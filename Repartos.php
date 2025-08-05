@@ -1,5 +1,7 @@
 <?php include("includes/HeaderScripts.php");
 
+$pageTitle = 'Edison - Reparto';
+
 $query_clientes = "SELECT * FROM clientes";
 $clientes = mysqli_query($conn, $query_clientes) or die(mysqli_error($conn));
 $totalRows_clientes = mysqli_num_rows($clientes);
