@@ -23,35 +23,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 		$_SESSION['NombreDelUsuario'] = $NombreDelUsuario;
 		$_SESSION['TipoDeUsuario'] = $data['TipoDeUsuario'];
 		$_SESSION['NombreCliente'] = $data['NombreCliente'];
-		$_SESSION['CLIENTEID'] = $data['CLIENTEID'];
+               $_SESSION['CLIENTEID'] = $data['CLIENTEID'];
 
+               header('Location: main.php');
+               exit;
+        } else { // Unsuccessful!
 
-                if ($_SERVER['HTTP_HOST'] == "local.edison:8888") {
-
-                        echo "<script>window.location.href='http://local.edison:8888/main.php';</script>";
-                        exit;
-                } else if ($_SERVER['HTTP_HOST'] == "localhost") {
-
-                        echo "<script>window.location.href='http://localhost/DesarrolloWeb/edisonreparto/main.php';</script>";
-                        exit;
-                } else {
-
-                        echo "<script>window.location.href='https://reparto.edison.com.mx/main.php';</script>";
-                        exit;
-                }
-	} else { // Unsuccessful!
-
-		if ($_SERVER['HTTP_HOST'] == "local.edison:8888") {
-			echo "<script>window.location.href='http://local.edison:8888/index.php?login=no';</script>";
-			exit;
-		} else if ($_SERVER['HTTP_HOST'] == "localhost/edisonreparto") {
-			echo "<script>window.location.href=''http://localhost/index.php?login=no';</script>";
-			exit;
-		} else {
-			echo "<script>window.location.href='https://reparto.edison.com.mx/index.php?login=no';</script>";
-			exit;
-		}
-	}
+               header('Location: index.php?login=no');
+               exit;
+        }
 
 	mysqli_close($conn); // Close the database connection.
 
