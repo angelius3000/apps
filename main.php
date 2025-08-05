@@ -1,7 +1,8 @@
 <?php include("includes/HeaderScripts.php");
 
-if ($_SESSION['TIPOUSUARIO'] != 1) {
+if (!in_array((int)$_SESSION['TIPOUSUARIO'], [1, 2, 3, 4], true)) {
     header("Location: index.php");
+    exit;
 }
 
 ?>
