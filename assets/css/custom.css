@@ -27,3 +27,19 @@
     padding: 10px 30px;
 }
 /* Your Custom CSS Goes here */
+
+.app-card {
+    box-shadow: none !important;
+    border: none;
+    border-radius: 0;
+    width: 150px;
+    height: 150px;
+}
+
+.app-card .card-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
