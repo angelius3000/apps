@@ -1,0 +1,17 @@
+.NumerosSIAN {
+  font-weight: bold;
+  color: #1484c9;
+}
+
+.badge.badge-successParcial {
+  background: #94a693;
+  color: #fff;
+}
+
+.border-right {
+  border-right: 1px solid rgb(231, 231, 231); /* Cambia 'gray' por el color que prefieras */
+}
+
+.border-menu-top {
+  border-top: 1px solid #f6f6f6; /* Cambia 'gray' por el color que prefieras */
+}

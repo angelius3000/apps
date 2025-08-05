@@ -1,0 +1,29 @@
+.dropdown-menu .dropdown-headerNombreUsuario {
+
+    text-transform: uppercase;
+    text-align: center;
+    font-weight: 600;
+    color: rgba(64, 71, 92, 0.5);
+}
+
+.dropdown-menu .dropdown-headerEdison {
+    display: block; /* Hace que el span se comporte como un bloque */
+    font-size: 12px;
+    color: #0082ca;
+    text-align: center; 
+}
+
+.dropdown-menu .dropdown-headerTipoUsuario {
+    display: block; /* Hace que el span se comporte como un bloque */
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-align: center; /* Centra el texto dentro del span */
+    color: #525252;
+}
+
+
+.dropdown-menu.large-items-menu .dropdown-headerEdison {
+    padding: 10px 30px;
+}
+/* Your Custom CSS Goes here */
