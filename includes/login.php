@@ -26,19 +26,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 		$_SESSION['CLIENTEID'] = $data['CLIENTEID'];
 
 
-		if ($_SERVER['HTTP_HOST'] == "local.edison:8888") {
+                if ($_SERVER['HTTP_HOST'] == "local.edison:8888") {
 
-			echo "<script>window.location.href='http://local.edison:8888/Repartos.php';</script>";
-			exit;
-		} else if ($_SERVER['HTTP_HOST'] == "localhost") {
+                        echo "<script>window.location.href='http://local.edison:8888/main.php';</script>";
+                        exit;
+                } else if ($_SERVER['HTTP_HOST'] == "localhost") {
 
-			echo "<script>window.location.href='http://localhost/DesarrolloWeb/edisonreparto/Repartos.php';</script>";
-			exit;
-		} else {
+                        echo "<script>window.location.href='http://localhost/DesarrolloWeb/edisonreparto/main.php';</script>";
+                        exit;
+                } else {
 
-			echo "<script>window.location.href='https://reparto.edison.com.mx/Repartos.php';</script>";
-			exit;
-		}
+                        echo "<script>window.location.href='https://reparto.edison.com.mx/main.php';</script>";
+                        exit;
+                }
 	} else { // Unsuccessful!
 
 		if ($_SERVER['HTTP_HOST'] == "local.edison:8888") {
