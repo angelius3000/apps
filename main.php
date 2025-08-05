@@ -43,18 +43,18 @@ if (!in_array((int)$_SESSION['TIPOUSUARIO'], [1, 2, 3, 4], true)) {
                                     <h1>Aplicaciones</h1>
                                     <div class="row justify-content-center">
                                         <div class="col-md-6 mb-3">
-                                            <a href="Repartos.php" class="card text-decoration-none text-dark">
+                                            <a href="Repartos.php" class="card text-decoration-none text-dark bg-transparent border-0">
                                                 <div class="card-body">
                                                     <i class="material-icons-two-tone" style="font-size:72px;">local_shipping</i>
-                                                    <h5 class="mt-3">Reparto</h5>
+                                                    <h5 class="mt-1">Reparto</h5>
                                                 </div>
                                             </a>
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                            <a href="charolas.php" class="card text-decoration-none text-dark">
+                                            <a href="charolas.php" class="card text-decoration-none text-dark bg-transparent border-0">
                                                 <div class="card-body">
                                                     <i class="material-icons-two-tone" style="font-size:72px;">view_day</i>
-                                                    <h5 class="mt-3">Charolas</h5>
+                                                    <h5 class="mt-1">Charolas</h5>
                                                 </div>
                                             </a>
                                         </div>
