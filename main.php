@@ -1,5 +1,7 @@
 <?php include("includes/HeaderScripts.php");
 
+$pageTitle = 'Edison - Apps';
+
 if (!in_array((int)$_SESSION['TIPOUSUARIO'], [1, 2, 3, 4], true)) {
     header("Location: index.php");
     exit;
@@ -37,14 +39,24 @@ if (!in_array((int)$_SESSION['TIPOUSUARIO'], [1, 2, 3, 4], true)) {
                     <div class="container-fluid">
                         <div class="row">
                             <div class="col">
-                                <div class="page-description">
+                                <div class="page-description text-center">
                                     <h1>Aplicaciones</h1>
-                                    <div class="row">
+                                    <div class="row justify-content-center">
                                         <div class="col-md-6 mb-3">
-                                            <a href="Repartos.php" class="btn btn-primary btn-lg w-100">EdisonReparto</a>
+                                            <a href="Repartos.php" class="card text-decoration-none text-dark">
+                                                <div class="card-body">
+                                                    <i class="material-icons-two-tone" style="font-size:72px;">local_shipping</i>
+                                                    <h5 class="mt-3">Reparto</h5>
+                                                </div>
+                                            </a>
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                            <a href="charolas.php" class="btn btn-primary btn-lg w-100">Charolas</a>
+                                            <a href="charolas.php" class="card text-decoration-none text-dark">
+                                                <div class="card-body">
+                                                    <i class="material-icons-two-tone" style="font-size:72px;">view_day</i>
+                                                    <h5 class="mt-3">Charolas</h5>
+                                                </div>
+                                            </a>
                                         </div>
                                     </div>
                                 </div>

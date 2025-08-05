@@ -1,4 +1,6 @@
 <?php include("includes/HeaderScripts.php");
+
+$pageTitle = 'Edison - Charolas';
 ?>
 <!DOCTYPE html>
 <html lang="en">
