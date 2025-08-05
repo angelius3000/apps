@@ -4,7 +4,7 @@
             Apps
         </li> -->
         <li>
-            <a href="main.php"><i class="material-icons-two-tone">dashboard</i>Dashboard</a>
+            <a href="main.php"><i class="material-icons-two-tone">dashboard</i>Aplicaciones</a>
         </li>
         <li>
             <a href="charolas.php"><i class="material-icons-two-tone">view_day</i>Charolas</a>
