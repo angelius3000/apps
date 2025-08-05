@@ -41,7 +41,7 @@ if (!in_array((int)$_SESSION['TIPOUSUARIO'], [1, 2, 3, 4], true)) {
                                     <h1>Aplicaciones</h1>
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
-                                            <a href="Repartos.php" class="btn btn-primary btn-lg w-100">Reparto</a>
+                                            <a href="Repartos.php" class="btn btn-primary btn-lg w-100">EdisonReparto</a>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <a href="charolas.php" class="btn btn-primary btn-lg w-100">Charolas</a>

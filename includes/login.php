@@ -25,13 +25,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 		$_SESSION['NombreCliente'] = $data['NombreCliente'];
                $_SESSION['CLIENTEID'] = $data['CLIENTEID'];
 
-               header('Location: main.php');
-               exit;
-        } else { // Unsuccessful!
-
-               header('Location: index.php?login=no');
-               exit;
-        }
+               // Redirect all users to the application selector
+               redirect_user('main.php');
+       } else { // Unsuccessful!
+               // Failed login should return to the login form with an error
+               redirect_user('index.php?login=no');
+       }
 
 	mysqli_close($conn); // Close the database connection.
 
