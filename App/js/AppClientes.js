@@ -226,38 +226,40 @@ $(document).ready(function() {
 
   // Función que se llama cuando el usuario deja de escribir
   function doneTyping() {
-    $.ajax({
-      //async: false,
-      type: "POST",
-      url: "App/Server/ServerInfoClientesChecarSIANSiExiste.php",
-      data: "CLIENTESIAN=" + ValorClienteSIAN,
-      dataType: "json",
-      success: function(response) {
-        // Reescribe la Datatable y le da refresh
+    if (ValorClienteSIAN !== "" && ValorClienteSIAN !== "0") {
+      $.ajax({
+        //async: false,
+        type: "POST",
+        url: "App/Server/ServerInfoClientesChecarSIANSiExiste.php",
+        data: "CLIENTESIAN=" + ValorClienteSIAN,
+        dataType: "json",
+        success: function(response) {
+          // Reescribe la Datatable y le da refresh
 
-        if (response.NombreCliente != null) {
-          // Mandar el modal de que ya existe el email
+          if (response.NombreCliente != null) {
+            // Mandar el modal de que ya existe el email
 
-          $("#ModalYaExiste").modal("show");
+            $("#ModalYaExiste").modal("show");
 
-          // Quitamos el modal que genero el email
+            // Quitamos el modal que genero el email
 
-          $("#ModalAgregarClientes").modal("hide");
+            $("#ModalAgregarClientes").modal("hide");
 
-          // Mandamos la informacion al nuevo modal
+            // Mandamos la informacion al nuevo modal
 
-          $("#NumeroDeClienteSIANYaExiste").text(response.CLIENTESIAN);
-          $("#NombreClienteYaExiste").text(response.NombreCliente);
-          $("#EmailClienteYaExiste").text(response.EmailCliente);
-          $("#TelefonoClienteYaExiste").text(response.TelefonoCliente);
-          $("#NombreContactoYaExiste").text(response.NombreContacto);
-          $("#DireccionClienteYaExiste").text(response.DireccionCliente);
-          $("#ColoniaClienteYaExiste").text(response.ColoniaCliente);
-          $("#CiudadClienteYaExiste").text(response.CiudadCliente);
-          $("#EstadoClienteYaExiste").text(response.EstadoCliente);
-        }
-      },
-    }).done(function() {});
+            $("#NumeroDeClienteSIANYaExiste").text(response.CLIENTESIAN);
+            $("#NombreClienteYaExiste").text(response.NombreCliente);
+            $("#EmailClienteYaExiste").text(response.EmailCliente);
+            $("#TelefonoClienteYaExiste").text(response.TelefonoCliente);
+            $("#NombreContactoYaExiste").text(response.NombreContacto);
+            $("#DireccionClienteYaExiste").text(response.DireccionCliente);
+            $("#ColoniaClienteYaExiste").text(response.ColoniaCliente);
+            $("#CiudadClienteYaExiste").text(response.CiudadCliente);
+            $("#EstadoClienteYaExiste").text(response.EstadoCliente);
+          }
+        },
+      }).done(function() {});
+    }
   }
 
   // Disparo el modal #ModalAgregarClientes cuano cierro #ModalEmailYaExiste
