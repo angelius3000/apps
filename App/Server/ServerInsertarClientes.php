@@ -3,8 +3,12 @@
 include("../../Connections/ConDB.php");
 include("../../includes/Funciones.php");
 
-$CLIENTESIAN = mysqli_real_escape_string($conn, $_POST['CLIENTESIAN']);
-$CLCSIAN = isset($_POST['CLCSIAN']) ? mysqli_real_escape_string($conn, $_POST['CLCSIAN']) : NULL;
+$CLIENTESIAN = (isset($_POST['CLIENTESIAN']) && $_POST['CLIENTESIAN'] !== '')
+    ? "'" . mysqli_real_escape_string($conn, $_POST['CLIENTESIAN']) . "'"
+    : "NULL";
+$CLCSIAN = (isset($_POST['CLCSIAN']) && $_POST['CLCSIAN'] !== '')
+    ? "'" . mysqli_real_escape_string($conn, $_POST['CLCSIAN']) . "'"
+    : "NULL";
 
 $NombreCliente = isset($_POST['NombreCliente']) ? mysqli_real_escape_string($conn, $_POST['NombreCliente']) : NULL;
 
@@ -16,7 +20,7 @@ $ColoniaCliente = isset($_POST['ColoniaCliente']) ? mysqli_real_escape_string($c
 $CiudadCliente = isset($_POST['CiudadCliente']) ? mysqli_real_escape_string($conn, $_POST['CiudadCliente']) : NULL;
 $EstadoCliente = isset($_POST['EstadoCliente']) ? mysqli_real_escape_string($conn, $_POST['EstadoCliente']) : NULL;
 
-$sql = "INSERT INTO clientes (CLIENTESIAN,CLCSIAN, NombreCliente, EmailCliente, TelefonoCliente, NombreContacto, DireccionCliente, ColoniaCliente, CiudadCliente, EstadoCliente) VALUES ('$CLIENTESIAN', '$CLCSIAN', '$NombreCliente', '$EmailCliente', '$TelefonoCliente', '$NombreContacto', '$DireccionCliente', '$ColoniaCliente', '$CiudadCliente', '$EstadoCliente')";
+$sql = "INSERT INTO clientes (CLIENTESIAN,CLCSIAN, NombreCliente, EmailCliente, TelefonoCliente, NombreContacto, DireccionCliente, ColoniaCliente, CiudadCliente, EstadoCliente) VALUES ($CLIENTESIAN, $CLCSIAN, '$NombreCliente', '$EmailCliente', '$TelefonoCliente', '$NombreContacto', '$DireccionCliente', '$ColoniaCliente', '$CiudadCliente', '$EstadoCliente')";
 
 if (!mysqli_query($conn, $sql)) {
     die('Error: ' . mysqli_error($conn));
