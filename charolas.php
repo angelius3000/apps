@@ -1,6 +1,11 @@
 <?php include("includes/HeaderScripts.php");
 
 $pageTitle = 'Edison - Charolas';
+
+// Obtener la lista de charolas disponibles
+$query_charolas = "SELECT * FROM charolas";
+$charolas = mysqli_query($conn, $query_charolas) or die(mysqli_error($conn));
+$totalRows_charolas = mysqli_num_rows($charolas);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -22,8 +27,44 @@ $pageTitle = 'Edison - Charolas';
                             <div class="col">
                                 <div class="page-description">
                                     <h1>Charolas</h1>
-                                    <p>Página en construcción.</p>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <select class="form-select" id="CHAROLASID" aria-label="Selecciona charola" required>
+                                    <option value="">Selecciona charola</option>
+                                    <?php while ($row_charolas = mysqli_fetch_assoc($charolas)) { ?>
+                                        <option value="<?php echo $row_charolas['CHAROLASID']; ?>">
+                                            <?php echo $row_charolas['SkuCharolas'] . ' - ' . $row_charolas['DescripcionCharolas']; ?>
+                                        </option>
+                                    <?php }
+                                    // Reiniciar el puntero de la consulta
+                                    mysqli_data_seek($charolas, 0);
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <input type="number" class="form-control" id="CantidadCharolas" placeholder="Cantidad a fabricar">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <button type="button" class="btn btn-primary w-100" id="CalcularBtn">Calcular</button>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <table class="table" id="TablaMateriaPrima">
+                                    <thead>
+                                        <tr>
+                                            <th>SKU MP</th>
+                                            <th>Descripción</th>
+                                            <th>Tipo</th>
+                                            <th>Cantidad</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -41,6 +82,8 @@ $pageTitle = 'Edison - Charolas';
     <script src="assets/plugins/highlight/highlight.pack.js"></script>
     <script src="assets/js/main.min.js"></script>
     <script src="assets/js/custom.js"></script>
+    <script src="assets/js/select2.min.js" integrity="sha512-9p/L4acAjbjIaaGXmZf0Q2bV42HetlCLbv8EP0z3rLbQED2TAFUlDvAezy7kumYqg5T8jHtDdlm1fgIsr5QzKg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="App/js/AppCharolas.js"></script>
     <script src="App/js/AppCambiarContrasena.js"></script>
 </body>
 </html>
