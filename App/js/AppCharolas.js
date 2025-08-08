@@ -5,28 +5,67 @@ $(document).ready(function() {
     width: '100%'
   });
 
+  var tablaOrdenes;
+
+  function obtenerBadge(statusId, orderId) {
+    var mandarModal = 'data-bs-toggle="modal" data-bs-target="#ModalCambioStatusCharola" data-order="' + orderId + '" data-status="' + statusId + '"';
+    switch (statusId) {
+      case '1':
+        return '<span class="badge badge-info badge-status" ' + mandarModal + '>Registrada</span>';
+      case '2':
+        return '<span class="badge badge-warning badge-status" ' + mandarModal + '>En proceso</span>';
+      case '3':
+        return '<span class="badge badge-success badge-status" ' + mandarModal + '>Terminada</span>';
+      case '4':
+        return '<span class="badge badge-dark badge-status" ' + mandarModal + '>Entregada</span>';
+      case '5':
+        return '<span class="badge badge-danger badge-status" ' + mandarModal + '>Cancelada</span>';
+      default:
+        return '';
+    }
+  }
+
   function cargarOrdenes() {
     $.ajax({
       url: 'App/Server/ServerInfoOrdenesCharolas.php',
       dataType: 'json',
       success: function(response) {
+        if (tablaOrdenes) {
+          tablaOrdenes.clear().destroy();
+        }
+
         var tbody = $('#TablaOrdenesCharolas tbody');
         tbody.empty();
 
         $.each(response, function(index, item) {
-          var opciones = '';
-          $.each(statusOptions, function(i, status) {
-            var seleccionado = status.STATUSID == item.STATUSID ? 'selected' : '';
-            opciones += '<option value="' + status.STATUSID + '" ' + seleccionado + '>' + status.Status + '</option>';
-          });
-
           var fila = '<tr>' +
             '<td>' + item.SkuCharolas + '</td>' +
             '<td>' + item.DescripcionCharolas + '</td>' +
             '<td>' + item.Cantidad + '</td>' +
-            '<td><select class="form-select status-select" data-order="' + item.ORDENCHAROLAID + '">' + opciones + '</select></td>' +
+            '<td>' + obtenerBadge(item.STATUSID, item.ORDENCHAROLAID) + '</td>' +
             '</tr>';
           tbody.append(fila);
+        });
+
+        tablaOrdenes = $('#TablaOrdenesCharolas').DataTable({
+          dom: 'Bfrtip',
+          buttons: ['excelHtml5', 'pageLength'],
+          responsive: true,
+          pageLength: 100,
+          language: {
+            search: 'Búsqueda:',
+            lengthMenu: 'Mostrar _MENU_ filas',
+            zeroRecords: 'Sin información',
+            info: 'Mostrando _START_ a _END_ de _TOTAL_ registros',
+            paginate: {
+              first: 'Primera',
+              last: 'Última',
+              next: 'Siguiente',
+              previous: 'Anterior',
+            },
+            infoEmpty: 'Sin requisiciones registradas',
+            infoFiltered: '(filtrado de _MAX_ registros)',
+          },
         });
       }
     });
@@ -80,9 +119,17 @@ $(document).ready(function() {
     }
   });
 
-  $('#TablaOrdenesCharolas').on('change', '.status-select', function() {
+  $('#TablaOrdenesCharolas').on('click', '.badge-status', function() {
     var orderId = $(this).data('order');
-    var statusId = $(this).val();
+    var statusId = $(this).data('status');
+    $('#ORDENCHAROLAIDEditar').val(orderId);
+    $('#NuevoStatusCharola').val(statusId);
+  });
+
+  $('#FormEditarStatusCharola').on('submit', function(e) {
+    e.preventDefault();
+    var orderId = $('#ORDENCHAROLAIDEditar').val();
+    var statusId = $('#NuevoStatusCharola').val();
 
     $.ajax({
       type: 'POST',
@@ -90,6 +137,7 @@ $(document).ready(function() {
       data: { ORDENCHAROLAID: orderId, STATUSID: statusId },
       dataType: 'json',
       success: function() {
+        $('#ModalCambioStatusCharola').modal('hide');
         cargarOrdenes();
       }
     });
