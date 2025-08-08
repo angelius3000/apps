@@ -6,6 +6,14 @@ $pageTitle = 'Edison - Charolas';
 $query_charolas = "SELECT * FROM charolas";
 $charolas = mysqli_query($conn, $query_charolas) or die(mysqli_error($conn));
 $totalRows_charolas = mysqli_num_rows($charolas);
+
+// Obtener estatus disponibles para las requisiciones
+$query_status = "SELECT * FROM status WHERE STATUSID IN (1,2,3,4)";
+$status = mysqli_query($conn, $query_status) or die(mysqli_error($conn));
+$status_options = [];
+while ($row_status = mysqli_fetch_assoc($status)) {
+    $status_options[] = $row_status;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -51,6 +59,11 @@ $totalRows_charolas = mysqli_num_rows($charolas);
                                 <button type="button" class="btn btn-primary w-100" id="CalcularBtn">Calcular</button>
                             </div>
                         </div>
+                        <div class="row mb-4">
+                            <div class="col-md-3 ms-auto">
+                                <button type="button" class="btn btn-success w-100" id="GenerarRequisicionBtn">Generar requisición</button>
+                            </div>
+                        </div>
                         <div class="row">
                             <div class="col">
                                 <table class="table" id="TablaMateriaPrima">
@@ -64,6 +77,22 @@ $totalRows_charolas = mysqli_num_rows($charolas);
                                     </thead>
                                     <tbody>
                                     </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row mt-4">
+                            <div class="col">
+                                <h5>Requisiciones de armado</h5>
+                                <table id="TablaOrdenesCharolas" class="display" style="width:100%">
+                                    <thead>
+                                        <tr>
+                                            <th>SKU</th>
+                                            <th>Descripción</th>
+                                            <th>Cantidad</th>
+                                            <th>Estatus</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
                                 </table>
                             </div>
                         </div>
@@ -83,6 +112,35 @@ $totalRows_charolas = mysqli_num_rows($charolas);
     <script src="assets/js/main.min.js"></script>
     <script src="assets/js/custom.js"></script>
     <script src="assets/js/select2.min.js" integrity="sha512-9p/L4acAjbjIaaGXmZf0Q2bV42HetlCLbv8EP0z3rLbQED2TAFUlDvAezy7kumYqg5T8jHtDdlm1fgIsr5QzKg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <div class="modal" id="ModalCambioStatusCharola">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Estatus</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="btn-close"></button>
+                </div>
+                <form id="FormEditarStatusCharola">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="STATUSIDCharola" class="form-label">Status</label>
+                            <select class="form-select" id="STATUSIDCharola" name="STATUSID" required>
+                                <?php foreach ($status_options as $opt) { ?>
+                                    <option value="<?php echo $opt['STATUSID']; ?>"><?php echo $opt['Status']; ?></option>
+                                <?php } ?>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <input type="hidden" id="ORDENCHAROLAIDEditar">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/responsive/2.2.7/js/dataTables.responsive.min.js"></script>
     <script src="App/js/AppCharolas.js"></script>
     <script src="App/js/AppCambiarContrasena.js"></script>
 </body>
