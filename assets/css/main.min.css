@@ -5943,11 +5943,7 @@ span.flatpickr-weekday {
   content: "";
   display: block;
 }
-.app-auth-sign-in .app-auth-background {
-  background: url(../../App/Graficos/Background/BackIndex.jpg) no-repeat;
-  background-size: 60%;
-  background-position: center;
-}
+.app-auth-sign-in .app-auth-background{background:url(../../App/Graficos/Background/BackIndex.jpg) center/cover no-repeat;}
 .app-auth-sign-up .app-auth-background {
   background: url(../images/backgrounds/sign-up.svg) no-repeat;
   background-size: 60%;

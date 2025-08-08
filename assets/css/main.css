@@ -6407,9 +6407,8 @@ span.flatpickr-weekday {
 }
 
 .app-auth-sign-in .app-auth-background {
-    background: url('../../App/Graficos/Background/BackIndex.jpg') no-repeat;
-    background-size: 100%;
-    background-position: center;
+    /* Use a cover background to avoid distortion of the login image */
+    background: url('../../App/Graficos/Background/BackIndex.jpg') center/cover no-repeat;
 }
 
 
