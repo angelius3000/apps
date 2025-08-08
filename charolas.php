@@ -6,6 +6,14 @@ $pageTitle = 'Edison - Charolas';
 $query_charolas = "SELECT * FROM charolas";
 $charolas = mysqli_query($conn, $query_charolas) or die(mysqli_error($conn));
 $totalRows_charolas = mysqli_num_rows($charolas);
+
+// Obtener estatus disponibles para las requisiciones
+$query_status = "SELECT * FROM status";
+$status = mysqli_query($conn, $query_status) or die(mysqli_error($conn));
+$status_options = [];
+while ($row_status = mysqli_fetch_assoc($status)) {
+    $status_options[] = $row_status;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -51,6 +59,11 @@ $totalRows_charolas = mysqli_num_rows($charolas);
                                 <button type="button" class="btn btn-primary w-100" id="CalcularBtn">Calcular</button>
                             </div>
                         </div>
+                        <div class="row mb-4">
+                            <div class="col-md-3 ms-auto">
+                                <button type="button" class="btn btn-success w-100" id="GenerarRequisicionBtn">Generar requisición</button>
+                            </div>
+                        </div>
                         <div class="row">
                             <div class="col">
                                 <table class="table" id="TablaMateriaPrima">
@@ -64,6 +77,22 @@ $totalRows_charolas = mysqli_num_rows($charolas);
                                     </thead>
                                     <tbody>
                                     </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row mt-4">
+                            <div class="col">
+                                <h5>Requisiciones de armado</h5>
+                                <table class="table" id="TablaOrdenesCharolas">
+                                    <thead>
+                                        <tr>
+                                            <th>SKU</th>
+                                            <th>Descripción</th>
+                                            <th>Cantidad</th>
+                                            <th>Estatus</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
                                 </table>
                             </div>
                         </div>
@@ -83,6 +112,9 @@ $totalRows_charolas = mysqli_num_rows($charolas);
     <script src="assets/js/main.min.js"></script>
     <script src="assets/js/custom.js"></script>
     <script src="assets/js/select2.min.js" integrity="sha512-9p/L4acAjbjIaaGXmZf0Q2bV42HetlCLbv8EP0z3rLbQED2TAFUlDvAezy7kumYqg5T8jHtDdlm1fgIsr5QzKg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        var statusOptions = <?php echo json_encode($status_options); ?>;
+    </script>
     <script src="App/js/AppCharolas.js"></script>
     <script src="App/js/AppCambiarContrasena.js"></script>
 </body>
