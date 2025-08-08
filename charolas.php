@@ -6,14 +6,6 @@ $pageTitle = 'Edison - Charolas';
 $query_charolas = "SELECT * FROM charolas";
 $charolas = mysqli_query($conn, $query_charolas) or die(mysqli_error($conn));
 $totalRows_charolas = mysqli_num_rows($charolas);
-
-// Obtener estatus disponibles para las requisiciones
-$query_status = "SELECT * FROM status";
-$status = mysqli_query($conn, $query_status) or die(mysqli_error($conn));
-$status_options = [];
-while ($row_status = mysqli_fetch_assoc($status)) {
-    $status_options[] = $row_status;
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -102,19 +94,26 @@ while ($row_status = mysqli_fetch_assoc($status)) {
         </div>
     </div>
 
+    <?php include("App/Modales/ModalesCharolas.php"); ?>
+
     <!-- Javascripts -->
-    <script src="assets/plugins/jquery/jquery-3.5.1.min.js"></script>
+    <script src="assets/plugins/jquery/jquery-3.7.1.min.js"></script>
     <script src="assets/plugins/bootstrap/js/popper.min.js"></script>
     <script src="assets/plugins/bootstrap/js/bootstrap.min.js"></script>
     <script src="assets/plugins/perfectscroll/perfect-scrollbar.min.js"></script>
     <script src="assets/plugins/pace/pace.min.js"></script>
     <script src="assets/plugins/highlight/highlight.pack.js"></script>
+    <script type="text/javascript" charset="utf8" src="assets/js/jquery.dataTables.js"></script>
     <script src="assets/js/main.min.js"></script>
     <script src="assets/js/custom.js"></script>
+    <script src="assets/js/pages/datatables.js"></script>
+    <script type="text/javascript" charset="utf8" src="assets/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="assets/js/buttons.html5.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="assets/js/jszip.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="assets/js/pdfmake.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="assets/js/vfs_fonts.js"></script>
+    <script type="text/javascript" charset="utf8" src="assets/js/dataTables.responsive.min.js"></script>
     <script src="assets/js/select2.min.js" integrity="sha512-9p/L4acAjbjIaaGXmZf0Q2bV42HetlCLbv8EP0z3rLbQED2TAFUlDvAezy7kumYqg5T8jHtDdlm1fgIsr5QzKg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script>
-        var statusOptions = <?php echo json_encode($status_options); ?>;
-    </script>
     <script src="App/js/AppCharolas.js"></script>
     <script src="App/js/AppCambiarContrasena.js"></script>
 </body>
