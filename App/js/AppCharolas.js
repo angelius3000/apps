@@ -30,7 +30,7 @@ function badgeHtml(statusId, orderId) {
     text = 'En proceso';
   } else if (statusId == 3) {
     badgeClass = 'badge-success';
-    text = 'Terminada';
+    text = 'Finalizada';
   } else if (statusId == 4) {
     badgeClass = 'badge-dark';
     text = 'Entregada';
