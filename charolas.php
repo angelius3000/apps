@@ -112,9 +112,6 @@ while ($row_status = mysqli_fetch_assoc($status)) {
     <script src="assets/js/main.min.js"></script>
     <script src="assets/js/custom.js"></script>
     <script src="assets/js/select2.min.js" integrity="sha512-9p/L4acAjbjIaaGXmZf0Q2bV42HetlCLbv8EP0z3rLbQED2TAFUlDvAezy7kumYqg5T8jHtDdlm1fgIsr5QzKg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script>
-        const statusOptionsCharola = <?php echo json_encode($status_options); ?>;
-    </script>
     <div class="modal" id="ModalCambioStatusCharola">
         <div class="modal-dialog">
             <div class="modal-content">
