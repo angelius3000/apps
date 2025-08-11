@@ -82,6 +82,7 @@ $totalRows_charolas = mysqli_num_rows($charolas);
                                             <th>SKU</th>
                                             <th>Descripción</th>
                                             <th>Cantidad</th>
+                                            <th>Detalles</th>
                                             <th>Estatus</th>
                                         </tr>
                                     </thead>

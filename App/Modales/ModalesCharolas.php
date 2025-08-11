@@ -26,3 +26,27 @@
         </div>
     </div>
 </div>
+
+<div class="modal" id="ModalDetallesCharola">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalles de la charola</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="btn-close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>SKU MP</th>
+                            <th>Descripción</th>
+                            <th>Tipo</th>
+                            <th>Cantidad</th>
+                        </tr>
+                    </thead>
+                    <tbody id="DetalleCharolaTBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
