@@ -32,26 +32,55 @@ $(document).ready(function() {
       success: function(response) {
         if (tablaOrdenes) {
           tablaOrdenes.clear().destroy();
+          $('#TablaOrdenesCharolas tbody').empty();
         }
-
-        var tbody = $('#TablaOrdenesCharolas tbody');
-        tbody.empty();
-
-        $.each(response, function(index, item) {
-          var fila = '<tr>' +
-            '<td>' + item.SkuCharolas + '</td>' +
-            '<td>' + item.DescripcionCharolas + '</td>' +
-            '<td>' + item.Cantidad + '</td>' +
-            '<td>' + obtenerBadge(item.STATUSID, item.ORDENCHAROLAID) + '</td>' +
-            '</tr>';
-          tbody.append(fila);
-        });
 
         tablaOrdenes = $('#TablaOrdenesCharolas').DataTable({
           dom: 'Bfrtip',
           buttons: ['excelHtml5', 'pageLength'],
-          responsive: true,
+          data: response,
           pageLength: 100,
+          responsive: {
+            details: {
+              type: 'column',
+              target: 0,
+              renderer: function(api, rowIdx, columns) {
+                var data = api.row(rowIdx).data();
+                if (!data.Detalles || !data.Detalles.length) {
+                  return '';
+                }
+                var html = '<table class="table table-sm"><thead><tr>' +
+                  '<th>SKU MP</th><th>Descripción</th><th>Tipo</th><th>Cantidad</th>' +
+                  '</tr></thead><tbody>';
+                $.each(data.Detalles, function(i, mp) {
+                  html += '<tr>' +
+                    '<td>' + mp.SkuMP + '</td>' +
+                    '<td>' + mp.DescripcionMP + '</td>' +
+                    '<td>' + mp.TipoMP + '</td>' +
+                    '<td>' + mp.Cantidad + '</td>' +
+                    '</tr>';
+                });
+                html += '</tbody></table>';
+                return html;
+              }
+            }
+          },
+          columnDefs: [
+            { className: 'dtr-control', orderable: false, targets: 0 }
+          ],
+          order: [1, 'asc'],
+          columns: [
+            { data: null, defaultContent: '' },
+            { data: 'SkuCharolas' },
+            { data: 'DescripcionCharolas' },
+            { data: 'Cantidad' },
+            {
+              data: null,
+              render: function(data, type, row) {
+                return obtenerBadge(row.STATUSID, row.ORDENCHAROLAID);
+              }
+            }
+          ],
           language: {
             search: 'Búsqueda:',
             lengthMenu: 'Mostrar _MENU_ filas',
