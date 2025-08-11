@@ -40,6 +40,24 @@ $(document).ready(function() {
           buttons: ['excelHtml5', 'pageLength'],
           data: response,
           pageLength: 100,
+          order: [1, 'asc'],
+          columns: [
+            {
+              className: 'dtr-control',
+              orderable: false,
+              data: null,
+              defaultContent: ''
+            },
+            { data: 'SkuCharolas' },
+            { data: 'DescripcionCharolas' },
+            { data: 'Cantidad' },
+            {
+              data: null,
+              render: function(data, type, row) {
+                return obtenerBadge(row.STATUSID, row.ORDENCHAROLAID);
+              }
+            }
+          ],
           responsive: {
             details: {
               type: 'column',
@@ -65,22 +83,6 @@ $(document).ready(function() {
               }
             }
           },
-          columnDefs: [
-            { className: 'dtr-control', orderable: false, targets: 0 }
-          ],
-          order: [1, 'asc'],
-          columns: [
-            { data: null, defaultContent: '' },
-            { data: 'SkuCharolas' },
-            { data: 'DescripcionCharolas' },
-            { data: 'Cantidad' },
-            {
-              data: null,
-              render: function(data, type, row) {
-                return obtenerBadge(row.STATUSID, row.ORDENCHAROLAID);
-              }
-            }
-          ],
           language: {
             search: 'Búsqueda:',
             lengthMenu: 'Mostrar _MENU_ filas',
