@@ -40,7 +40,7 @@ $(document).ready(function() {
           buttons: ['excelHtml5', 'pageLength'],
           data: response,
           pageLength: 100,
-          order: [1, 'asc'],
+          order: [1, 'desc'],
           columns: [
             {
               className: 'dtr-control',
@@ -48,14 +48,10 @@ $(document).ready(function() {
               data: null,
               defaultContent: ''
             },
+            { data: 'ORDENCHAROLAID' },
             { data: 'SkuCharolas' },
             { data: 'DescripcionCharolas' },
             { data: 'Cantidad' },
-            {
-              data: null,
-              orderable: false,
-              defaultContent: '<button class="btn btn-sm btn-info btn-ver-detalles">Ver</button>'
-            },
             {
               data: null,
               render: function(data, type, row) {
@@ -153,25 +149,6 @@ $(document).ready(function() {
         }
       });
     }
-  });
-
-  $('#TablaOrdenesCharolas').on('click', '.btn-ver-detalles', function() {
-    var tr = $(this).closest('tr');
-    var data = tablaOrdenes.row(tr).data();
-    var tbody = $('#DetalleCharolaTBody');
-    tbody.empty();
-    if (data && data.Detalles) {
-      $.each(data.Detalles, function(i, mp) {
-        var fila = '<tr>' +
-          '<td>' + mp.SkuMP + '</td>' +
-          '<td>' + mp.DescripcionMP + '</td>' +
-          '<td>' + mp.TipoMP + '</td>' +
-          '<td>' + mp.Cantidad + '</td>' +
-          '</tr>';
-        tbody.append(fila);
-      });
-    }
-    $('#ModalDetallesCharola').modal('show');
   });
 
   $('#TablaOrdenesCharolas').on('click', '.badge-status', function() {

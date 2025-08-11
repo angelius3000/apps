@@ -79,10 +79,10 @@ $totalRows_charolas = mysqli_num_rows($charolas);
                                     <thead>
                                         <tr>
                                             <th class="dtr-control"></th>
+                                            <th>Requisición</th>
                                             <th>SKU</th>
                                             <th>Descripción</th>
                                             <th>Cantidad</th>
-                                            <th>Detalles</th>
                                             <th>Estatus</th>
                                         </tr>
                                     </thead>
