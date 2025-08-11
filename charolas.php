@@ -78,7 +78,7 @@ $totalRows_charolas = mysqli_num_rows($charolas);
                                 <table class="table" id="TablaOrdenesCharolas">
                                     <thead>
                                         <tr>
-                                            <th></th>
+                                            <th class="dtr-control"></th>
                                             <th>SKU</th>
                                             <th>Descripción</th>
                                             <th>Cantidad</th>
