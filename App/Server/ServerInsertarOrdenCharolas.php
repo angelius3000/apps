@@ -9,11 +9,24 @@ if (!$conn) {
 
 function normalizarTexto($texto)
 {
+    if (!is_string($texto)) {
+        if ($texto === null) {
+            return '';
+        }
+        $texto = (string) $texto;
+    }
+
+    $texto = strtolower(trim($texto));
+    if ($texto === '') {
+        return '';
+    }
+
     $texto = strtolower(trim($texto));
     $texto = strtr($texto, [
         'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u',
         'Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u', 'Ü' => 'u'
     ]);
+
     return $texto;
 }
 
