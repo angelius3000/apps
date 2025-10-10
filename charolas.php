@@ -134,7 +134,7 @@ $totalRows_charolas = count($charolas);
     <script type="text/javascript" charset="utf8" src="assets/js/pdfmake.min.js"></script>
     <script type="text/javascript" charset="utf8" src="assets/js/vfs_fonts.js"></script>
     <script type="text/javascript" charset="utf8" src="assets/js/dataTables.responsive.min.js"></script>
-    <script src="assets/js/select2.min.js" integrity="sha512-9p/L4acAjbjIaaGXmZf0Q2bV42HetlCLbv8EP0z3rLbQED2TAFUlDvAezy7kumYqg5T8jHtDdlm1fgIsr5QzKg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="assets/js/select2.min.js"></script>
     <script src="App/js/AppCharolas.js"></script>
     <script src="App/js/AppCambiarContrasena.js"></script>
 </body>
