@@ -25,11 +25,27 @@ $(document).ready(function() {
     }
   }
 
+  function mostrarErrorOrdenes(mensaje) {
+    var columnas = $('#TablaOrdenesCharolas thead tr th').length || 1;
+    var contenido = '<tr><td colspan="' + columnas + '" class="text-center text-danger">' + mensaje + '</td></tr>';
+    if (tablaOrdenes) {
+      tablaOrdenes.clear().destroy();
+      tablaOrdenes = null;
+    }
+    $('#TablaOrdenesCharolas tbody').html(contenido);
+  }
+
   function cargarOrdenes() {
     $.ajax({
       url: 'App/Server/ServerInfoOrdenesCharolas.php',
       dataType: 'json',
       success: function(response) {
+        if (!Array.isArray(response)) {
+          var mensaje = response && response.error ? response.error : 'No se pudo cargar la información de requisiciones.';
+          mostrarErrorOrdenes(mensaje);
+          return;
+        }
+
         if (tablaOrdenes) {
           tablaOrdenes.clear().destroy();
           $('#TablaOrdenesCharolas tbody').empty();
@@ -53,6 +69,30 @@ $(document).ready(function() {
             { data: 'DescripcionCharolas' },
             { data: 'Cantidad' },
             {
+              data: 'Largueros',
+              render: function(data) {
+                return data ?? 0;
+              }
+            },
+            {
+              data: 'Tornilleria',
+              render: function(data) {
+                return data ?? 0;
+              }
+            },
+            {
+              data: 'JuntaZeta',
+              render: function(data) {
+                return data ?? 0;
+              }
+            },
+            {
+              data: 'Traves',
+              render: function(data) {
+                return data ?? 0;
+              }
+            },
+            {
               data: null,
               render: function(data, type, row) {
                 return obtenerBadge(row.STATUSID, row.ORDENCHAROLAID);
@@ -68,7 +108,14 @@ $(document).ready(function() {
                 if (!data.Detalles || !data.Detalles.length) {
                   return '';
                 }
-                var html = '<table class="table table-sm"><thead><tr>' +
+                var resumen = '<div class="mb-2"><strong>Resumen de materiales</strong><table class="table table-sm mb-0"><tbody>' +
+                  '<tr><th scope="row">Largueros</th><td>' + (data.Largueros ?? 0) + '</td></tr>' +
+                  '<tr><th scope="row">Tornillería</th><td>' + (data.Tornilleria ?? 0) + '</td></tr>' +
+                  '<tr><th scope="row">Junta zeta</th><td>' + (data.JuntaZeta ?? 0) + '</td></tr>' +
+                  '<tr><th scope="row">Traves</th><td>' + (data.Traves ?? 0) + '</td></tr>' +
+                  '</tbody></table></div>';
+
+                var html = resumen + '<table class="table table-sm"><thead><tr>' +
                   '<th>SKU MP</th><th>Descripción</th><th>Tipo</th><th>Cantidad</th>' +
                   '</tr></thead><tbody>';
                 $.each(data.Detalles, function(i, mp) {
@@ -99,6 +146,13 @@ $(document).ready(function() {
             infoFiltered: '(filtrado de _MAX_ registros)',
           },
         });
+      },
+      error: function(xhr) {
+        var mensaje = 'No se pudo cargar la información de requisiciones.';
+        if (xhr.responseJSON && xhr.responseJSON.error) {
+          mensaje = xhr.responseJSON.error;
+        }
+        mostrarErrorOrdenes(mensaje);
       }
     });
   }
