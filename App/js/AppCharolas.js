@@ -175,7 +175,14 @@ $(document).ready(function() {
                 if (!data.Detalles || !data.Detalles.length) {
                   return '';
                 }
-                var html = '<table class="table table-sm"><thead><tr>' +
+                var resumen = '<div class="mb-2"><strong>Resumen de materiales</strong><table class="table table-sm mb-0"><tbody>' +
+                  '<tr><th scope="row">Largueros</th><td>' + (data.Largueros ?? 0) + '</td></tr>' +
+                  '<tr><th scope="row">Tornillería</th><td>' + (data.Tornilleria ?? 0) + '</td></tr>' +
+                  '<tr><th scope="row">Junta zeta</th><td>' + (data.JuntaZeta ?? 0) + '</td></tr>' +
+                  '<tr><th scope="row">Traves</th><td>' + (data.Traves ?? 0) + '</td></tr>' +
+                  '</tbody></table></div>';
+
+                var html = resumen + '<table class="table table-sm"><thead><tr>' +
                   '<th>SKU MP</th><th>Descripción</th><th>Tipo</th><th>Cantidad</th>' +
                   '</tr></thead><tbody>';
                 $.each(data.Detalles, function(i, mp) {
