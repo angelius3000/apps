@@ -224,9 +224,10 @@ $(document).ready(function() {
                   '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Traves</div><div class="h5 mb-0">' + escapeHtml(totales.Traves) + '</div></div></div></div>' +
                 '</div>';
 
-                html += '<div class="mt-3"><h6 class="fw-semibold">Detalle de materiales</h6>';
-                html += '<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr>' +
-                  '<th>SKU MP</th><th>Descripción</th><th>Tipo</th><th>Cantidad</th>' +
+                html += '<div class="mt-4 detalle-requisicion__detalle-materiales">' +
+                  '<h6 class="fw-semibold mb-3">Detalle de materiales</h6>';
+                html += '<div class="table-responsive"><table class="table table-hover table-striped align-middle detalle-requisicion__tabla"><thead><tr>' +
+                  '<th class="text-uppercase small text-muted">SKU MP</th><th class="text-uppercase small text-muted">Descripción</th><th class="text-uppercase small text-muted">Tipo</th><th class="text-uppercase small text-muted">Cantidad</th>' +
                   '</tr></thead><tbody>';
                 $.each(data.Detalles, function(i, mp) {
                   html += '<tr>' +
