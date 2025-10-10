@@ -25,6 +25,30 @@ $(document).ready(function() {
     }
   }
 
+  function escapeHtml(texto) {
+    if (texto === null || texto === undefined) {
+      return '';
+    }
+    return texto
+      .toString()
+      .replace(/[&<>"']/g, function(caracter) {
+        switch (caracter) {
+          case '&':
+            return '&amp;';
+          case '<':
+            return '&lt;';
+          case '>':
+            return '&gt;';
+          case '"':
+            return '&quot;';
+          case '\'':
+            return '&#39;';
+          default:
+            return caracter;
+        }
+      });
+  }
+
   function normalizarTexto(texto) {
     if (texto === null || texto === undefined) {
       return '';
@@ -172,28 +196,50 @@ $(document).ready(function() {
               target: 0,
               renderer: function(api, rowIdx, columns) {
                 var data = api.row(rowIdx).data();
-                if (!data.Detalles || !data.Detalles.length) {
-                  return '';
+                if (!data || !Array.isArray(data.Detalles) || !data.Detalles.length) {
+                  return '<div class="text-muted">Sin materiales registrados para esta requisición.</div>';
                 }
-                var resumen = '<div class="mb-2"><strong>Resumen de materiales</strong><table class="table table-sm mb-0"><tbody>' +
-                  '<tr><th scope="row">Largueros</th><td>' + (data.Largueros ?? 0) + '</td></tr>' +
-                  '<tr><th scope="row">Tornillería</th><td>' + (data.Tornilleria ?? 0) + '</td></tr>' +
-                  '<tr><th scope="row">Junta zeta</th><td>' + (data.JuntaZeta ?? 0) + '</td></tr>' +
-                  '<tr><th scope="row">Traves</th><td>' + (data.Traves ?? 0) + '</td></tr>' +
-                  '</tbody></table></div>';
 
-                var html = resumen + '<table class="table table-sm"><thead><tr>' +
+                var totales = obtenerTotalesFila(data) || {
+                  Largueros: 0,
+                  Tornilleria: 0,
+                  JuntaZeta: 0,
+                  Traves: 0
+                };
+
+                var html = '<div class="detalle-requisicion">';
+
+                html += '<div class="row g-3 detalle-requisicion__resumen">' +
+                  '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Requisición</div><div class="fw-semibold">' + escapeHtml(data.ORDENCHAROLAID) + '</div></div>' +
+                  '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">SKU</div><div class="fw-semibold">' + escapeHtml(data.SkuCharolas) + '</div></div>' +
+                  '<div class="col-sm-12 col-lg-6"><div class="text-muted text-uppercase small">Descripción</div><div class="fw-semibold">' + escapeHtml(data.DescripcionCharolas) + '</div></div>' +
+                  '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Cantidad</div><div class="fw-semibold">' + escapeHtml(data.Cantidad) + '</div></div>' +
+                  '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Estatus</div><div class="fw-semibold">' + escapeHtml(data.Status || '') + '</div></div>' +
+                '</div>';
+
+                html += '<div class="row g-3 detalle-requisicion__totales mt-2">' +
+                  '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Largueros</div><div class="h5 mb-0">' + escapeHtml(totales.Largueros) + '</div></div></div></div>' +
+                  '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Tornillería</div><div class="h5 mb-0">' + escapeHtml(totales.Tornilleria) + '</div></div></div></div>' +
+                  '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Junta zeta</div><div class="h5 mb-0">' + escapeHtml(totales.JuntaZeta) + '</div></div></div></div>' +
+                  '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Traves</div><div class="h5 mb-0">' + escapeHtml(totales.Traves) + '</div></div></div></div>' +
+                '</div>';
+
+                html += '<div class="mt-3"><h6 class="fw-semibold">Detalle de materiales</h6>';
+                html += '<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr>' +
                   '<th>SKU MP</th><th>Descripción</th><th>Tipo</th><th>Cantidad</th>' +
                   '</tr></thead><tbody>';
                 $.each(data.Detalles, function(i, mp) {
                   html += '<tr>' +
-                    '<td>' + mp.SkuMP + '</td>' +
-                    '<td>' + mp.DescripcionMP + '</td>' +
-                    '<td>' + mp.TipoMP + '</td>' +
-                    '<td>' + mp.Cantidad + '</td>' +
+                    '<td>' + escapeHtml(mp.SkuMP) + '</td>' +
+                    '<td>' + escapeHtml(mp.DescripcionMP) + '</td>' +
+                    '<td>' + escapeHtml(mp.TipoMP) + '</td>' +
+                    '<td>' + escapeHtml(mp.Cantidad) + '</td>' +
                     '</tr>';
                 });
-                html += '</tbody></table>';
+                html += '</tbody></table></div></div>';
+
+                html += '</div>';
+
                 return html;
               }
             }
