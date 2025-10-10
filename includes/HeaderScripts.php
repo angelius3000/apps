@@ -18,9 +18,19 @@ if (isset($_SESSION['Username'])) {
     $colname_UsuarioDeLogIn = $_SESSION['Username'];
 }
 
-$query_UsuarioDeLogIn = "SELECT * 
-FROM usuarios 
+if ($conn) {
+    $query_UsuarioDeLogIn = "SELECT *
+FROM usuarios
 WHERE usuarios.email = '$colname_UsuarioDeLogIn'";
-$UsuarioDeLogIn = mysqli_query($conn, $query_UsuarioDeLogIn) or die(mysqli_error($conn));
-$row_UsuarioDeLogIn = mysqli_fetch_assoc($UsuarioDeLogIn);
-$totalRows_UsuarioDeLogIn = mysqli_num_rows($UsuarioDeLogIn);
+    $UsuarioDeLogIn = mysqli_query($conn, $query_UsuarioDeLogIn);
+    if ($UsuarioDeLogIn) {
+        $row_UsuarioDeLogIn = mysqli_fetch_assoc($UsuarioDeLogIn);
+        $totalRows_UsuarioDeLogIn = mysqli_num_rows($UsuarioDeLogIn);
+    } else {
+        $row_UsuarioDeLogIn = null;
+        $totalRows_UsuarioDeLogIn = 0;
+    }
+} else {
+    $row_UsuarioDeLogIn = null;
+    $totalRows_UsuarioDeLogIn = 0;
+}

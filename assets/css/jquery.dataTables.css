@@ -1,10 +1,12 @@
 td.dt-control {
-  background: url("https://www.datatables.net/examples/resources/details_open.png") no-repeat center center;
+  background: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxOCcgaGVpZ2h0PScxOCcgdmlld0JveD0nMCAwIDE4IDE4Jz48Y2lyY2xlIGN4PSc5JyBjeT0nOScgcj0nOCcgZmlsbD0nIzFlODhlNScvPjxwYXRoIGQ9J005IDV2OE01IDloOCcgc3Ryb2tlPScjZmZmJyBzdHJva2Utd2lkdGg9JzInIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcvPjwvc3ZnPg==") no-repeat center center;
+  background-size: 16px 16px;
   cursor: pointer;
 }
 
 tr.dt-hasChild td.dt-control {
-  background: url("https://www.datatables.net/examples/resources/details_close.png") no-repeat center center;
+  background: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxOCcgaGVpZ2h0PScxOCcgdmlld0JveD0nMCAwIDE4IDE4Jz48Y2lyY2xlIGN4PSc5JyBjeT0nOScgcj0nOCcgZmlsbD0nIzFlODhlNScvPjxwYXRoIGQ9J001IDloOCcgc3Ryb2tlPScjZmZmJyBzdHJva2Utd2lkdGg9JzInIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcvPjwvc3ZnPg==") no-repeat center center;
+  background-size: 16px 16px;
 }
 
 table.dataTable th.dt-left,
@@ -124,19 +126,19 @@ table.dataTable thead .sorting_desc_disabled {
   background-position: center right;
 }
 table.dataTable thead .sorting {
-  background-image: url("../images/sort_both.png");
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMicgaGVpZ2h0PScyNCcgdmlld0JveD0nMCAwIDEyIDI0Jz48cGF0aCBkPSdNNiAxbDQgNUgybDQtNXonIGZpbGw9JyM5ZTllOWUnLz48cGF0aCBkPSdNNiAyM2wtNC01aDhsLTQgNXonIGZpbGw9JyM5ZTllOWUnLz48L3N2Zz4=");
 }
 table.dataTable thead .sorting_asc {
-  background-image: url("../images/sort_asc.png") !important;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMicgaGVpZ2h0PScyNCcgdmlld0JveD0nMCAwIDEyIDI0Jz48cGF0aCBkPSdNNiAxbDQgNUgybDQtNXonIGZpbGw9JyMxZTg4ZTUnLz48cGF0aCBkPSdNNiAyM2wtNC01aDhsLTQgNXonIGZpbGw9JyNjZmQ4ZGMnLz48L3N2Zz4=") !important;
 }
 table.dataTable thead .sorting_desc {
-  background-image: url("../images/sort_desc.png") !important;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMicgaGVpZ2h0PScyNCcgdmlld0JveD0nMCAwIDEyIDI0Jz48cGF0aCBkPSdNNiAxbDQgNUgybDQtNXonIGZpbGw9JyNjZmQ4ZGMnLz48cGF0aCBkPSdNNiAyM2wtNC01aDhsLTQgNXonIGZpbGw9JyMxZTg4ZTUnLz48L3N2Zz4=") !important;
 }
 table.dataTable thead .sorting_asc_disabled {
-  background-image: url("../images/sort_asc_disabled.png");
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMicgaGVpZ2h0PScyNCcgdmlld0JveD0nMCAwIDEyIDI0Jz48cGF0aCBkPSdNNiAxbDQgNUgybDQtNXonIGZpbGw9JyNjZmQ4ZGMnLz48cGF0aCBkPSdNNiAyM2wtNC01aDhsLTQgNXonIGZpbGw9JyNlMGUwZTAnLz48L3N2Zz4=");
 }
 table.dataTable thead .sorting_desc_disabled {
-  background-image: url("../images/sort_desc_disabled.png");
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMicgaGVpZ2h0PScyNCcgdmlld0JveD0nMCAwIDEyIDI0Jz48cGF0aCBkPSdNNiAxbDQgNUgybDQtNXonIGZpbGw9JyNlMGUwZTAnLz48cGF0aCBkPSdNNiAyM2wtNC01aDhsLTQgNXonIGZpbGw9JyNjZmQ4ZGMnLz48L3N2Zz4=");
 }
 table.dataTable tbody tr {
   background-color: #ffffff;
