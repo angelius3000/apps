@@ -25,11 +25,94 @@ $(document).ready(function() {
     }
   }
 
+  function normalizarTexto(texto) {
+    if (texto === null || texto === undefined) {
+      return '';
+    }
+    return texto
+      .toString()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function calcularTotalesMateriales(detalles) {
+    var totales = {
+      Largueros: 0,
+      Tornilleria: 0,
+      JuntaZeta: 0,
+      Traves: 0
+    };
+
+    if (!Array.isArray(detalles)) {
+      return totales;
+    }
+
+    detalles.forEach(function(mp) {
+      var tipo = normalizarTexto(mp.TipoMP);
+      var cantidad = Math.round(parseFloat(mp.Cantidad) || 0);
+
+      if (!cantidad) {
+        return;
+      }
+
+      if (tipo.includes('larguero')) {
+        totales.Largueros += cantidad;
+      } else if (tipo.includes('tornill') || tipo.includes('tuer')) {
+        totales.Tornilleria += cantidad;
+      } else if (tipo.includes('junta') && (tipo.includes('z') || tipo.includes('eta'))) {
+        totales.JuntaZeta += cantidad;
+      } else if (tipo.includes('trave') || tipo.includes('trabe')) {
+        totales.Traves += cantidad;
+      }
+    });
+
+    return totales;
+  }
+
+  function obtenerTotalesFila(row) {
+    if (!row || !Array.isArray(row.Detalles) || !row.Detalles.length) {
+      return null;
+    }
+
+    if (!row._totalesMateriales) {
+      row._totalesMateriales = calcularTotalesMateriales(row.Detalles);
+    }
+
+    return row._totalesMateriales;
+  }
+
+  function renderMaterial(data, row, clave) {
+    var valor = Number(data);
+    if (!isNaN(valor) && valor !== 0) {
+      return valor;
+    }
+
+    var totales = obtenerTotalesFila(row);
+    return totales ? totales[clave] : 0;
+  }
+
+  function mostrarErrorOrdenes(mensaje) {
+    var columnas = $('#TablaOrdenesCharolas thead tr th').length || 1;
+    var contenido = '<tr><td colspan="' + columnas + '" class="text-center text-danger">' + mensaje + '</td></tr>';
+    if (tablaOrdenes) {
+      tablaOrdenes.clear().destroy();
+      tablaOrdenes = null;
+    }
+    $('#TablaOrdenesCharolas tbody').html(contenido);
+  }
+
   function cargarOrdenes() {
     $.ajax({
       url: 'App/Server/ServerInfoOrdenesCharolas.php',
       dataType: 'json',
       success: function(response) {
+        if (!Array.isArray(response)) {
+          var mensaje = response && response.error ? response.error : 'No se pudo cargar la información de requisiciones.';
+          mostrarErrorOrdenes(mensaje);
+          return;
+        }
+
         if (tablaOrdenes) {
           tablaOrdenes.clear().destroy();
           $('#TablaOrdenesCharolas tbody').empty();
@@ -52,6 +135,30 @@ $(document).ready(function() {
             { data: 'SkuCharolas' },
             { data: 'DescripcionCharolas' },
             { data: 'Cantidad' },
+            {
+              data: 'Largueros',
+              render: function(data, type, row) {
+                return renderMaterial(data, row, 'Largueros');
+              }
+            },
+            {
+              data: 'Tornilleria',
+              render: function(data, type, row) {
+                return renderMaterial(data, row, 'Tornilleria');
+              }
+            },
+            {
+              data: 'JuntaZeta',
+              render: function(data, type, row) {
+                return renderMaterial(data, row, 'JuntaZeta');
+              }
+            },
+            {
+              data: 'Traves',
+              render: function(data, type, row) {
+                return renderMaterial(data, row, 'Traves');
+              }
+            },
             {
               data: null,
               render: function(data, type, row) {
@@ -99,6 +206,13 @@ $(document).ready(function() {
             infoFiltered: '(filtrado de _MAX_ registros)',
           },
         });
+      },
+      error: function(xhr) {
+        var mensaje = 'No se pudo cargar la información de requisiciones.';
+        if (xhr.responseJSON && xhr.responseJSON.error) {
+          mensaje = xhr.responseJSON.error;
+        }
+        mostrarErrorOrdenes(mensaje);
       }
     });
   }
