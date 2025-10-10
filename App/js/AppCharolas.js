@@ -25,11 +25,118 @@ $(document).ready(function() {
     }
   }
 
+  function escapeHtml(texto) {
+    if (texto === null || texto === undefined) {
+      return '';
+    }
+    return texto
+      .toString()
+      .replace(/[&<>"']/g, function(caracter) {
+        switch (caracter) {
+          case '&':
+            return '&amp;';
+          case '<':
+            return '&lt;';
+          case '>':
+            return '&gt;';
+          case '"':
+            return '&quot;';
+          case '\'':
+            return '&#39;';
+          default:
+            return caracter;
+        }
+      });
+  }
+
+  function normalizarTexto(texto) {
+    if (texto === null || texto === undefined) {
+      return '';
+    }
+    return texto
+      .toString()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function calcularTotalesMateriales(detalles) {
+    var totales = {
+      Largueros: 0,
+      Tornilleria: 0,
+      JuntaZeta: 0,
+      Traves: 0
+    };
+
+    if (!Array.isArray(detalles)) {
+      return totales;
+    }
+
+    detalles.forEach(function(mp) {
+      var tipo = normalizarTexto(mp.TipoMP);
+      var cantidad = Math.round(parseFloat(mp.Cantidad) || 0);
+
+      if (!cantidad) {
+        return;
+      }
+
+      if (tipo.includes('larguero')) {
+        totales.Largueros += cantidad;
+      } else if (tipo.includes('tornill') || tipo.includes('tuer')) {
+        totales.Tornilleria += cantidad;
+      } else if (tipo.includes('junta') && (tipo.includes('z') || tipo.includes('eta'))) {
+        totales.JuntaZeta += cantidad;
+      } else if (tipo.includes('trave') || tipo.includes('trabe')) {
+        totales.Traves += cantidad;
+      }
+    });
+
+    return totales;
+  }
+
+  function obtenerTotalesFila(row) {
+    if (!row || !Array.isArray(row.Detalles) || !row.Detalles.length) {
+      return null;
+    }
+
+    if (!row._totalesMateriales) {
+      row._totalesMateriales = calcularTotalesMateriales(row.Detalles);
+    }
+
+    return row._totalesMateriales;
+  }
+
+  function renderMaterial(data, row, clave) {
+    var valor = Number(data);
+    if (!isNaN(valor) && valor !== 0) {
+      return valor;
+    }
+
+    var totales = obtenerTotalesFila(row);
+    return totales ? totales[clave] : 0;
+  }
+
+  function mostrarErrorOrdenes(mensaje) {
+    var columnas = $('#TablaOrdenesCharolas thead tr th').length || 1;
+    var contenido = '<tr><td colspan="' + columnas + '" class="text-center text-danger">' + mensaje + '</td></tr>';
+    if (tablaOrdenes) {
+      tablaOrdenes.clear().destroy();
+      tablaOrdenes = null;
+    }
+    $('#TablaOrdenesCharolas tbody').html(contenido);
+  }
+
   function cargarOrdenes() {
     $.ajax({
       url: 'App/Server/ServerInfoOrdenesCharolas.php',
       dataType: 'json',
       success: function(response) {
+        if (!Array.isArray(response)) {
+          var mensaje = response && response.error ? response.error : 'No se pudo cargar la información de requisiciones.';
+          mostrarErrorOrdenes(mensaje);
+          return;
+        }
+
         if (tablaOrdenes) {
           tablaOrdenes.clear().destroy();
           $('#TablaOrdenesCharolas tbody').empty();
@@ -53,6 +160,30 @@ $(document).ready(function() {
             { data: 'DescripcionCharolas' },
             { data: 'Cantidad' },
             {
+              data: 'Largueros',
+              render: function(data, type, row) {
+                return renderMaterial(data, row, 'Largueros');
+              }
+            },
+            {
+              data: 'Tornilleria',
+              render: function(data, type, row) {
+                return renderMaterial(data, row, 'Tornilleria');
+              }
+            },
+            {
+              data: 'JuntaZeta',
+              render: function(data, type, row) {
+                return renderMaterial(data, row, 'JuntaZeta');
+              }
+            },
+            {
+              data: 'Traves',
+              render: function(data, type, row) {
+                return renderMaterial(data, row, 'Traves');
+              }
+            },
+            {
               data: null,
               render: function(data, type, row) {
                 return obtenerBadge(row.STATUSID, row.ORDENCHAROLAID);
@@ -65,21 +196,51 @@ $(document).ready(function() {
               target: 0,
               renderer: function(api, rowIdx, columns) {
                 var data = api.row(rowIdx).data();
-                if (!data.Detalles || !data.Detalles.length) {
-                  return '';
+                if (!data || !Array.isArray(data.Detalles) || !data.Detalles.length) {
+                  return '<div class="text-muted">Sin materiales registrados para esta requisición.</div>';
                 }
-                var html = '<table class="table table-sm"><thead><tr>' +
-                  '<th>SKU MP</th><th>Descripción</th><th>Tipo</th><th>Cantidad</th>' +
+
+                var totales = obtenerTotalesFila(data) || {
+                  Largueros: 0,
+                  Tornilleria: 0,
+                  JuntaZeta: 0,
+                  Traves: 0
+                };
+
+                var html = '<div class="detalle-requisicion">';
+
+                html += '<div class="row g-3 detalle-requisicion__resumen">' +
+                  '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Requisición</div><div class="fw-semibold">' + escapeHtml(data.ORDENCHAROLAID) + '</div></div>' +
+                  '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">SKU</div><div class="fw-semibold">' + escapeHtml(data.SkuCharolas) + '</div></div>' +
+                  '<div class="col-sm-12 col-lg-6"><div class="text-muted text-uppercase small">Descripción</div><div class="fw-semibold">' + escapeHtml(data.DescripcionCharolas) + '</div></div>' +
+                  '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Cantidad</div><div class="fw-semibold">' + escapeHtml(data.Cantidad) + '</div></div>' +
+                  '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Estatus</div><div class="fw-semibold">' + escapeHtml(data.Status || '') + '</div></div>' +
+                '</div>';
+
+                html += '<div class="row g-3 detalle-requisicion__totales mt-2">' +
+                  '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Largueros</div><div class="h5 mb-0">' + escapeHtml(totales.Largueros) + '</div></div></div></div>' +
+                  '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Tornillería</div><div class="h5 mb-0">' + escapeHtml(totales.Tornilleria) + '</div></div></div></div>' +
+                  '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Junta zeta</div><div class="h5 mb-0">' + escapeHtml(totales.JuntaZeta) + '</div></div></div></div>' +
+                  '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Traves</div><div class="h5 mb-0">' + escapeHtml(totales.Traves) + '</div></div></div></div>' +
+                '</div>';
+
+                html += '<div class="mt-4 detalle-requisicion__detalle-materiales">' +
+                  '<h6 class="fw-semibold mb-3">Detalle de materiales</h6>';
+                html += '<div class="table-responsive"><table class="table table-hover table-striped align-middle detalle-requisicion__tabla"><thead><tr>' +
+                  '<th class="text-uppercase small text-muted">SKU MP</th><th class="text-uppercase small text-muted">Descripción</th><th class="text-uppercase small text-muted">Tipo</th><th class="text-uppercase small text-muted">Cantidad</th>' +
                   '</tr></thead><tbody>';
                 $.each(data.Detalles, function(i, mp) {
                   html += '<tr>' +
-                    '<td>' + mp.SkuMP + '</td>' +
-                    '<td>' + mp.DescripcionMP + '</td>' +
-                    '<td>' + mp.TipoMP + '</td>' +
-                    '<td>' + mp.Cantidad + '</td>' +
+                    '<td>' + escapeHtml(mp.SkuMP) + '</td>' +
+                    '<td>' + escapeHtml(mp.DescripcionMP) + '</td>' +
+                    '<td>' + escapeHtml(mp.TipoMP) + '</td>' +
+                    '<td>' + escapeHtml(mp.Cantidad) + '</td>' +
                     '</tr>';
                 });
-                html += '</tbody></table>';
+                html += '</tbody></table></div></div>';
+
+                html += '</div>';
+
                 return html;
               }
             }
@@ -99,6 +260,13 @@ $(document).ready(function() {
             infoFiltered: '(filtrado de _MAX_ registros)',
           },
         });
+      },
+      error: function(xhr) {
+        var mensaje = 'No se pudo cargar la información de requisiciones.';
+        if (xhr.responseJSON && xhr.responseJSON.error) {
+          mensaje = xhr.responseJSON.error;
+        }
+        mostrarErrorOrdenes(mensaje);
       }
     });
   }
