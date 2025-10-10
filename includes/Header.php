@@ -20,14 +20,14 @@
     <link href="assets/plugins/pace/pace.css" rel="stylesheet">
     <link href="assets/plugins/highlight/styles/github-gist.css" rel="stylesheet">
 
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
+    <link rel="stylesheet" type="text/css" href="assets/css/jquery.dataTables.css">
 
     <!-- DataTables Buttons CSS -->
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.7.0/css/buttons.dataTables.min.css">
+    <link rel="stylesheet" type="text/css" href="assets/css/buttons.dataTables.min.css">
 
 
     <!-- DataTables Responsive CSS -->
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.7/css/responsive.dataTables.min.css">
+    <link rel="stylesheet" type="text/css" href="assets/css/responsive.dataTables.min.css">
 
     <!-- Theme Styles -->
     <link href="assets/css/main.min.css" rel="stylesheet">
