@@ -60,6 +60,27 @@ $(document).ready(function() {
       .replace(/[\u0300-\u036f]/g, '');
   }
 
+  function obtenerNombreStatus(statusTexto, statusId) {
+    if (statusTexto && statusTexto.toString().trim() !== '') {
+      return statusTexto;
+    }
+
+    switch (String(statusId || '')) {
+      case '1':
+        return 'Registrada';
+      case '2':
+        return 'En proceso';
+      case '3':
+        return 'Terminada';
+      case '4':
+        return 'Entregada';
+      case '5':
+        return 'Cancelada';
+      default:
+        return '';
+    }
+  }
+
   function calcularTotalesMateriales(detalles) {
     var totales = {
       Largueros: 0,
@@ -184,6 +205,12 @@ $(document).ready(function() {
               }
             },
             {
+              data: 'Status',
+              render: function(data, type, row) {
+                return escapeHtml(obtenerNombreStatus(data, row.STATUSID));
+              }
+            },
+            {
               data: null,
               render: function(data, type, row) {
                 return obtenerBadge(row.STATUSID, row.ORDENCHAROLAID);
@@ -214,7 +241,7 @@ $(document).ready(function() {
                   '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">SKU</div><div class="fw-semibold">' + escapeHtml(data.SkuCharolas) + '</div></div>' +
                   '<div class="col-sm-12 col-lg-6"><div class="text-muted text-uppercase small">Descripción</div><div class="fw-semibold">' + escapeHtml(data.DescripcionCharolas) + '</div></div>' +
                   '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Cantidad</div><div class="fw-semibold">' + escapeHtml(data.Cantidad) + '</div></div>' +
-                  '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Estatus</div><div class="fw-semibold">' + escapeHtml(data.Status || '') + '</div></div>' +
+                  '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Estatus</div><div class="fw-semibold">' + escapeHtml(obtenerNombreStatus(data.Status, data.STATUSID)) + '</div></div>' +
                 '</div>';
 
                 html += '<div class="row g-3 detalle-requisicion__totales mt-2">' +

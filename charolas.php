@@ -103,6 +103,7 @@ $totalRows_charolas = count($charolas);
                                             <th>Junta zeta</th>
                                             <th>Traves</th>
                                             <th>Estatus</th>
+                                            <th>Cambiar estatus</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
