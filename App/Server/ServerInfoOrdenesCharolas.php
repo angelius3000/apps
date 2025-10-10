@@ -23,56 +23,6 @@ function normalizarTexto($texto)
     return $texto;
 }
 
-function asegurarColumnasMateriales($conn)
-{
-    $columnas = [
-        'Largueros' => 'INT UNSIGNED NOT NULL DEFAULT 0',
-        'Tornilleria' => 'INT UNSIGNED NOT NULL DEFAULT 0',
-        'JuntaZeta' => 'INT UNSIGNED NOT NULL DEFAULT 0',
-        'Traves' => 'INT UNSIGNED NOT NULL DEFAULT 0'
-    ];
-    $todasCreadas = true;
-    foreach ($columnas as $columna => $definicion) {
-        $consulta = mysqli_query($conn, "SHOW COLUMNS FROM ordenes_charolas LIKE '" . mysqli_real_escape_string($conn, $columna) . "'");
-        if ($consulta && mysqli_num_rows($consulta) === 0) {
-            if (!mysqli_query($conn, "ALTER TABLE ordenes_charolas ADD COLUMN $columna $definicion")) {
-                $todasCreadas = false;
-            }
-        } elseif (!$consulta) {
-            $todasCreadas = false;
-        }
-        if ($consulta instanceof mysqli_result) {
-            mysqli_free_result($consulta);
-        }
-    }
-    return $todasCreadas;
-}
-
-function calcularTotalesMateriales($detalles, $cantidadOrden)
-{
-    $totales = [
-        'Largueros' => 0,
-        'Tornilleria' => 0,
-        'JuntaZeta' => 0,
-        'Traves' => 0,
-    ];
-
-    foreach ($detalles as $detalle) {
-        $cantidadBase = (float) $detalle['CANTIDAD'];
-        $cantidadTotal = $cantidadBase * (float) $cantidadOrden;
-        $tipoNormalizado = normalizarTexto($detalle['TipoMP']);
-
-        if (strpos($tipoNormalizado, 'larguero') !== false) {
-            $totales['Largueros'] += (int) round($cantidadTotal);
-        } elseif (strpos($tipoNormalizado, 'tornill') !== false || strpos($tipoNormalizado, 'tuer') !== false) {
-            $totales['Tornilleria'] += (int) round($cantidadTotal);
-        } elseif (strpos($tipoNormalizado, 'junta') !== false && (strpos($tipoNormalizado, 'z') !== false || strpos($tipoNormalizado, 'eta') !== false)) {
-            $totales['JuntaZeta'] += (int) round($cantidadTotal);
-        } elseif (strpos($tipoNormalizado, 'trave') !== false || strpos($tipoNormalizado, 'trabe') !== false) {
-            $totales['Traves'] += (int) round($cantidadTotal);
-        }
-    }
-
     return $totales;
 }
 
@@ -97,16 +47,28 @@ while ($row = mysqli_fetch_assoc($result)) {
                     INNER JOIN materiaprimacharolas mp ON cc.MATERIAPRIMAID = mp.MATERIAPRIMAID
                     WHERE cc.CHAROLASID = " . intval($row['CHAROLASID']);
     $resultDetalles = mysqli_query($conn, $sqlDetalles) or die(mysqli_error($conn));
-
-    $detallesBrutos = [];
+    $largueros = 0;
+    $tornilleria = 0;
+    $juntaZeta = 0;
+    $traves = 0;
     while ($det = mysqli_fetch_assoc($resultDetalles)) {
-        $detallesBrutos[] = $det;
-        $detalles[] = [
+        $cantidadTotal = intval($det['CANTIDAD']) * intval($row['Cantidad']);
+        $detalles[] = array(
             'SkuMP' => $det['SkuMP'],
             'DescripcionMP' => $det['DescripcionMP'],
             'TipoMP' => $det['TipoMP'],
-            'Cantidad' => round((float) $det['CANTIDAD'] * (float) $row['Cantidad'], 4)
-        ];
+            'Cantidad' => $cantidadTotal
+        );
+        $tipoNormalizado = normalizarTexto($det['TipoMP']);
+        if (strpos($tipoNormalizado, 'larguero') !== false) {
+            $largueros += $cantidadTotal;
+        } elseif (strpos($tipoNormalizado, 'tornill') !== false) {
+            $tornilleria += $cantidadTotal;
+        } elseif (strpos($tipoNormalizado, 'junta') !== false && (strpos($tipoNormalizado, 'z') !== false || strpos($tipoNormalizado, 'eta') !== false)) {
+            $juntaZeta += $cantidadTotal;
+        } elseif (strpos($tipoNormalizado, 'trave') !== false) {
+            $traves += $cantidadTotal;
+        }
     }
     mysqli_free_result($resultDetalles);
 
@@ -136,6 +98,10 @@ while ($row = mysqli_fetch_assoc($result)) {
     }
 
     $row['Detalles'] = $detalles;
+    $row['Largueros'] = $largueros;
+    $row['Tornilleria'] = $tornilleria;
+    $row['JuntaZeta'] = $juntaZeta;
+    $row['Traves'] = $traves;
     $ordenes[] = $row;
 }
 mysqli_free_result($result);
