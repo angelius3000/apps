@@ -118,6 +118,11 @@ if ($columnasMaterialesDisponibles) {
         echo json_encode(['error' => mysqli_error($conn)]);
         exit;
     }
+    $totalLargueros = (int) $totales['Largueros'];
+    $totalTornilleria = (int) $totales['Tornilleria'];
+    $totalJuntaZeta = (int) $totales['JuntaZeta'];
+    $totalTraves = (int) $totales['Traves'];
+    mysqli_stmt_bind_param($stmt, 'idiiii', $charolasId, $cantidad, $totalLargueros, $totalTornilleria, $totalJuntaZeta, $totalTraves);
     mysqli_stmt_bind_param($stmt, 'idiiii', $charolasId, $cantidad, $totales['Largueros'], $totales['Tornilleria'], $totales['JuntaZeta'], $totales['Traves']);
     if (!mysqli_stmt_execute($stmt)) {
         http_response_code(500);

@@ -27,6 +27,12 @@ function normalizarTexto($texto)
         return '';
     }
 
+
+    $texto = strtolower(trim($texto));
+    if ($texto === '') {
+        return '';
+    }
+
     $texto = strtolower(trim($texto));
     $texto = strtr($texto, [
         'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u',
@@ -112,6 +118,13 @@ $query = "SELECT oc.ORDENCHAROLAID, oc.CHAROLASID, oc.Cantidad, oc.STATUSID, s.S
           JOIN charolas c ON c.CHAROLASID = oc.CHAROLASID
           JOIN status s ON s.STATUSID = oc.STATUSID
           ORDER BY oc.ORDENCHAROLAID DESC";
+$result = mysqli_query($conn, $query);
+if (!$result) {
+    http_response_code(500);
+    echo json_encode(['error' => mysqli_error($conn)]);
+    mysqli_close($conn);
+    exit;
+}
 $result = mysqli_query($conn, $query) or die(mysqli_error($conn));
 
 $ordenes = [];
@@ -121,6 +134,24 @@ while ($row = mysqli_fetch_assoc($result)) {
                     FROM cantidadcharolas cc
                     INNER JOIN materiaprimacharolas mp ON cc.MATERIAPRIMAID = mp.MATERIAPRIMAID
                     WHERE cc.CHAROLASID = " . intval($row['CHAROLASID']);
+    $resultDetalles = mysqli_query($conn, $sqlDetalles);
+    if (!$resultDetalles) {
+        http_response_code(500);
+        echo json_encode(['error' => mysqli_error($conn)]);
+        mysqli_free_result($result);
+        mysqli_close($conn);
+        exit;
+    }
+
+    $detallesBrutos = [];
+    while ($det = mysqli_fetch_assoc($resultDetalles)) {
+        $detallesBrutos[] = $det;
+        $detalles[] = [
+            'SkuMP' => $det['SkuMP'],
+            'DescripcionMP' => $det['DescripcionMP'],
+            'TipoMP' => $det['TipoMP'],
+            'Cantidad' => round((float) $det['CANTIDAD'] * (float) $row['Cantidad'], 4)
+        ];
     $resultDetalles = mysqli_query($conn, $sqlDetalles) or die(mysqli_error($conn));
 
     $detallesBrutos = [];
@@ -198,6 +229,12 @@ while ($row = mysqli_fetch_assoc($result)) {
         if ($necesitaActualizacion) {
             $stmt = mysqli_prepare($conn, "UPDATE ordenes_charolas SET Largueros = ?, Tornilleria = ?, JuntaZeta = ?, Traves = ? WHERE ORDENCHAROLAID = ?");
             if ($stmt) {
+                $totalLargueros = (int) $totales['Largueros'];
+                $totalTornilleria = (int) $totales['Tornilleria'];
+                $totalJuntaZeta = (int) $totales['JuntaZeta'];
+                $totalTraves = (int) $totales['Traves'];
+                $ordenCharolaId = (int) $row['ORDENCHAROLAID'];
+                mysqli_stmt_bind_param($stmt, 'iiiii', $totalLargueros, $totalTornilleria, $totalJuntaZeta, $totalTraves, $ordenCharolaId);
                 mysqli_stmt_bind_param($stmt, 'iiiii', $totales['Largueros'], $totales['Tornilleria'], $totales['JuntaZeta'], $totales['Traves'], $row['ORDENCHAROLAID']);
                 mysqli_stmt_execute($stmt);
                 mysqli_stmt_close($stmt);
