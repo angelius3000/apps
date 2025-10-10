@@ -27,6 +27,13 @@ function normalizarTexto($texto)
         return '';
     }
 
+
+    $texto = strtolower(trim($texto));
+    if ($texto === '') {
+        return '';
+    }
+
+    $texto = strtolower(trim($texto));
     $texto = strtr($texto, [
         'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u',
         'Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u', 'Ü' => 'u'
@@ -94,6 +101,18 @@ if ($columnasMaterialesDisponibles) {
     $columnasSeleccionadas = ", oc.Largueros, oc.Tornilleria, oc.JuntaZeta, oc.Traves";
 }
 
+    return $texto;
+}
+
+    return $totales;
+}
+
+$columnasMaterialesDisponibles = asegurarColumnasMateriales($conn);
+$columnasSeleccionadas = "";
+if ($columnasMaterialesDisponibles) {
+    $columnasSeleccionadas = ", oc.Largueros, oc.Tornilleria, oc.JuntaZeta, oc.Traves";
+}
+
 $query = "SELECT oc.ORDENCHAROLAID, oc.CHAROLASID, oc.Cantidad, oc.STATUSID, s.Status, c.SkuCharolas, c.DescripcionCharolas" . $columnasSeleccionadas . "
           FROM ordenes_charolas oc
           JOIN charolas c ON c.CHAROLASID = oc.CHAROLASID
@@ -106,6 +125,7 @@ if (!$result) {
     mysqli_close($conn);
     exit;
 }
+$result = mysqli_query($conn, $query) or die(mysqli_error($conn));
 
 $ordenes = [];
 while ($row = mysqli_fetch_assoc($result)) {
@@ -122,6 +142,17 @@ while ($row = mysqli_fetch_assoc($result)) {
         mysqli_close($conn);
         exit;
     }
+
+    $detallesBrutos = [];
+    while ($det = mysqli_fetch_assoc($resultDetalles)) {
+        $detallesBrutos[] = $det;
+        $detalles[] = [
+            'SkuMP' => $det['SkuMP'],
+            'DescripcionMP' => $det['DescripcionMP'],
+            'TipoMP' => $det['TipoMP'],
+            'Cantidad' => round((float) $det['CANTIDAD'] * (float) $row['Cantidad'], 4)
+        ];
+    $resultDetalles = mysqli_query($conn, $sqlDetalles) or die(mysqli_error($conn));
 
     $detallesBrutos = [];
     while ($det = mysqli_fetch_assoc($resultDetalles)) {
@@ -149,12 +180,62 @@ while ($row = mysqli_fetch_assoc($result)) {
         if ($necesitaActualizacion) {
             $stmt = mysqli_prepare($conn, "UPDATE ordenes_charolas SET Largueros = ?, Tornilleria = ?, JuntaZeta = ?, Traves = ? WHERE ORDENCHAROLAID = ?");
             if ($stmt) {
+                mysqli_stmt_bind_param($stmt, 'iiiii', $totales['Largueros'], $totales['Tornilleria'], $totales['JuntaZeta'], $totales['Traves'], $row['ORDENCHAROLAID']);
+                mysqli_stmt_execute($stmt);
+                mysqli_stmt_close($stmt);
+            }
+        }
+    } else {
+        foreach ($totales as $clave => $valor) {
+            $row[$clave] = $valor;
+        }
+    }
+    $largueros = 0;
+    $tornilleria = 0;
+    $juntaZeta = 0;
+    $traves = 0;
+    while ($det = mysqli_fetch_assoc($resultDetalles)) {
+        $cantidadTotal = intval($det['CANTIDAD']) * intval($row['Cantidad']);
+        $detalles[] = array(
+            'SkuMP' => $det['SkuMP'],
+            'DescripcionMP' => $det['DescripcionMP'],
+            'TipoMP' => $det['TipoMP'],
+            'Cantidad' => $cantidadTotal
+        );
+        $tipoNormalizado = normalizarTexto($det['TipoMP']);
+        if (strpos($tipoNormalizado, 'larguero') !== false) {
+            $largueros += $cantidadTotal;
+        } elseif (strpos($tipoNormalizado, 'tornill') !== false) {
+            $tornilleria += $cantidadTotal;
+        } elseif (strpos($tipoNormalizado, 'junta') !== false && (strpos($tipoNormalizado, 'z') !== false || strpos($tipoNormalizado, 'eta') !== false)) {
+            $juntaZeta += $cantidadTotal;
+        } elseif (strpos($tipoNormalizado, 'trave') !== false) {
+            $traves += $cantidadTotal;
+        }
+    }
+    mysqli_free_result($resultDetalles);
+
+    $totales = calcularTotalesMateriales($detallesBrutos, $row['Cantidad']);
+
+    if ($columnasMaterialesDisponibles) {
+        $necesitaActualizacion = false;
+        foreach ($totales as $clave => $valor) {
+            $valorActual = isset($row[$clave]) ? (int) $row[$clave] : 0;
+            if ($valorActual !== $valor) {
+                $row[$clave] = $valor;
+                $necesitaActualizacion = true;
+            }
+        }
+        if ($necesitaActualizacion) {
+            $stmt = mysqli_prepare($conn, "UPDATE ordenes_charolas SET Largueros = ?, Tornilleria = ?, JuntaZeta = ?, Traves = ? WHERE ORDENCHAROLAID = ?");
+            if ($stmt) {
                 $totalLargueros = (int) $totales['Largueros'];
                 $totalTornilleria = (int) $totales['Tornilleria'];
                 $totalJuntaZeta = (int) $totales['JuntaZeta'];
                 $totalTraves = (int) $totales['Traves'];
                 $ordenCharolaId = (int) $row['ORDENCHAROLAID'];
                 mysqli_stmt_bind_param($stmt, 'iiiii', $totalLargueros, $totalTornilleria, $totalJuntaZeta, $totalTraves, $ordenCharolaId);
+                mysqli_stmt_bind_param($stmt, 'iiiii', $totales['Largueros'], $totales['Tornilleria'], $totales['JuntaZeta'], $totales['Traves'], $row['ORDENCHAROLAID']);
                 mysqli_stmt_execute($stmt);
                 mysqli_stmt_close($stmt);
             }
@@ -166,6 +247,10 @@ while ($row = mysqli_fetch_assoc($result)) {
     }
 
     $row['Detalles'] = $detalles;
+    $row['Largueros'] = $largueros;
+    $row['Tornilleria'] = $tornilleria;
+    $row['JuntaZeta'] = $juntaZeta;
+    $row['Traves'] = $traves;
     $ordenes[] = $row;
 }
 mysqli_free_result($result);

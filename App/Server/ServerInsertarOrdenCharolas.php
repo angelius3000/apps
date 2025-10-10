@@ -21,6 +21,7 @@ function normalizarTexto($texto)
         return '';
     }
 
+    $texto = strtolower(trim($texto));
     $texto = strtr($texto, [
         'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u',
         'Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u', 'Ü' => 'u'
@@ -122,6 +123,7 @@ if ($columnasMaterialesDisponibles) {
     $totalJuntaZeta = (int) $totales['JuntaZeta'];
     $totalTraves = (int) $totales['Traves'];
     mysqli_stmt_bind_param($stmt, 'idiiii', $charolasId, $cantidad, $totalLargueros, $totalTornilleria, $totalJuntaZeta, $totalTraves);
+    mysqli_stmt_bind_param($stmt, 'idiiii', $charolasId, $cantidad, $totales['Largueros'], $totales['Tornilleria'], $totales['JuntaZeta'], $totales['Traves']);
     if (!mysqli_stmt_execute($stmt)) {
         http_response_code(500);
         echo json_encode(['error' => mysqli_stmt_error($stmt)]);
