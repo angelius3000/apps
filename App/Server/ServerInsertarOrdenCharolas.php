@@ -21,7 +21,6 @@ function normalizarTexto($texto)
         return '';
     }
 
-    $texto = strtolower(trim($texto));
     $texto = strtr($texto, [
         'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u',
         'Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u', 'Ü' => 'u'
@@ -30,28 +29,27 @@ function normalizarTexto($texto)
     return $texto;
 }
 
-function asegurarColumnasMateriales($conn)
+function obtenerColumnasMateriales($conn)
 {
     $columnas = [
-        'Largueros' => 'INT UNSIGNED NOT NULL DEFAULT 0',
-        'Tornilleria' => 'INT UNSIGNED NOT NULL DEFAULT 0',
-        'JuntaZeta' => 'INT UNSIGNED NOT NULL DEFAULT 0',
-        'Traves' => 'INT UNSIGNED NOT NULL DEFAULT 0'
+        'Largueros' => false,
+        'Tornilleria' => false,
+        'JuntaZeta' => false,
+        'Traves' => false
     ];
-    foreach ($columnas as $columna => $definicion) {
-        $consulta = mysqli_query($conn, "SHOW COLUMNS FROM ordenes_charolas LIKE '" . mysqli_real_escape_string($conn, $columna) . "'");
-        if ($consulta && mysqli_num_rows($consulta) === 0) {
-            if (!mysqli_query($conn, "ALTER TABLE ordenes_charolas ADD COLUMN $columna $definicion")) {
-                return false;
+
+    $consulta = mysqli_query($conn, 'SHOW COLUMNS FROM ordenes_charolas');
+    if ($consulta instanceof mysqli_result) {
+        while ($columna = mysqli_fetch_assoc($consulta)) {
+            $nombre = isset($columna['Field']) ? $columna['Field'] : null;
+            if ($nombre !== null && array_key_exists($nombre, $columnas)) {
+                $columnas[$nombre] = true;
             }
-        } elseif (!$consulta) {
-            return false;
         }
-        if ($consulta instanceof mysqli_result) {
-            mysqli_free_result($consulta);
-        }
+        mysqli_free_result($consulta);
     }
-    return true;
+
+    return $columnas;
 }
 
 function obtenerDetallesMateriaPrima($conn, $charolasId)
@@ -107,7 +105,8 @@ if ($charolasId <= 0 || $cantidad <= 0) {
     exit;
 }
 
-$columnasMaterialesDisponibles = asegurarColumnasMateriales($conn);
+$columnasDisponibles = obtenerColumnasMateriales($conn);
+$columnasMaterialesDisponibles = !in_array(false, $columnasDisponibles, true);
 $detalles = obtenerDetallesMateriaPrima($conn, $charolasId);
 $totales = calcularTotalesMateriales($detalles, $cantidad);
 
@@ -123,7 +122,6 @@ if ($columnasMaterialesDisponibles) {
     $totalJuntaZeta = (int) $totales['JuntaZeta'];
     $totalTraves = (int) $totales['Traves'];
     mysqli_stmt_bind_param($stmt, 'idiiii', $charolasId, $cantidad, $totalLargueros, $totalTornilleria, $totalJuntaZeta, $totalTraves);
-    mysqli_stmt_bind_param($stmt, 'idiiii', $charolasId, $cantidad, $totales['Largueros'], $totales['Tornilleria'], $totales['JuntaZeta'], $totales['Traves']);
     if (!mysqli_stmt_execute($stmt)) {
         http_response_code(500);
         echo json_encode(['error' => mysqli_stmt_error($stmt)]);
