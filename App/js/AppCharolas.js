@@ -174,7 +174,35 @@ $(document).ready(function() {
     window.renderMaterial = renderMaterial;
   }
 
+  function asegurarEncabezadoTabla() {
+    var tabla = $('#TablaOrdenesCharolas');
+    var thead = tabla.find('thead');
+    var encabezado = '<tr>' +
+      '<th class="dtr-control" scope="col"></th>' +
+      '<th scope="col">Requisición</th>' +
+      '<th scope="col">SKU</th>' +
+      '<th scope="col">Descripción</th>' +
+      '<th scope="col">Cantidad</th>' +
+      '<th scope="col">Cambiar estatus</th>' +
+    '</tr>';
+
+    if (!thead.length) {
+      thead = $('<thead />').appendTo(tabla);
+    }
+
+    var fila = thead.find('tr');
+    if (!fila.length) {
+      thead.append(encabezado);
+    } else {
+      var celdas = fila.first().children('th');
+      if (celdas.length !== 6 || !celdas.first().hasClass('dtr-control')) {
+        thead.html(encabezado);
+      }
+    }
+  }
+
   function mostrarErrorOrdenes(mensaje) {
+    asegurarEncabezadoTabla();
     var columnas = $('#TablaOrdenesCharolas thead tr th').length || 1;
     var contenido = '<tr><td colspan="' + columnas + '" class="text-center text-danger">' + mensaje + '</td></tr>';
     if (tablaOrdenes) {
@@ -261,12 +289,15 @@ $(document).ready(function() {
           responsiveDetails.display = responsiveDisplayControl;
         }
 
+        asegurarEncabezadoTabla();
+
         tablaOrdenes = $('#TablaOrdenesCharolas').DataTable({
           dom: 'Bfrtip',
           buttons: ['excelHtml5', 'pageLength'],
           data: response,
           pageLength: 100,
           order: [1, 'desc'],
+          autoWidth: false,
           columns: [
             {
               className: 'dtr-control',
@@ -308,6 +339,10 @@ $(document).ready(function() {
                 return obtenerBadge(row.STATUSID, row.ORDENCHAROLAID);
               }
             }
+          ],
+          columnDefs: [
+            { targets: 0, width: '1%', className: 'dtr-control text-center', orderable: false, defaultContent: '' },
+            { targets: -1, orderable: false }
           ],
           responsive: {
             details: responsiveDetails
