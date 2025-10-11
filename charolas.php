@@ -93,7 +93,7 @@ $totalRows_charolas = count($charolas);
                                 <table class="table" id="TablaOrdenesCharolas">
                                     <thead>
                                         <tr>
-                                            <th class="dtr-control" scope="col"></th>
+                                            <th class="dt-control dtr-control" scope="col"></th>
                                             <th scope="col">Requisición</th>
                                             <th scope="col">SKU</th>
                                             <th scope="col">Descripción</th>

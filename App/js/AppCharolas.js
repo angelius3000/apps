@@ -178,7 +178,7 @@ $(document).ready(function() {
     var tabla = $('#TablaOrdenesCharolas');
     var thead = tabla.find('thead');
     var encabezado = '<tr>' +
-      '<th class="dtr-control" scope="col"></th>' +
+      '<th class="dt-control dtr-control" scope="col"></th>' +
       '<th scope="col">Requisición</th>' +
       '<th scope="col">SKU</th>' +
       '<th scope="col">Descripción</th>' +
@@ -226,7 +226,23 @@ $(document).ready(function() {
         if (tablaOrdenes) {
           tablaOrdenes.clear().destroy();
           $('#TablaOrdenesCharolas tbody').empty();
+          tablaOrdenes = null;
         }
+
+        response.forEach(function(row) {
+          if (!row || typeof row !== 'object') {
+            return;
+          }
+
+          if (Array.isArray(row.Detalles)) {
+            row._totalesMateriales = row._totalesMateriales || calcularTotalesMateriales(row.Detalles);
+          }
+
+          delete row.Largueros;
+          delete row.Tornilleria;
+          delete row.JuntaZeta;
+          delete row.Traves;
+        });
 
         var responsiveDisplayControl = $.fn.dataTable &&
           $.fn.dataTable.Responsive &&
@@ -235,7 +251,7 @@ $(document).ready(function() {
 
         var responsiveDetails = {
           type: 'column',
-          target: '.dtr-control',
+          target: 'td.dt-control, td.dtr-control',
           renderer: function(api, rowIdx, columns) {
             var data = api.row(rowIdx).data();
             if (!data || !Array.isArray(data.Detalles) || !data.Detalles.length) {
@@ -300,7 +316,7 @@ $(document).ready(function() {
           autoWidth: false,
           columns: [
             {
-              className: 'dtr-control',
+              className: 'dt-control dtr-control text-center',
               orderable: false,
               data: null,
               defaultContent: ''
@@ -341,7 +357,7 @@ $(document).ready(function() {
             }
           ],
           columnDefs: [
-            { targets: 0, width: '1%', className: 'dtr-control text-center', orderable: false, defaultContent: '' },
+            { targets: 0, width: '1%', className: 'dt-control dtr-control text-center', orderable: false, defaultContent: '' },
             { targets: -1, orderable: false }
           ],
           responsive: {
@@ -362,7 +378,7 @@ $(document).ready(function() {
             infoFiltered: '(filtrado de _MAX_ registros)',
           },
         });
-        $('#TablaOrdenesCharolas').addClass('dtr-inline collapsed');
+        $('#TablaOrdenesCharolas').addClass('dtr-inline collapsed dt-responsive');
       },
       error: function(xhr) {
         var mensaje = 'No se pudo cargar la información de requisiciones.';
