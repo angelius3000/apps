@@ -115,16 +115,46 @@ $(document).ready(function() {
     return totales;
   }
 
+  function normalizarTotalesMateriales(origen) {
+    var totales = {
+      Largueros: 0,
+      Tornilleria: 0,
+      JuntaZeta: 0,
+      Traves: 0
+    };
+
+    if (!origen || typeof origen !== 'object') {
+      return totales;
+    }
+
+    Object.keys(totales).forEach(function(clave) {
+      var valor = origen[clave];
+      totales[clave] = Math.round(parseFloat(valor) || 0);
+    });
+
+    return totales;
+  }
+
   function obtenerTotalesFila(row) {
-    if (!row || !Array.isArray(row.Detalles) || !row.Detalles.length) {
+    if (!row || typeof row !== 'object') {
       return null;
     }
 
-    if (!row._totalesMateriales) {
-      row._totalesMateriales = calcularTotalesMateriales(row.Detalles);
+    if (row._totalesMateriales && typeof row._totalesMateriales === 'object') {
+      return row._totalesMateriales;
     }
 
-    return row._totalesMateriales;
+    if (row.TotalesMateriales && typeof row.TotalesMateriales === 'object') {
+      row._totalesMateriales = normalizarTotalesMateriales(row.TotalesMateriales);
+      return row._totalesMateriales;
+    }
+
+    if (Array.isArray(row.Detalles) && row.Detalles.length) {
+      row._totalesMateriales = calcularTotalesMateriales(row.Detalles);
+      return row._totalesMateriales;
+    }
+
+    return null;
   }
 
   function renderMaterial(row, tipo) {
@@ -229,19 +259,37 @@ $(document).ready(function() {
           tablaOrdenes = null;
         }
 
+        var datosTabla = [];
+
         response.forEach(function(row) {
           if (!row || typeof row !== 'object') {
             return;
           }
 
-          if (Array.isArray(row.Detalles)) {
-            row._totalesMateriales = row._totalesMateriales || calcularTotalesMateriales(row.Detalles);
+          if (!Array.isArray(row.Detalles)) {
+            row.Detalles = [];
+          }
+
+          var totales = row._totalesMateriales && typeof row._totalesMateriales === 'object'
+            ? normalizarTotalesMateriales(row._totalesMateriales)
+            : normalizarTotalesMateriales(row.TotalesMateriales);
+
+          if (!row._totalesMateriales || typeof row._totalesMateriales !== 'object') {
+            if (row.Detalles.length) {
+              totales = calcularTotalesMateriales(row.Detalles);
+            }
+            row._totalesMateriales = normalizarTotalesMateriales(totales);
+          } else {
+            row._totalesMateriales = totales;
           }
 
           delete row.Largueros;
           delete row.Tornilleria;
           delete row.JuntaZeta;
           delete row.Traves;
+          delete row.TotalesMateriales;
+
+          datosTabla.push(row);
         });
 
         var responsiveDisplayControl = $.fn.dataTable &&
@@ -310,16 +358,16 @@ $(document).ready(function() {
         tablaOrdenes = $('#TablaOrdenesCharolas').DataTable({
           dom: 'Bfrtip',
           buttons: ['excelHtml5', 'pageLength'],
-          data: response,
+          data: datosTabla,
           pageLength: 100,
           order: [1, 'desc'],
           autoWidth: false,
           columns: [
             {
+              data: null,
               className: 'dt-control dtr-control text-center',
               orderable: false,
-              data: null,
-              defaultContent: ''
+              defaultContent: '<span class="dt-control-icon" aria-hidden="true"></span><span class="visually-hidden">Mostrar detalles</span>'
             },
             { data: 'ORDENCHAROLAID' },
             { data: 'SkuCharolas' },
@@ -357,7 +405,7 @@ $(document).ready(function() {
             }
           ],
           columnDefs: [
-            { targets: 0, width: '1%', className: 'dt-control dtr-control text-center', orderable: false, defaultContent: '' },
+            { targets: 0, width: '1%', className: 'dt-control dtr-control text-center', orderable: false },
             { targets: -1, orderable: false }
           ],
           responsive: {

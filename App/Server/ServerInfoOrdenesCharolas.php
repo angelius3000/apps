@@ -149,10 +149,6 @@ while ($row = mysqli_fetch_assoc($result)) {
         }
     }
 
-    foreach ($totales as $clave => $valor) {
-        $row[$clave] = $valor;
-    }
-
     if ($columnasMaterialesCompletas) {
         $necesitaActualizacion = false;
         foreach ($totales as $clave => $valor) {
@@ -174,6 +170,19 @@ while ($row = mysqli_fetch_assoc($result)) {
                 mysqli_stmt_execute($stmt);
                 mysqli_stmt_close($stmt);
             }
+        }
+    }
+
+    $row['_totalesMateriales'] = [
+        'Largueros' => (int) $totales['Largueros'],
+        'Tornilleria' => (int) $totales['Tornilleria'],
+        'JuntaZeta' => (int) $totales['JuntaZeta'],
+        'Traves' => (int) $totales['Traves'],
+    ];
+
+    foreach ($columnasDisponibles as $clave => $disponible) {
+        if ($disponible && array_key_exists($clave, $row)) {
+            unset($row[$clave]);
         }
     }
 
