@@ -44,15 +44,41 @@
     height: 100%;
 }
 
-/* Estilos para el botón de detalles de DataTables */
-table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control:before,
-table.dataTable.dtr-inline.collapsed>tbody>tr>th.dtr-control:before {
-    background-color: #198754; /* verde */
-    color: #fff;
+.toggle-detalle {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
 }
 
-table.dataTable.dtr-inline.collapsed>tbody>tr.parent>td.dtr-control:before,
-table.dataTable.dtr-inline.collapsed>tbody>tr.parent>th.dtr-control:before {
-    background-color: #dc3545; /* rojo */
+.toggle-detalle:focus-visible {
+    outline: 2px solid rgba(25, 135, 84, 0.35);
+    outline-offset: 2px;
+}
+
+.toggle-detalle-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background-color: #198754;
     color: #fff;
+    font-weight: 700;
+    font-family: "Courier New", Courier, monospace;
+    line-height: 1;
+}
+
+.toggle-detalle-badge.is-open,
+tr.detalle-abierto .toggle-detalle-badge {
+    background-color: #dc3545;
+}
+
+.detalle-control {
+    width: 1%;
+    white-space: nowrap;
 }
