@@ -266,30 +266,32 @@ $(document).ready(function() {
             return;
           }
 
-          if (!Array.isArray(row.Detalles)) {
-            row.Detalles = [];
+          var detalles = Array.isArray(row.Detalles) ? row.Detalles : [];
+
+          var totales = null;
+          if (row._totalesMateriales && typeof row._totalesMateriales === 'object') {
+            totales = normalizarTotalesMateriales(row._totalesMateriales);
+          } else if (row.TotalesMateriales && typeof row.TotalesMateriales === 'object') {
+            totales = normalizarTotalesMateriales(row.TotalesMateriales);
           }
 
-          var totales = row._totalesMateriales && typeof row._totalesMateriales === 'object'
-            ? normalizarTotalesMateriales(row._totalesMateriales)
-            : normalizarTotalesMateriales(row.TotalesMateriales);
-
-          if (!row._totalesMateriales || typeof row._totalesMateriales !== 'object') {
-            if (row.Detalles.length) {
-              totales = calcularTotalesMateriales(row.Detalles);
-            }
-            row._totalesMateriales = normalizarTotalesMateriales(totales);
-          } else {
-            row._totalesMateriales = totales;
+          if (!totales) {
+            totales = detalles.length ? calcularTotalesMateriales(detalles) : normalizarTotalesMateriales({});
           }
 
-          delete row.Largueros;
-          delete row.Tornilleria;
-          delete row.JuntaZeta;
-          delete row.Traves;
-          delete row.TotalesMateriales;
+          var filaSanitizada = {
+            ORDENCHAROLAID: row.ORDENCHAROLAID,
+            CHAROLASID: row.CHAROLASID,
+            SkuCharolas: row.SkuCharolas,
+            DescripcionCharolas: row.DescripcionCharolas,
+            Cantidad: row.Cantidad,
+            STATUSID: row.STATUSID,
+            Status: row.Status,
+            Detalles: detalles,
+            _totalesMateriales: normalizarTotalesMateriales(totales)
+          };
 
-          datosTabla.push(row);
+          datosTabla.push(filaSanitizada);
         });
 
         var responsiveDisplayControl = $.fn.dataTable &&
@@ -367,7 +369,7 @@ $(document).ready(function() {
               data: null,
               className: 'dt-control dtr-control text-center',
               orderable: false,
-              defaultContent: '<span class="dt-control-icon" aria-hidden="true"></span><span class="visually-hidden">Mostrar detalles</span>'
+              defaultContent: '<span class="dt-control-icon" aria-hidden="true">+</span><span class="visually-hidden">Mostrar detalles</span>'
             },
             { data: 'ORDENCHAROLAID' },
             { data: 'SkuCharolas' },
@@ -427,6 +429,19 @@ $(document).ready(function() {
           },
         });
         $('#TablaOrdenesCharolas').addClass('dtr-inline collapsed dt-responsive');
+        actualizarIconosResponsive();
+
+        tablaOrdenes.on('draw', function() {
+          actualizarIconosResponsive();
+        });
+
+        tablaOrdenes.on('responsive-display', function() {
+          actualizarIconosResponsive();
+        });
+
+        tablaOrdenes.on('responsive-resize', function() {
+          actualizarIconosResponsive();
+        });
       },
       error: function(xhr) {
         var mensaje = 'No se pudo cargar la información de requisiciones.';
@@ -439,6 +454,28 @@ $(document).ready(function() {
   }
 
   cargarOrdenes();
+
+  function actualizarIconosResponsive() {
+    if (!tablaOrdenes) {
+      return;
+    }
+
+    $('#TablaOrdenesCharolas tbody tr').each(function() {
+      var $fila = $(this);
+      var $icono = $fila.find('td.dt-control .dt-control-icon, td.dtr-control .dt-control-icon');
+      if (!$icono.length) {
+        return;
+      }
+
+      if ($fila.hasClass('parent')) {
+        $icono.text('−');
+        $icono.addClass('is-open');
+      } else {
+        $icono.text('+');
+        $icono.removeClass('is-open');
+      }
+    });
+  }
 
   $('#CalcularBtn').on('click', function() {
     var charolaId = $('#CHAROLASID').val();

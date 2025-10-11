@@ -58,24 +58,17 @@ table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control .dt-control-icon {
     width: 1.75rem;
     height: 1.75rem;
     border-radius: 50%;
-    background-color: #198754; /* verde */
+    background-color: #198754;
     color: #fff;
     font-weight: 700;
     font-family: "Courier New", Courier, monospace;
     line-height: 1;
+    cursor: pointer;
 }
 
 table.dataTable.dtr-inline.collapsed>tbody>tr.parent>td.dt-control .dt-control-icon,
-table.dataTable.dtr-inline.collapsed>tbody>tr.parent>td.dtr-control .dt-control-icon {
-    background-color: #dc3545; /* rojo */
-}
-
-table.dataTable.dtr-inline.collapsed>tbody>tr>td.dt-control .dt-control-icon::before,
-table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control .dt-control-icon::before {
-    content: '+';
-}
-
-table.dataTable.dtr-inline.collapsed>tbody>tr.parent>td.dt-control .dt-control-icon::before,
-table.dataTable.dtr-inline.collapsed>tbody>tr.parent>td.dtr-control .dt-control-icon::before {
-    content: '\2212';
+table.dataTable.dtr-inline.collapsed>tbody>tr.parent>td.dtr-control .dt-control-icon,
+table.dataTable.dtr-inline.collapsed>tbody>tr>td.dt-control .dt-control-icon.is-open,
+table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control .dt-control-icon.is-open {
+    background-color: #dc3545;
 }
