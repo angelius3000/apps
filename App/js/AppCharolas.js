@@ -204,11 +204,84 @@ $(document).ready(function() {
     window.renderMaterial = renderMaterial;
   }
 
+  function construirDetalleRequisicion(data) {
+    if (!data || !Array.isArray(data.Detalles) || !data.Detalles.length) {
+      return '<div class="text-muted">Sin materiales registrados para esta requisición.</div>';
+    }
+
+    var totalLargueros = renderMaterial(data, 'Largueros');
+    var totalTornilleria = renderMaterial(data, 'Tornilleria');
+    var totalJuntaZeta = renderMaterial(data, 'Junta Zeta');
+    var totalTraves = renderMaterial(data, 'Traves');
+
+    var html = '<div class="detalle-requisicion">';
+
+    html += '<div class="row g-3 detalle-requisicion__resumen">' +
+      '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Requisición</div><div class="fw-semibold">' + escapeHtml(data.ORDENCHAROLAID) + '</div></div>' +
+      '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">SKU</div><div class="fw-semibold">' + escapeHtml(data.SkuCharolas) + '</div></div>' +
+      '<div class="col-sm-12 col-lg-6"><div class="text-muted text-uppercase small">Descripción</div><div class="fw-semibold">' + escapeHtml(data.DescripcionCharolas) + '</div></div>' +
+      '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Cantidad</div><div class="fw-semibold">' + escapeHtml(data.Cantidad) + '</div></div>' +
+      '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Estatus</div><div class="fw-semibold">' + escapeHtml(obtenerNombreStatus(data.Status, data.STATUSID)) + '</div></div>' +
+    '</div>';
+
+    html += '<div class="row g-3 detalle-requisicion__totales mt-2">' +
+      '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Largueros</div><div class="h5 mb-0">' + escapeHtml(totalLargueros) + '</div></div></div></div>' +
+      '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Tornillería</div><div class="h5 mb-0">' + escapeHtml(totalTornilleria) + '</div></div></div></div>' +
+      '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Junta zeta</div><div class="h5 mb-0">' + escapeHtml(totalJuntaZeta) + '</div></div></div></div>' +
+      '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Traves</div><div class="h5 mb-0">' + escapeHtml(totalTraves) + '</div></div></div></div>' +
+    '</div>';
+
+    html += '<div class="mt-4 detalle-requisicion__detalle-materiales">' +
+      '<h6 class="fw-semibold mb-3">Detalle de materiales</h6>';
+    html += '<div class="table-responsive"><table class="table table-hover table-striped align-middle detalle-requisicion__tabla"><thead><tr>' +
+      '<th class="text-uppercase small text-muted">SKU MP</th><th class="text-uppercase small text-muted">Descripción</th><th class="text-uppercase small text-muted">Tipo</th><th class="text-uppercase small text-muted">Cantidad</th>' +
+      '</tr></thead><tbody>';
+    $.each(data.Detalles, function(i, mp) {
+      html += '<tr>' +
+        '<td>' + escapeHtml(mp.SkuMP) + '</td>' +
+        '<td>' + escapeHtml(mp.DescripcionMP) + '</td>' +
+        '<td>' + escapeHtml(mp.TipoMP) + '</td>' +
+        '<td>' + escapeHtml(mp.Cantidad) + '</td>' +
+        '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+
+    html += '</div>';
+
+    return html;
+  }
+
+  function actualizarBotonesDetalle() {
+    if (!tablaOrdenes) {
+      return;
+    }
+
+    tablaOrdenes.rows().every(function() {
+      var row = this;
+      var $fila = $(row.node());
+      var $boton = $fila.find('button.toggle-detalle');
+      if (!$boton.length) {
+        return;
+      }
+
+      var $badge = $boton.find('.toggle-detalle-badge');
+      if (row.child.isShown()) {
+        $fila.addClass('detalle-abierto');
+        $boton.attr('aria-expanded', 'true');
+        $badge.text('−').addClass('is-open');
+      } else {
+        $fila.removeClass('detalle-abierto');
+        $boton.attr('aria-expanded', 'false');
+        $badge.text('+').removeClass('is-open');
+      }
+    });
+  }
+
   function asegurarEncabezadoTabla() {
     var tabla = $('#TablaOrdenesCharolas');
     var thead = tabla.find('thead');
     var encabezado = '<tr>' +
-      '<th class="dt-control dtr-control" scope="col"></th>' +
+      '<th scope="col" class="text-center"><span class="visually-hidden">Detalle</span></th>' +
       '<th scope="col">Requisición</th>' +
       '<th scope="col">SKU</th>' +
       '<th scope="col">Descripción</th>' +
@@ -225,7 +298,7 @@ $(document).ready(function() {
       thead.append(encabezado);
     } else {
       var celdas = fila.first().children('th');
-      if (celdas.length !== 6 || !celdas.first().hasClass('dtr-control')) {
+      if (celdas.length !== 6) {
         thead.html(encabezado);
       }
     }
@@ -239,6 +312,7 @@ $(document).ready(function() {
       tablaOrdenes.clear().destroy();
       tablaOrdenes = null;
     }
+    $('#TablaOrdenesCharolas tbody').off('click', '.toggle-detalle');
     $('#TablaOrdenesCharolas tbody').html(contenido);
   }
 
@@ -294,67 +368,6 @@ $(document).ready(function() {
           datosTabla.push(filaSanitizada);
         });
 
-        var responsiveDisplayControl = $.fn.dataTable &&
-          $.fn.dataTable.Responsive &&
-          $.fn.dataTable.Responsive.display &&
-          $.fn.dataTable.Responsive.display.control;
-
-        var responsiveDetails = {
-          type: 'column',
-          target: 'td.dt-control, td.dtr-control',
-          renderer: function(api, rowIdx, columns) {
-            var data = api.row(rowIdx).data();
-            if (!data || !Array.isArray(data.Detalles) || !data.Detalles.length) {
-              return '<div class="text-muted">Sin materiales registrados para esta requisición.</div>';
-            }
-
-            var totalLargueros = renderMaterial(data, 'Largueros');
-            var totalTornilleria = renderMaterial(data, 'Tornilleria');
-            var totalJuntaZeta = renderMaterial(data, 'Junta Zeta');
-            var totalTraves = renderMaterial(data, 'Traves');
-
-            var html = '<div class="detalle-requisicion">';
-
-            html += '<div class="row g-3 detalle-requisicion__resumen">' +
-              '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Requisición</div><div class="fw-semibold">' + escapeHtml(data.ORDENCHAROLAID) + '</div></div>' +
-              '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">SKU</div><div class="fw-semibold">' + escapeHtml(data.SkuCharolas) + '</div></div>' +
-              '<div class="col-sm-12 col-lg-6"><div class="text-muted text-uppercase small">Descripción</div><div class="fw-semibold">' + escapeHtml(data.DescripcionCharolas) + '</div></div>' +
-              '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Cantidad</div><div class="fw-semibold">' + escapeHtml(data.Cantidad) + '</div></div>' +
-              '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Estatus</div><div class="fw-semibold">' + escapeHtml(obtenerNombreStatus(data.Status, data.STATUSID)) + '</div></div>' +
-            '</div>';
-
-            html += '<div class="row g-3 detalle-requisicion__totales mt-2">' +
-              '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Largueros</div><div class="h5 mb-0">' + escapeHtml(totalLargueros) + '</div></div></div></div>' +
-              '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Tornillería</div><div class="h5 mb-0">' + escapeHtml(totalTornilleria) + '</div></div></div></div>' +
-              '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Junta zeta</div><div class="h5 mb-0">' + escapeHtml(totalJuntaZeta) + '</div></div></div></div>' +
-              '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Traves</div><div class="h5 mb-0">' + escapeHtml(totalTraves) + '</div></div></div></div>' +
-            '</div>';
-
-            html += '<div class="mt-4 detalle-requisicion__detalle-materiales">' +
-              '<h6 class="fw-semibold mb-3">Detalle de materiales</h6>';
-            html += '<div class="table-responsive"><table class="table table-hover table-striped align-middle detalle-requisicion__tabla"><thead><tr>' +
-              '<th class="text-uppercase small text-muted">SKU MP</th><th class="text-uppercase small text-muted">Descripción</th><th class="text-uppercase small text-muted">Tipo</th><th class="text-uppercase small text-muted">Cantidad</th>' +
-              '</tr></thead><tbody>';
-            $.each(data.Detalles, function(i, mp) {
-              html += '<tr>' +
-                '<td>' + escapeHtml(mp.SkuMP) + '</td>' +
-                '<td>' + escapeHtml(mp.DescripcionMP) + '</td>' +
-                '<td>' + escapeHtml(mp.TipoMP) + '</td>' +
-                '<td>' + escapeHtml(mp.Cantidad) + '</td>' +
-                '</tr>';
-            });
-            html += '</tbody></table></div></div>';
-
-            html += '</div>';
-
-            return html;
-          }
-        };
-
-        if (responsiveDisplayControl) {
-          responsiveDetails.display = responsiveDisplayControl;
-        }
-
         asegurarEncabezadoTabla();
 
         tablaOrdenes = $('#TablaOrdenesCharolas').DataTable({
@@ -367,9 +380,9 @@ $(document).ready(function() {
           columns: [
             {
               data: null,
-              className: 'dt-control dtr-control text-center',
+              className: 'text-center detalle-control',
               orderable: false,
-              defaultContent: '<span class="dt-control-icon" aria-hidden="true">+</span><span class="visually-hidden">Mostrar detalles</span>'
+              defaultContent: '<button type="button" class="btn btn-link p-0 toggle-detalle" aria-expanded="false"><span class="toggle-detalle-badge" aria-hidden="true">+</span><span class="visually-hidden">Mostrar detalles</span></button>'
             },
             { data: 'ORDENCHAROLAID' },
             { data: 'SkuCharolas' },
@@ -407,12 +420,9 @@ $(document).ready(function() {
             }
           ],
           columnDefs: [
-            { targets: 0, width: '1%', className: 'dt-control dtr-control text-center', orderable: false },
+            { targets: 0, width: '1%', orderable: false, searchable: false },
             { targets: -1, orderable: false }
           ],
-          responsive: {
-            details: responsiveDetails
-          },
           language: {
             search: 'Búsqueda:',
             lengthMenu: 'Mostrar _MENU_ filas',
@@ -428,19 +438,34 @@ $(document).ready(function() {
             infoFiltered: '(filtrado de _MAX_ registros)',
           },
         });
-        $('#TablaOrdenesCharolas').addClass('dtr-inline collapsed dt-responsive');
-        actualizarIconosResponsive();
+        actualizarBotonesDetalle();
+
+        $('#TablaOrdenesCharolas tbody')
+          .off('click', '.toggle-detalle')
+          .on('click', '.toggle-detalle', function(e) {
+            e.preventDefault();
+            if (!tablaOrdenes) {
+              return;
+            }
+
+            var $boton = $(this);
+            var tr = $boton.closest('tr');
+            var row = tablaOrdenes.row(tr);
+
+            if (row.child.isShown()) {
+              row.child.hide();
+              tr.removeClass('detalle-abierto');
+            } else {
+              var detalleHtml = construirDetalleRequisicion(row.data());
+              row.child(detalleHtml, 'detalle-requisicion__child').show();
+              tr.addClass('detalle-abierto');
+            }
+
+            actualizarBotonesDetalle();
+          });
 
         tablaOrdenes.on('draw', function() {
-          actualizarIconosResponsive();
-        });
-
-        tablaOrdenes.on('responsive-display', function() {
-          actualizarIconosResponsive();
-        });
-
-        tablaOrdenes.on('responsive-resize', function() {
-          actualizarIconosResponsive();
+          actualizarBotonesDetalle();
         });
       },
       error: function(xhr) {

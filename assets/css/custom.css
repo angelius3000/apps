@@ -44,14 +44,22 @@
     height: 100%;
 }
 
-/* Estilos para el botón de detalles de DataTables */
-table.dataTable.dtr-inline.collapsed>tbody>tr>td.dt-control,
-table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control {
-    text-align: center;
+.toggle-detalle {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
 }
 
-table.dataTable.dtr-inline.collapsed>tbody>tr>td.dt-control .dt-control-icon,
-table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control .dt-control-icon {
+.toggle-detalle:focus-visible {
+    outline: 2px solid rgba(25, 135, 84, 0.35);
+    outline-offset: 2px;
+}
+
+.toggle-detalle-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -63,12 +71,14 @@ table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control .dt-control-icon {
     font-weight: 700;
     font-family: "Courier New", Courier, monospace;
     line-height: 1;
-    cursor: pointer;
 }
 
-table.dataTable.dtr-inline.collapsed>tbody>tr.parent>td.dt-control .dt-control-icon,
-table.dataTable.dtr-inline.collapsed>tbody>tr.parent>td.dtr-control .dt-control-icon,
-table.dataTable.dtr-inline.collapsed>tbody>tr>td.dt-control .dt-control-icon.is-open,
-table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control .dt-control-icon.is-open {
+.toggle-detalle-badge.is-open,
+tr.detalle-abierto .toggle-detalle-badge {
     background-color: #dc3545;
+}
+
+.detalle-control {
+    width: 1%;
+    white-space: nowrap;
 }
