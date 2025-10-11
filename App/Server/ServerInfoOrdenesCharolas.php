@@ -178,6 +178,10 @@ while ($row = mysqli_fetch_assoc($result)) {
     }
 
     $row['Detalles'] = $detalles;
+    $row['Largueros'] = $largueros;
+    $row['Tornilleria'] = $tornilleria;
+    $row['JuntaZeta'] = $juntaZeta;
+    $row['Traves'] = $traves;
     $ordenes[] = $row;
 }
 mysqli_free_result($result);
