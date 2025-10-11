@@ -2,10 +2,23 @@
 
 $pageTitle = 'Edison - Charolas';
 
-// Obtener la lista de charolas disponibles
-$query_charolas = "SELECT * FROM charolas";
-$charolas = mysqli_query($conn, $query_charolas) or die(mysqli_error($conn));
-$totalRows_charolas = mysqli_num_rows($charolas);
+$charolas = [];
+$charolasError = null;
+if ($conn) {
+    $query_charolas = "SELECT * FROM charolas";
+    $resultadoCharolas = mysqli_query($conn, $query_charolas);
+    if ($resultadoCharolas) {
+        while ($fila = mysqli_fetch_assoc($resultadoCharolas)) {
+            $charolas[] = $fila;
+        }
+        mysqli_free_result($resultadoCharolas);
+    } else {
+        $charolasError = mysqli_error($conn);
+    }
+} else {
+    $charolasError = $connectionError ?? 'No se pudo conectar a la base de datos.';
+}
+$totalRows_charolas = count($charolas);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -30,30 +43,32 @@ $totalRows_charolas = mysqli_num_rows($charolas);
                                 </div>
                             </div>
                         </div>
+                        <?php if ($charolasError) { ?>
+                            <div class="alert alert-warning" role="alert">
+                                <?php echo htmlspecialchars($charolasError, ENT_QUOTES, 'UTF-8'); ?>
+                            </div>
+                        <?php } ?>
                         <div class="row mb-4">
                             <div class="col-md-6 mb-3">
-                                <select class="form-select" id="CHAROLASID" aria-label="Selecciona charola" required>
+                                <select class="form-select" id="CHAROLASID" aria-label="Selecciona charola" required <?php echo $charolasError ? 'disabled' : ''; ?>>
                                     <option value="">Selecciona charola</option>
-                                    <?php while ($row_charolas = mysqli_fetch_assoc($charolas)) { ?>
+                                    <?php foreach ($charolas as $row_charolas) { ?>
                                         <option value="<?php echo $row_charolas['CHAROLASID']; ?>">
                                             <?php echo $row_charolas['SkuCharolas'] . ' - ' . $row_charolas['DescripcionCharolas']; ?>
                                         </option>
-                                    <?php }
-                                    // Reiniciar el puntero de la consulta
-                                    mysqli_data_seek($charolas, 0);
-                                    ?>
+                                    <?php } ?>
                                 </select>
                             </div>
                             <div class="col-md-3 mb-3">
-                                <input type="number" class="form-control" id="CantidadCharolas" placeholder="Cantidad a fabricar">
+                                <input type="number" class="form-control" id="CantidadCharolas" placeholder="Cantidad a fabricar" <?php echo $charolasError ? 'disabled' : ''; ?>>
                             </div>
                             <div class="col-md-3 mb-3">
-                                <button type="button" class="btn btn-primary w-100" id="CalcularBtn">Calcular</button>
+                                <button type="button" class="btn btn-primary w-100" id="CalcularBtn" <?php echo $charolasError ? 'disabled' : ''; ?>>Calcular</button>
                             </div>
                         </div>
                         <div class="row mb-4">
                             <div class="col-md-3 ms-auto">
-                                <button type="button" class="btn btn-success w-100" id="GenerarRequisicionBtn">Generar requisición</button>
+                                <button type="button" class="btn btn-success w-100" id="GenerarRequisicionBtn" <?php echo $charolasError ? 'disabled' : ''; ?>>Generar requisición</button>
                             </div>
                         </div>
                         <div class="row">
@@ -83,7 +98,7 @@ $totalRows_charolas = mysqli_num_rows($charolas);
                                             <th>SKU</th>
                                             <th>Descripción</th>
                                             <th>Cantidad</th>
-                                            <th>Estatus</th>
+                                            <th>Cambiar estatus</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -115,7 +130,7 @@ $totalRows_charolas = mysqli_num_rows($charolas);
     <script type="text/javascript" charset="utf8" src="assets/js/pdfmake.min.js"></script>
     <script type="text/javascript" charset="utf8" src="assets/js/vfs_fonts.js"></script>
     <script type="text/javascript" charset="utf8" src="assets/js/dataTables.responsive.min.js"></script>
-    <script src="assets/js/select2.min.js" integrity="sha512-9p/L4acAjbjIaaGXmZf0Q2bV42HetlCLbv8EP0z3rLbQED2TAFUlDvAezy7kumYqg5T8jHtDdlm1fgIsr5QzKg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="assets/js/select2.min.js"></script>
     <script src="App/js/AppCharolas.js"></script>
     <script src="App/js/AppCambiarContrasena.js"></script>
 </body>

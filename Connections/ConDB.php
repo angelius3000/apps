@@ -21,9 +21,11 @@ if ($_SERVER['HTTP_HOST'] == "localhost") {
     $dbname = "edison";
 }
 
-$conn = mysqli_connect($servername, $username, $password, $dbname) or die("Connection failed: " . mysqli_connect_error());
-/* check connection */
-if (mysqli_connect_errno()) {
-    printf("Connect failed: %s\n", mysqli_connect_error());
-    exit();
+$connectionError = null;
+mysqli_report(MYSQLI_REPORT_OFF);
+$conn = @mysqli_connect($servername, $username, $password, $dbname);
+if ($conn === false) {
+    $connectionError = mysqli_connect_error();
+} else {
+    mysqli_set_charset($conn, 'utf8mb4');
 }
