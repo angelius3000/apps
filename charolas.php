@@ -98,10 +98,6 @@ $totalRows_charolas = count($charolas);
                                             <th>SKU</th>
                                             <th>Descripción</th>
                                             <th>Cantidad</th>
-                                            <th>Largueros</th>
-                                            <th>Tornillería</th>
-                                            <th>Junta zeta</th>
-                                            <th>Traves</th>
                                             <th>Cambiar estatus</th>
                                         </tr>
                                     </thead>

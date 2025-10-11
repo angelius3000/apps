@@ -127,16 +127,6 @@ $(document).ready(function() {
     return row._totalesMateriales;
   }
 
-  function renderMaterial(data, row, clave) {
-    var valor = Number(data);
-    if (!isNaN(valor) && valor !== 0) {
-      return valor;
-    }
-
-    var totales = obtenerTotalesFila(row);
-    return totales ? totales[clave] : 0;
-  }
-
   function mostrarErrorOrdenes(mensaje) {
     var columnas = $('#TablaOrdenesCharolas thead tr th').length || 1;
     var contenido = '<tr><td colspan="' + columnas + '" class="text-center text-danger">' + mensaje + '</td></tr>';
@@ -161,6 +151,69 @@ $(document).ready(function() {
         if (tablaOrdenes) {
           tablaOrdenes.clear().destroy();
           $('#TablaOrdenesCharolas tbody').empty();
+        }
+
+        var responsiveDisplayControl = $.fn.dataTable &&
+          $.fn.dataTable.Responsive &&
+          $.fn.dataTable.Responsive.display &&
+          $.fn.dataTable.Responsive.display.control;
+
+        var responsiveDetails = {
+          type: 'column',
+          target: '.dtr-control',
+          renderer: function(api, rowIdx, columns) {
+            var data = api.row(rowIdx).data();
+            if (!data || !Array.isArray(data.Detalles) || !data.Detalles.length) {
+              return '<div class="text-muted">Sin materiales registrados para esta requisición.</div>';
+            }
+
+            var totales = obtenerTotalesFila(data) || {
+              Largueros: 0,
+              Tornilleria: 0,
+              JuntaZeta: 0,
+              Traves: 0
+            };
+
+            var html = '<div class="detalle-requisicion">';
+
+            html += '<div class="row g-3 detalle-requisicion__resumen">' +
+              '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Requisición</div><div class="fw-semibold">' + escapeHtml(data.ORDENCHAROLAID) + '</div></div>' +
+              '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">SKU</div><div class="fw-semibold">' + escapeHtml(data.SkuCharolas) + '</div></div>' +
+              '<div class="col-sm-12 col-lg-6"><div class="text-muted text-uppercase small">Descripción</div><div class="fw-semibold">' + escapeHtml(data.DescripcionCharolas) + '</div></div>' +
+              '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Cantidad</div><div class="fw-semibold">' + escapeHtml(data.Cantidad) + '</div></div>' +
+              '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Estatus</div><div class="fw-semibold">' + escapeHtml(obtenerNombreStatus(data.Status, data.STATUSID)) + '</div></div>' +
+            '</div>';
+
+            html += '<div class="row g-3 detalle-requisicion__totales mt-2">' +
+              '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Largueros</div><div class="h5 mb-0">' + escapeHtml(totales.Largueros) + '</div></div></div></div>' +
+              '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Tornillería</div><div class="h5 mb-0">' + escapeHtml(totales.Tornilleria) + '</div></div></div></div>' +
+              '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Junta zeta</div><div class="h5 mb-0">' + escapeHtml(totales.JuntaZeta) + '</div></div></div></div>' +
+              '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Traves</div><div class="h5 mb-0">' + escapeHtml(totales.Traves) + '</div></div></div></div>' +
+            '</div>';
+
+            html += '<div class="mt-4 detalle-requisicion__detalle-materiales">' +
+              '<h6 class="fw-semibold mb-3">Detalle de materiales</h6>';
+            html += '<div class="table-responsive"><table class="table table-hover table-striped align-middle detalle-requisicion__tabla"><thead><tr>' +
+              '<th class="text-uppercase small text-muted">SKU MP</th><th class="text-uppercase small text-muted">Descripción</th><th class="text-uppercase small text-muted">Tipo</th><th class="text-uppercase small text-muted">Cantidad</th>' +
+              '</tr></thead><tbody>';
+            $.each(data.Detalles, function(i, mp) {
+              html += '<tr>' +
+                '<td>' + escapeHtml(mp.SkuMP) + '</td>' +
+                '<td>' + escapeHtml(mp.DescripcionMP) + '</td>' +
+                '<td>' + escapeHtml(mp.TipoMP) + '</td>' +
+                '<td>' + escapeHtml(mp.Cantidad) + '</td>' +
+                '</tr>';
+            });
+            html += '</tbody></table></div></div>';
+
+            html += '</div>';
+
+            return html;
+          }
+        };
+
+        if (responsiveDisplayControl) {
+          responsiveDetails.display = responsiveDisplayControl;
         }
 
         tablaOrdenes = $('#TablaOrdenesCharolas').DataTable({
@@ -212,59 +265,7 @@ $(document).ready(function() {
             }
           ],
           responsive: {
-            details: {
-              type: 'column',
-              target: '.dtr-control',
-              renderer: function(api, rowIdx, columns) {
-                var data = api.row(rowIdx).data();
-                if (!data || !Array.isArray(data.Detalles) || !data.Detalles.length) {
-                  return '<div class="text-muted">Sin materiales registrados para esta requisición.</div>';
-                }
-
-                var totales = obtenerTotalesFila(data) || {
-                  Largueros: 0,
-                  Tornilleria: 0,
-                  JuntaZeta: 0,
-                  Traves: 0
-                };
-
-                var html = '<div class="detalle-requisicion">';
-
-                html += '<div class="row g-3 detalle-requisicion__resumen">' +
-                  '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Requisición</div><div class="fw-semibold">' + escapeHtml(data.ORDENCHAROLAID) + '</div></div>' +
-                  '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">SKU</div><div class="fw-semibold">' + escapeHtml(data.SkuCharolas) + '</div></div>' +
-                  '<div class="col-sm-12 col-lg-6"><div class="text-muted text-uppercase small">Descripción</div><div class="fw-semibold">' + escapeHtml(data.DescripcionCharolas) + '</div></div>' +
-                  '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Cantidad</div><div class="fw-semibold">' + escapeHtml(data.Cantidad) + '</div></div>' +
-                  '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Estatus</div><div class="fw-semibold">' + escapeHtml(obtenerNombreStatus(data.Status, data.STATUSID)) + '</div></div>' +
-                '</div>';
-
-                html += '<div class="row g-3 detalle-requisicion__totales mt-2">' +
-                  '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Largueros</div><div class="h5 mb-0">' + escapeHtml(totales.Largueros) + '</div></div></div></div>' +
-                  '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Tornillería</div><div class="h5 mb-0">' + escapeHtml(totales.Tornilleria) + '</div></div></div></div>' +
-                  '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Junta zeta</div><div class="h5 mb-0">' + escapeHtml(totales.JuntaZeta) + '</div></div></div></div>' +
-                  '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Traves</div><div class="h5 mb-0">' + escapeHtml(totales.Traves) + '</div></div></div></div>' +
-                '</div>';
-
-                html += '<div class="mt-4 detalle-requisicion__detalle-materiales">' +
-                  '<h6 class="fw-semibold mb-3">Detalle de materiales</h6>';
-                html += '<div class="table-responsive"><table class="table table-hover table-striped align-middle detalle-requisicion__tabla"><thead><tr>' +
-                  '<th class="text-uppercase small text-muted">SKU MP</th><th class="text-uppercase small text-muted">Descripción</th><th class="text-uppercase small text-muted">Tipo</th><th class="text-uppercase small text-muted">Cantidad</th>' +
-                  '</tr></thead><tbody>';
-                $.each(data.Detalles, function(i, mp) {
-                  html += '<tr>' +
-                    '<td>' + escapeHtml(mp.SkuMP) + '</td>' +
-                    '<td>' + escapeHtml(mp.DescripcionMP) + '</td>' +
-                    '<td>' + escapeHtml(mp.TipoMP) + '</td>' +
-                    '<td>' + escapeHtml(mp.Cantidad) + '</td>' +
-                    '</tr>';
-                });
-                html += '</tbody></table></div></div>';
-
-                html += '</div>';
-
-                return html;
-              }
-            }
+            details: responsiveDetails
           },
           language: {
             search: 'Búsqueda:',
