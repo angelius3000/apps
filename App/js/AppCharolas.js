@@ -326,6 +326,30 @@ $(document).ready(function() {
             { data: 'DescripcionCharolas' },
             { data: 'Cantidad' },
             {
+              data: 'Largueros',
+              render: function(data, type, row) {
+                return renderMaterial(data, row, 'Largueros');
+              }
+            },
+            {
+              data: 'Tornilleria',
+              render: function(data, type, row) {
+                return renderMaterial(data, row, 'Tornilleria');
+              }
+            },
+            {
+              data: 'JuntaZeta',
+              render: function(data, type, row) {
+                return renderMaterial(data, row, 'JuntaZeta');
+              }
+            },
+            {
+              data: 'Traves',
+              render: function(data, type, row) {
+                return renderMaterial(data, row, 'Traves');
+              }
+            },
+            {
               data: null,
               render: function(data, type, row) {
                 return obtenerBadge(row.STATUSID, row.ORDENCHAROLAID);
