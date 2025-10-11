@@ -45,14 +45,30 @@
 }
 
 /* Estilos para el botón de detalles de DataTables */
-table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control:before,
-table.dataTable.dtr-inline.collapsed>tbody>tr>th.dtr-control:before {
-    background-color: #198754; /* verde */
-    color: #fff;
+table.dataTable.dtr-inline.collapsed>tbody>tr>td.dt-control,
+table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control {
+    text-align: center;
 }
 
-table.dataTable.dtr-inline.collapsed>tbody>tr.parent>td.dtr-control:before,
-table.dataTable.dtr-inline.collapsed>tbody>tr.parent>th.dtr-control:before {
-    background-color: #dc3545; /* rojo */
+table.dataTable.dtr-inline.collapsed>tbody>tr>td.dt-control .dt-control-icon,
+table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control .dt-control-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background-color: #198754;
     color: #fff;
+    font-weight: 700;
+    font-family: "Courier New", Courier, monospace;
+    line-height: 1;
+    cursor: pointer;
+}
+
+table.dataTable.dtr-inline.collapsed>tbody>tr.parent>td.dt-control .dt-control-icon,
+table.dataTable.dtr-inline.collapsed>tbody>tr.parent>td.dtr-control .dt-control-icon,
+table.dataTable.dtr-inline.collapsed>tbody>tr>td.dt-control .dt-control-icon.is-open,
+table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control .dt-control-icon.is-open {
+    background-color: #dc3545;
 }
