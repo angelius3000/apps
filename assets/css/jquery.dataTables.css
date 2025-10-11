@@ -1,10 +1,12 @@
-td.dt-control {
+td.dt-control,
+td.dtr-control {
   background: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxOCcgaGVpZ2h0PScxOCcgdmlld0JveD0nMCAwIDE4IDE4Jz48Y2lyY2xlIGN4PSc5JyBjeT0nOScgcj0nOCcgZmlsbD0nIzFlODhlNScvPjxwYXRoIGQ9J005IDV2OE01IDloOCcgc3Ryb2tlPScjZmZmJyBzdHJva2Utd2lkdGg9JzInIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcvPjwvc3ZnPg==") no-repeat center center;
   background-size: 16px 16px;
   cursor: pointer;
 }
 
-tr.dt-hasChild td.dt-control {
+tr.dt-hasChild td.dt-control,
+tr.dt-hasChild td.dtr-control {
   background: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxOCcgaGVpZ2h0PScxOCcgdmlld0JveD0nMCAwIDE4IDE4Jz48Y2lyY2xlIGN4PSc5JyBjeT0nOScgcj0nOCcgZmlsbD0nIzFlODhlNScvPjxwYXRoIGQ9J001IDloOCcgc3Ryb2tlPScjZmZmJyBzdHJva2Utd2lkdGg9JzInIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcvPjwvc3ZnPg==") no-repeat center center;
   background-size: 16px 16px;
 }
