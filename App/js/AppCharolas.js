@@ -389,6 +389,30 @@ $(document).ready(function() {
             { data: 'DescripcionCharolas' },
             { data: 'Cantidad' },
             {
+              data: 'Largueros',
+              render: function(data, type, row) {
+                return renderMaterial(data, row, 'Largueros');
+              }
+            },
+            {
+              data: 'Tornilleria',
+              render: function(data, type, row) {
+                return renderMaterial(data, row, 'Tornilleria');
+              }
+            },
+            {
+              data: 'JuntaZeta',
+              render: function(data, type, row) {
+                return renderMaterial(data, row, 'JuntaZeta');
+              }
+            },
+            {
+              data: 'Traves',
+              render: function(data, type, row) {
+                return renderMaterial(data, row, 'Traves');
+              }
+            },
+            {
               data: null,
               render: function(data, type, row) {
                 return obtenerBadge(row.STATUSID, row.ORDENCHAROLAID);
@@ -455,6 +479,28 @@ $(document).ready(function() {
   }
 
   cargarOrdenes();
+
+  function actualizarIconosResponsive() {
+    if (!tablaOrdenes) {
+      return;
+    }
+
+    $('#TablaOrdenesCharolas tbody tr').each(function() {
+      var $fila = $(this);
+      var $icono = $fila.find('td.dt-control .dt-control-icon, td.dtr-control .dt-control-icon');
+      if (!$icono.length) {
+        return;
+      }
+
+      if ($fila.hasClass('parent')) {
+        $icono.text('−');
+        $icono.addClass('is-open');
+      } else {
+        $icono.text('+');
+        $icono.removeClass('is-open');
+      }
+    });
+  }
 
   $('#CalcularBtn').on('click', function() {
     var charolaId = $('#CHAROLASID').val();
