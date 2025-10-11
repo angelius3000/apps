@@ -127,6 +127,53 @@ $(document).ready(function() {
     return row._totalesMateriales;
   }
 
+  function renderMaterial(row, tipo) {
+    if (!row) {
+      return '0';
+    }
+
+    var totales = obtenerTotalesFila(row);
+
+    if (!totales) {
+      return '0';
+    }
+
+    var claveNormalizada = normalizarTexto(tipo)
+      .replace(/\s+/g, '')
+      .replace(/\./g, '');
+
+    var clave;
+    switch (claveNormalizada) {
+      case 'largueros':
+        clave = 'Largueros';
+        break;
+      case 'tornilleria':
+      case 'tornillo':
+        clave = 'Tornilleria';
+        break;
+      case 'juntazeta':
+      case 'junzeta':
+        clave = 'JuntaZeta';
+        break;
+      case 'traves':
+      case 'trabe':
+        clave = 'Traves';
+        break;
+      default:
+        clave = '';
+    }
+
+    if (!clave || !Object.prototype.hasOwnProperty.call(totales, clave)) {
+      return '0';
+    }
+
+    return String(totales[clave] || 0);
+  }
+
+  if (typeof window !== 'undefined') {
+    window.renderMaterial = renderMaterial;
+  }
+
   function mostrarErrorOrdenes(mensaje) {
     var columnas = $('#TablaOrdenesCharolas thead tr th').length || 1;
     var contenido = '<tr><td colspan="' + columnas + '" class="text-center text-danger">' + mensaje + '</td></tr>';
@@ -167,12 +214,10 @@ $(document).ready(function() {
               return '<div class="text-muted">Sin materiales registrados para esta requisición.</div>';
             }
 
-            var totales = obtenerTotalesFila(data) || {
-              Largueros: 0,
-              Tornilleria: 0,
-              JuntaZeta: 0,
-              Traves: 0
-            };
+            var totalLargueros = renderMaterial(data, 'Largueros');
+            var totalTornilleria = renderMaterial(data, 'Tornilleria');
+            var totalJuntaZeta = renderMaterial(data, 'Junta Zeta');
+            var totalTraves = renderMaterial(data, 'Traves');
 
             var html = '<div class="detalle-requisicion">';
 
@@ -185,10 +230,10 @@ $(document).ready(function() {
             '</div>';
 
             html += '<div class="row g-3 detalle-requisicion__totales mt-2">' +
-              '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Largueros</div><div class="h5 mb-0">' + escapeHtml(totales.Largueros) + '</div></div></div></div>' +
-              '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Tornillería</div><div class="h5 mb-0">' + escapeHtml(totales.Tornilleria) + '</div></div></div></div>' +
-              '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Junta zeta</div><div class="h5 mb-0">' + escapeHtml(totales.JuntaZeta) + '</div></div></div></div>' +
-              '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Traves</div><div class="h5 mb-0">' + escapeHtml(totales.Traves) + '</div></div></div></div>' +
+              '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Largueros</div><div class="h5 mb-0">' + escapeHtml(totalLargueros) + '</div></div></div></div>' +
+              '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Tornillería</div><div class="h5 mb-0">' + escapeHtml(totalTornilleria) + '</div></div></div></div>' +
+              '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Junta zeta</div><div class="h5 mb-0">' + escapeHtml(totalJuntaZeta) + '</div></div></div></div>' +
+              '<div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body py-2"><div class="text-muted text-uppercase small">Traves</div><div class="h5 mb-0">' + escapeHtml(totalTraves) + '</div></div></div></div>' +
             '</div>';
 
             html += '<div class="mt-4 detalle-requisicion__detalle-materiales">' +
