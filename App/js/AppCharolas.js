@@ -205,12 +205,6 @@ $(document).ready(function() {
               }
             },
             {
-              data: 'Status',
-              render: function(data, type, row) {
-                return escapeHtml(obtenerNombreStatus(data, row.STATUSID));
-              }
-            },
-            {
               data: null,
               render: function(data, type, row) {
                 return obtenerBadge(row.STATUSID, row.ORDENCHAROLAID);
@@ -220,7 +214,7 @@ $(document).ready(function() {
           responsive: {
             details: {
               type: 'column',
-              target: 0,
+              target: '.dtr-control',
               renderer: function(api, rowIdx, columns) {
                 var data = api.row(rowIdx).data();
                 if (!data || !Array.isArray(data.Detalles) || !data.Detalles.length) {
@@ -287,6 +281,7 @@ $(document).ready(function() {
             infoFiltered: '(filtrado de _MAX_ registros)',
           },
         });
+        $('#TablaOrdenesCharolas').addClass('dtr-inline collapsed');
       },
       error: function(xhr) {
         var mensaje = 'No se pudo cargar la información de requisiciones.';
