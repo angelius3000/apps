@@ -2,6 +2,12 @@
 
 $pageTitle = 'Edison - Charolas';
 
+$tieneAcceso = usuarioTieneAccesoSeccion('charolas');
+if (!$tieneAcceso) {
+    header("Location: main.php");
+    exit;
+}
+
 $charolas = [];
 $charolasError = null;
 if ($conn) {

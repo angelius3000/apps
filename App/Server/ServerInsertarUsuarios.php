@@ -27,6 +27,36 @@ if (!mysqli_query($conn, $sql)) {
 
 $last_id = mysqli_insert_id($conn);
 
+$seccionesSeleccionadas = [];
+if (isset($_POST['secciones']) && is_array($_POST['secciones'])) {
+    $seccionesSeleccionadas = array_map('intval', array_keys($_POST['secciones']));
+}
+
+$resultadoSecciones = mysqli_query($conn, "SELECT SECCIONID FROM secciones ORDER BY Orden, Nombre");
+if ($resultadoSecciones) {
+    $stmtPermiso = mysqli_prepare(
+        $conn,
+        'INSERT INTO usuario_secciones (USUARIOID, SECCIONID, PuedeVer)
+         VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE PuedeVer = VALUES(PuedeVer)'
+    );
+
+    if ($stmtPermiso) {
+        mysqli_stmt_bind_param($stmtPermiso, 'iii', $usuarioIdParam, $seccionIdParam, $puedeVerParam);
+        $usuarioIdParam = (int)$last_id;
+
+        while ($filaSeccion = mysqli_fetch_assoc($resultadoSecciones)) {
+            $seccionIdParam = (int)$filaSeccion['SECCIONID'];
+            $puedeVerParam = in_array($seccionIdParam, $seccionesSeleccionadas, true) ? 1 : 0;
+            mysqli_stmt_execute($stmtPermiso);
+        }
+
+        mysqli_stmt_close($stmtPermiso);
+    }
+
+    mysqli_free_result($resultadoSecciones);
+}
+
 $msg = array('USUARIOID' => $last_id);
 
 // send data as json format

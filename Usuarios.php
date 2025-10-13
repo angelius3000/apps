@@ -1,7 +1,8 @@
 <?php include("includes/HeaderScripts.php");
 
-if ($_SESSION['TIPOUSUARIO'] != 1) {
-    header("Location: index.php");
+if (!usuarioTieneAccesoSeccion('usuarios')) {
+    header("Location: main.php");
+    exit;
 }
 
 $query_TipoDeUsuario = "SELECT * FROM tipodeusuarios";
@@ -11,6 +12,17 @@ $totalRows_TipoDeUsuario = mysqli_num_rows($TipoDeUsuario);
 $query_clientes = "SELECT * FROM clientes";
 $clientes = mysqli_query($conn, $query_clientes) or die(mysqli_error($conn));
 $totalRows_clientes = mysqli_num_rows($clientes);
+
+$seccionesSistema = [];
+if ($conn) {
+    $consultaSecciones = mysqli_query($conn, "SELECT SECCIONID, Nombre FROM secciones ORDER BY Orden, Nombre");
+    if ($consultaSecciones) {
+        while ($filaSeccion = mysqli_fetch_assoc($consultaSecciones)) {
+            $seccionesSistema[] = $filaSeccion;
+        }
+        mysqli_free_result($consultaSecciones);
+    }
+}
 
 
 ?>
@@ -63,13 +75,16 @@ $totalRows_clientes = mysqli_num_rows($clientes);
                         </div>
                         <br>
                         <div class="row">
-                            <table id="UsuariosDT" class="table table-striped" style="width:100%">
+                            <table id="UsuariosDT" class="table table-striped" style="width:100%" data-permiso-count="<?php echo count($seccionesSistema); ?>">
                                 <thead>
                                     <tr>
                                         <th>Nombre</th>
                                         <th>email</th>
                                         <th>Tipo de usuario</th>
                                         <th>Empresa</th>
+                                        <?php foreach ($seccionesSistema as $seccion) { ?>
+                                            <th><?php echo htmlspecialchars($seccion['Nombre'], ENT_QUOTES, 'UTF-8'); ?></th>
+                                        <?php } ?>
                                         <th></th>
                                         <th></th>
                                     </tr>
