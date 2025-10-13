@@ -2,6 +2,12 @@
 
 $pageTitle = 'Edison - Reparto';
 
+$tieneAcceso = usuarioTieneAccesoSeccion('reparto');
+if (!$tieneAcceso) {
+    header("Location: main.php");
+    exit;
+}
+
 $query_clientes = "SELECT * FROM clientes";
 $clientes = mysqli_query($conn, $query_clientes) or die(mysqli_error($conn));
 $totalRows_clientes = mysqli_num_rows($clientes);

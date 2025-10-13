@@ -30,7 +30,39 @@ WHERE usuarios.email = '$colname_UsuarioDeLogIn'";
         $row_UsuarioDeLogIn = null;
         $totalRows_UsuarioDeLogIn = 0;
     }
+
+    if (isset($_SESSION['USUARIOID'])) {
+        $permisos = [];
+        $stmtPermisos = @mysqli_prepare(
+            $conn,
+            'SELECT s.Slug, COALESCE(us.PuedeVer, 0) as PuedeVer
+             FROM secciones s
+             LEFT JOIN usuario_secciones us ON us.SECCIONID = s.SECCIONID AND us.USUARIOID = ?
+             ORDER BY s.Orden, s.Nombre'
+        );
+
+        if ($stmtPermisos) {
+            mysqli_stmt_bind_param($stmtPermisos, 'i', $_SESSION['USUARIOID']);
+            mysqli_stmt_execute($stmtPermisos);
+            mysqli_stmt_bind_result($stmtPermisos, $slugPermiso, $puedeVerPermiso);
+
+            while (mysqli_stmt_fetch($stmtPermisos)) {
+                $permisos[$slugPermiso] = (int)$puedeVerPermiso;
+            }
+
+            mysqli_stmt_close($stmtPermisos);
+        }
+
+        $_SESSION['PermisosSecciones'] = $permisos;
+    }
 } else {
     $row_UsuarioDeLogIn = null;
     $totalRows_UsuarioDeLogIn = 0;
+}
+
+if (!function_exists('usuarioTieneAccesoSeccion')) {
+    function usuarioTieneAccesoSeccion(string $slug): bool
+    {
+        return !empty($_SESSION['PermisosSecciones'][$slug]);
+    }
 }

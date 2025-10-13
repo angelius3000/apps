@@ -114,6 +114,24 @@
 
                                             </div>
 
+                                            <?php if (!empty($seccionesSistema)) { ?>
+                                                <div class="row">
+                                                    <div class="col-lg-12 col-sm-12 mb-4">
+                                                        <label class="form-label d-block">Permisos de secciones</label>
+                                                        <div class="row">
+                                                            <?php foreach ($seccionesSistema as $seccion) { ?>
+                                                                <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
+                                                                    <div class="form-check form-switch">
+                                                                        <input class="form-check-input permiso-seccion" type="checkbox" id="seccion_<?php echo $seccion['SECCIONID']; ?>" name="secciones[<?php echo $seccion['SECCIONID']; ?>]" value="1" data-seccion="<?php echo $seccion['SECCIONID']; ?>" checked>
+                                                                        <label class="form-check-label" for="seccion_<?php echo $seccion['SECCIONID']; ?>"><?php echo htmlspecialchars($seccion['Nombre'], ENT_QUOTES, 'UTF-8'); ?></label>
+                                                                    </div>
+                                                                </div>
+                                                            <?php } ?>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <?php } ?>
+
                                         </div>
                                     </div>
                                 </div>
@@ -239,6 +257,24 @@
                                                 </div>
 
                                             </div>
+
+                                            <?php if (!empty($seccionesSistema)) { ?>
+                                                <div class="row">
+                                                    <div class="col-lg-12 col-sm-12 mb-4">
+                                                        <label class="form-label d-block">Permisos de secciones</label>
+                                                        <div class="row">
+                                                            <?php foreach ($seccionesSistema as $seccion) { ?>
+                                                                <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
+                                                                    <div class="form-check form-switch">
+                                                                        <input class="form-check-input permiso-seccion-editar" type="checkbox" id="seccion_editar_<?php echo $seccion['SECCIONID']; ?>" name="secciones[<?php echo $seccion['SECCIONID']; ?>]" value="1" data-seccion="<?php echo $seccion['SECCIONID']; ?>">
+                                                                        <label class="form-check-label" for="seccion_editar_<?php echo $seccion['SECCIONID']; ?>"><?php echo htmlspecialchars($seccion['Nombre'], ENT_QUOTES, 'UTF-8'); ?></label>
+                                                                    </div>
+                                                                </div>
+                                                            <?php } ?>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <?php } ?>
 
                                         </div>
                                     </div>

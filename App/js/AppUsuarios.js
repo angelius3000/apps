@@ -1,5 +1,11 @@
 $(document).ready(function() {
 
+  $('#ModalAgregarUsuarios').on('show.bs.modal', function () {
+    $(this)
+      .find('input.permiso-seccion')
+      .prop('checked', true);
+  });
+
   $('#ModalAgregarUsuarios').on('shown.bs.modal', function () {
     $('#CLIENTEID').select2({
       dropdownParent: $('#ModalAgregarUsuarios'), // Ajuste importante
@@ -17,6 +23,12 @@ $(document).ready(function() {
     });
   });
   
+  var permisoCount = parseInt($('#UsuariosDT').data('permisoCount'), 10) || 0;
+  var nonOrderableTargets = [];
+  for (var i = 0; i < permisoCount + 2; i++) {
+    nonOrderableTargets.push(4 + i);
+  }
+
   var dataTableUsuarioDT = $("#UsuariosDT").DataTable({
     // Tabla General de Usuarios
 
@@ -47,7 +59,7 @@ $(document).ready(function() {
       type: "post",
     },
 
-    columnDefs: [{ orderable: false, targets: [4, 5] }],
+    columnDefs: [{ orderable: false, targets: nonOrderableTargets }],
 
     lengthChange: true, // añade la lista desplegable
     order: [[0, "DESC"]],
@@ -80,7 +92,7 @@ $(document).ready(function() {
 
           console.log(response.USUARIOID);
 
-          dataTableUsuarioDT.columns.adjust().draw();
+          dataTableUsuarioDT.ajax.reload(null, false);
         },
       }).done(function() {});
 
@@ -114,7 +126,7 @@ $(document).ready(function() {
 
           console.log(response.USUARIOID);
 
-          dataTableUsuarioDT.columns.adjust().draw();
+          dataTableUsuarioDT.ajax.reload(null, false);
         },
       }).done(function() {});
 
@@ -139,7 +151,7 @@ $(document).ready(function() {
       data: dataString,
       dataType: "json",
       success: function(response) {
-        dataTableUsuarioDT.columns.adjust().draw();
+        dataTableUsuarioDT.ajax.reload(null, false);
       },
     }).done(function() {});
 
@@ -189,9 +201,16 @@ function TomarDatosParaModalUsuarios(val) {
       $("input#emailEditar").val(response.Email);
       $("input#TelefonoEditar").val(response.Telefono);
 
-      $("select#TIPODEUSUARIOIDEditar").val(response.TIPODEUSUARIOID);
-      $("select#CLIENTEIDEditar").val(response.CLIENTEID);
+      $("select#TIPODEUSUARIOIDEditar").val(response.TIPODEUSUARIOID).trigger('change');
+      $("select#CLIENTEIDEditar").val(response.CLIENTEID).trigger('change');
       $("input#USUARIOIDEditar").val(response.USUARIOID);
+
+      var permisos = response.Permisos || {};
+      $("#ModalEditarUsuarios input.permiso-seccion-editar").each(function() {
+        var seccionId = String($(this).data("seccion"));
+        var activo = permisos.hasOwnProperty(seccionId) ? permisos[seccionId] == 1 : true;
+        $(this).prop("checked", activo);
+      });
 
       //Para modal de Borrar
 
@@ -209,3 +228,34 @@ function TomarDatosParaModalUsuarios(val) {
     },
   });
 }
+
+$(document).on("change", ".usuario-seccion-toggle", function() {
+  var checkbox = $(this);
+  var nuevoEstado = checkbox.is(":checked");
+  var estadoAnterior = !nuevoEstado;
+  var data = {
+    USUARIOID: checkbox.data("usuario"),
+    SECCIONID: checkbox.data("seccion"),
+    PuedeVer: nuevoEstado ? 1 : 0,
+  };
+
+  checkbox.prop("disabled", true);
+
+  $.ajax({
+    type: "POST",
+    url: "App/Server/ServerActualizarPermisoSeccion.php",
+    data: data,
+    dataType: "json",
+  })
+    .done(function(response) {
+      if (!response || response.success !== true) {
+        checkbox.prop("checked", estadoAnterior);
+      }
+    })
+    .fail(function() {
+      checkbox.prop("checked", estadoAnterior);
+    })
+    .always(function() {
+      checkbox.prop("disabled", false);
+    });
+});

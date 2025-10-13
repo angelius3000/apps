@@ -2,7 +2,7 @@
 
 $pageTitle = 'Edison - Apps';
 
-if (!in_array((int)$_SESSION['TIPOUSUARIO'], [1, 2, 3, 4], true)) {
+if (!usuarioTieneAccesoSeccion('aplicaciones')) {
     header("Location: index.php");
     exit;
 }
