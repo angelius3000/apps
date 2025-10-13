@@ -24,6 +24,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['TipoDeUsuario'] = $data['TipoDeUsuario'];
                 $_SESSION['NombreCliente'] = $data['NombreCliente'];
                $_SESSION['CLIENTEID'] = $data['CLIENTEID'];
+                $seccionInicioRuta = $data['RutaSeccionInicio'] ?? '';
+                $seccionInicioSlug = $data['SlugSeccionInicio'] ?? '';
+                $_SESSION['SeccionInicioID'] = $data['SECCIONINICIOID'] ?? null;
+                $_SESSION['SeccionInicioRuta'] = $seccionInicioRuta;
+                $_SESSION['SeccionInicioSlug'] = $seccionInicioSlug;
 
                 $permisos = [];
                 $stmtPermisos = @mysqli_prepare(
@@ -48,8 +53,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                 $_SESSION['PermisosSecciones'] = $permisos;
 
-               // Redirect all users to the application selector
-               redirect_user('main.php');
+                $destino = 'main.php';
+                if (!empty($seccionInicioRuta)) {
+                    $puedeIngresar = true;
+                    if ($seccionInicioSlug !== '') {
+                        $puedeIngresar = !isset($permisos[$seccionInicioSlug]) || (int)$permisos[$seccionInicioSlug] === 1;
+                    }
+                    if ($puedeIngresar) {
+                        $destino = $seccionInicioRuta;
+                    }
+                }
+
+                redirect_user($destino);
        } else { // Unsuccessful!
                // Failed login should return to the login form with an error
                redirect_user('index.php?login=no');

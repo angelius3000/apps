@@ -28,6 +28,7 @@ $msg = array(
     'Telefono' => $row['Telefono'],
     'CLIENTEID' => $row['CLIENTEID'],
     'TIPODEUSUARIOID' => $row['TIPODEUSUARIOID'],
+    'SeccionInicioID' => $row['SECCIONINICIOID'],
     'Permisos' => $permisos
 );
 
