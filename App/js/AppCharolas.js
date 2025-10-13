@@ -467,6 +467,28 @@ $(document).ready(function() {
 
   cargarOrdenes();
 
+  function actualizarIconosResponsive() {
+    if (!tablaOrdenes) {
+      return;
+    }
+
+    $('#TablaOrdenesCharolas tbody tr').each(function() {
+      var $fila = $(this);
+      var $icono = $fila.find('td.dt-control .dt-control-icon, td.dtr-control .dt-control-icon');
+      if (!$icono.length) {
+        return;
+      }
+
+      if ($fila.hasClass('parent')) {
+        $icono.text('−');
+        $icono.addClass('is-open');
+      } else {
+        $icono.text('+');
+        $icono.removeClass('is-open');
+      }
+    });
+  }
+
   $('#CalcularBtn').on('click', function() {
     var charolaId = $('#CHAROLASID').val();
     var cantidad = $('#CantidadCharolas').val();
