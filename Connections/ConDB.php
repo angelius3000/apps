@@ -28,4 +28,37 @@ if ($conn === false) {
     $connectionError = mysqli_connect_error();
 } else {
     mysqli_set_charset($conn, 'utf8mb4');
+
+    // Ensure new user profiles exist so they are available across the
+    // application without requiring a manual database migration.
+    $perfilesNuevos = ['Auditor', 'Supervisor'];
+    foreach ($perfilesNuevos as $perfil) {
+        $stmt = @mysqli_prepare(
+            $conn,
+            'SELECT TIPODEUSUARIOID FROM tipodeusuarios WHERE TipoDeUsuario = ? LIMIT 1'
+        );
+
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, 's', $perfil);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_store_result($stmt);
+
+            if (mysqli_stmt_num_rows($stmt) === 0) {
+                mysqli_stmt_close($stmt);
+
+                $insertStmt = @mysqli_prepare(
+                    $conn,
+                    'INSERT INTO tipodeusuarios (TipoDeUsuario) VALUES (?)'
+                );
+
+                if ($insertStmt) {
+                    mysqli_stmt_bind_param($insertStmt, 's', $perfil);
+                    mysqli_stmt_execute($insertStmt);
+                    mysqli_stmt_close($insertStmt);
+                }
+            } else {
+                mysqli_stmt_close($stmt);
+            }
+        }
+    }
 }
