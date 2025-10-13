@@ -4,6 +4,8 @@ $(document).ready(function() {
     $(this)
       .find('input.permiso-seccion')
       .prop('checked', true);
+
+    $('#SeccionInicioID').val('');
   });
 
   $('#ModalAgregarUsuarios').on('shown.bs.modal', function () {
@@ -203,6 +205,7 @@ function TomarDatosParaModalUsuarios(val) {
 
       $("select#TIPODEUSUARIOIDEditar").val(response.TIPODEUSUARIOID).trigger('change');
       $("select#CLIENTEIDEditar").val(response.CLIENTEID).trigger('change');
+      $("select#SeccionInicioIDEditar").val(response.SeccionInicioID || '').trigger('change');
       $("input#USUARIOIDEditar").val(response.USUARIOID);
 
       var permisos = response.Permisos || {};

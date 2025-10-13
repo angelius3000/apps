@@ -142,6 +142,43 @@ if ($conn === false) {
         mysqli_stmt_close($stmtInsertSeccion);
     }
 
+    $columnaSeccionInicio = @mysqli_query(
+        $conn,
+        "SHOW COLUMNS FROM usuarios LIKE 'SECCIONINICIOID'"
+    );
+
+    if ($columnaSeccionInicio && mysqli_num_rows($columnaSeccionInicio) === 0) {
+        @mysqli_query(
+            $conn,
+            'ALTER TABLE usuarios ADD COLUMN SECCIONINICIOID INT NULL DEFAULT NULL'
+        );
+    }
+
+    if ($columnaSeccionInicio) {
+        mysqli_free_result($columnaSeccionInicio);
+    }
+
+    $constraintSeccionInicio = @mysqli_query(
+        $conn,
+        "SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE\n"
+            . "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'usuarios'\n"
+            . "AND COLUMN_NAME = 'SECCIONINICIOID' AND REFERENCED_TABLE_NAME = 'secciones' LIMIT 1"
+    );
+
+    if ($constraintSeccionInicio && mysqli_num_rows($constraintSeccionInicio) === 0) {
+        @mysqli_query(
+            $conn,
+            'ALTER TABLE usuarios '
+                . 'ADD CONSTRAINT fk_usuarios_seccion_inicio '
+                . 'FOREIGN KEY (SECCIONINICIOID) REFERENCES secciones (SECCIONID) '
+                . 'ON DELETE SET NULL ON UPDATE CASCADE'
+        );
+    }
+
+    if ($constraintSeccionInicio) {
+        mysqli_free_result($constraintSeccionInicio);
+    }
+
     $seccionesRegistradas = [];
     $resultadoSecciones = @mysqli_query(
         $conn,

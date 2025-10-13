@@ -17,9 +17,13 @@ $USUARIOIDEditar = mysqli_real_escape_string($conn, $_POST['USUARIOIDEditar']);
 $CLIENTEIDEditar = isset($_POST['CLIENTEIDEditar']) && $_POST['CLIENTEIDEditar'] !== ''
     ? (int)$_POST['CLIENTEIDEditar']
     : null;
+$SeccionInicioIDEditar = isset($_POST['SeccionInicioIDEditar']) && $_POST['SeccionInicioIDEditar'] !== ''
+    ? (int)$_POST['SeccionInicioIDEditar']
+    : null;
 
 // Build the base query
 $clienteSql = $CLIENTEIDEditar !== null ? "'" . $CLIENTEIDEditar . "'" : "NULL";
+$seccionInicioSql = $SeccionInicioIDEditar !== null ? "'" . $SeccionInicioIDEditar . "'" : "NULL";
 
 $sql = "UPDATE usuarios SET
     PrimerNombre = '$PrimerNombreEditar',
@@ -29,7 +33,8 @@ $sql = "UPDATE usuarios SET
     email = '$emailEditar',
     Telefono = '$TelefonoEditar',
     TIPODEUSUARIOID = '$TIPODEUSUARIOIDEditar',
-    CLIENTEID = $clienteSql
+    CLIENTEID = $clienteSql,
+    SECCIONINICIOID = $seccionInicioSql
     WHERE USUARIOID = '$USUARIOIDEditar'";
 
 if (!mysqli_query($conn, $sql)) {
@@ -70,6 +75,31 @@ if ($resultadoSecciones) {
 }
 
 if (isset($_SESSION['USUARIOID']) && (int)$_SESSION['USUARIOID'] === (int)$USUARIOIDEditar) {
+    $_SESSION['SeccionInicioID'] = $SeccionInicioIDEditar;
+    $_SESSION['SeccionInicioRuta'] = '';
+    $_SESSION['SeccionInicioSlug'] = '';
+
+    if ($SeccionInicioIDEditar !== null) {
+        $stmtSeccionInicio = @mysqli_prepare(
+            $conn,
+            'SELECT Ruta, Slug FROM secciones WHERE SECCIONID = ? LIMIT 1'
+        );
+
+        if ($stmtSeccionInicio) {
+            mysqli_stmt_bind_param($stmtSeccionInicio, 'i', $seccionInicioConsulta);
+            $seccionInicioConsulta = (int)$SeccionInicioIDEditar;
+            mysqli_stmt_execute($stmtSeccionInicio);
+            mysqli_stmt_bind_result($stmtSeccionInicio, $rutaSeccionInicio, $slugSeccionInicio);
+
+            if (mysqli_stmt_fetch($stmtSeccionInicio)) {
+                $_SESSION['SeccionInicioRuta'] = $rutaSeccionInicio ?? '';
+                $_SESSION['SeccionInicioSlug'] = $slugSeccionInicio ?? '';
+            }
+
+            mysqli_stmt_close($stmtSeccionInicio);
+        }
+    }
+
     $permisos = [];
     $stmtPermisos = @mysqli_prepare(
         $conn,

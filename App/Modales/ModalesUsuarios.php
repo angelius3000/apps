@@ -32,6 +32,15 @@
 
                                                     </select>
                                                 </div>
+                                                <div class="col-lg-12 col-sm-12 mb-4">
+                                                    <label for="SeccionInicioID" class="form-label">Sección de inicio</label>
+                                                    <select class="form-select" name="SeccionInicioID" id="SeccionInicioID" aria-label="Selecciona sección de inicio">
+                                                        <option value="">Selecciona sección de inicio</option>
+                                                        <?php foreach ($seccionesSistema as $seccion) { ?>
+                                                            <option value="<?php echo (int)$seccion['SECCIONID']; ?>"><?php echo htmlspecialchars($seccion['Nombre'], ENT_QUOTES, 'UTF-8'); ?></option>
+                                                        <?php } ?>
+                                                    </select>
+                                                </div>
                                             </div>
 
                                             <div class="row" style="display:none" id="ClientesEscondidos">
@@ -180,6 +189,16 @@
                                                         <?php } ?>
 
 
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-lg-12 col-sm-12 mb-4">
+                                                    <label for="SeccionInicioIDEditar" class="form-label">Sección de inicio</label>
+                                                    <select class="form-select" name="SeccionInicioIDEditar" id="SeccionInicioIDEditar" aria-label="Selecciona sección de inicio">
+                                                        <option value="">Selecciona sección de inicio</option>
+                                                        <?php foreach ($seccionesSistema as $seccion) { ?>
+                                                            <option value="<?php echo (int)$seccion['SECCIONID']; ?>"><?php echo htmlspecialchars($seccion['Nombre'], ENT_QUOTES, 'UTF-8'); ?></option>
+                                                        <?php } ?>
                                                     </select>
                                                 </div>
 
