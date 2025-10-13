@@ -281,7 +281,7 @@ $(document).ready(function() {
     var tabla = $('#TablaOrdenesCharolas');
     var thead = tabla.find('thead');
     var encabezado = '<tr>' +
-      '<th scope="col" class="text-center"><span class="visually-hidden">Detalle</span></th>' +
+      '<th scope="col" class="text-center detalle-control"><span class="visually-hidden">Detalle</span></th>' +
       '<th scope="col">Requisición</th>' +
       '<th scope="col">SKU</th>' +
       '<th scope="col">Descripción</th>' +
@@ -353,7 +353,7 @@ $(document).ready(function() {
             totales = detalles.length ? calcularTotalesMateriales(detalles) : normalizarTotalesMateriales({});
           }
 
-          var filaSanitizada = {
+          var datosDetalle = {
             ORDENCHAROLAID: row.ORDENCHAROLAID,
             CHAROLASID: row.CHAROLASID,
             SkuCharolas: row.SkuCharolas,
@@ -365,7 +365,15 @@ $(document).ready(function() {
             _totalesMateriales: normalizarTotalesMateriales(totales)
           };
 
-          datosTabla.push(filaSanitizada);
+          datosTabla.push({
+            datos: datosDetalle,
+            ORDENCHAROLAID: row.ORDENCHAROLAID,
+            SkuCharolas: row.SkuCharolas,
+            DescripcionCharolas: row.DescripcionCharolas,
+            Cantidad: row.Cantidad,
+            STATUSID: row.STATUSID,
+            badgeHtml: obtenerBadge(row.STATUSID, row.ORDENCHAROLAID)
+          });
         });
 
         asegurarEncabezadoTabla();
@@ -379,49 +387,26 @@ $(document).ready(function() {
           autoWidth: false,
           columns: [
             {
-              data: null,
-              className: 'text-center detalle-control',
+              data: 'datos',
+              className: 'text-center detalle-control align-middle',
               orderable: false,
-              defaultContent: '<button type="button" class="btn btn-link p-0 toggle-detalle" aria-expanded="false"><span class="toggle-detalle-badge" aria-hidden="true">+</span><span class="visually-hidden">Mostrar detalles</span></button>'
+              render: function() {
+                return '<button type="button" class="btn btn-link p-0 toggle-detalle" aria-expanded="false"><span class="toggle-detalle-badge" aria-hidden="true">+</span><span class="visually-hidden">Mostrar detalles</span></button>';
+              }
             },
             { data: 'ORDENCHAROLAID' },
             { data: 'SkuCharolas' },
             { data: 'DescripcionCharolas' },
             { data: 'Cantidad' },
             {
-              data: 'Largueros',
-              render: function(data, type, row) {
-                return renderMaterial(data, row, 'Largueros');
-              }
-            },
-            {
-              data: 'Tornilleria',
-              render: function(data, type, row) {
-                return renderMaterial(data, row, 'Tornilleria');
-              }
-            },
-            {
-              data: 'JuntaZeta',
-              render: function(data, type, row) {
-                return renderMaterial(data, row, 'JuntaZeta');
-              }
-            },
-            {
-              data: 'Traves',
-              render: function(data, type, row) {
-                return renderMaterial(data, row, 'Traves');
-              }
-            },
-            {
-              data: null,
-              render: function(data, type, row) {
-                return obtenerBadge(row.STATUSID, row.ORDENCHAROLAID);
-              }
+              data: 'badgeHtml',
+              orderable: false,
+              searchable: false
             }
           ],
           columnDefs: [
             { targets: 0, width: '1%', orderable: false, searchable: false },
-            { targets: -1, orderable: false }
+            { targets: -1, orderable: false, searchable: false }
           ],
           language: {
             search: 'Búsqueda:',
@@ -456,7 +441,9 @@ $(document).ready(function() {
               row.child.hide();
               tr.removeClass('detalle-abierto');
             } else {
-              var detalleHtml = construirDetalleRequisicion(row.data());
+              var dataFila = row.data();
+              var detalle = dataFila && dataFila.datos ? dataFila.datos : null;
+              var detalleHtml = construirDetalleRequisicion(detalle);
               row.child(detalleHtml, 'detalle-requisicion__child').show();
               tr.addClass('detalle-abierto');
             }
