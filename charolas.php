@@ -32,6 +32,10 @@ $mensajeRestriccionVerificado = 'Solo un administrador, supervisor o auditor pue
 $tiposPermitidosVerificado = ['administrador', 'supervisor', 'auditor'];
 $tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string) $_SESSION['TipoDeUsuario'])) : '';
 $puedeAsignarVerificado = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $tiposPermitidosVerificado, true);
+$statusAuditadoNombre = 'Auditado';
+$statusAuditadoId = null;
+$mensajeRestriccionAuditado = 'Solo un auditor puede asignar el estatus Auditado.';
+$puedeAsignarAuditado = $tipoUsuarioActual === 'auditor';
 
 if ($conn) {
     $stmtStatusVerificado = @mysqli_prepare($conn, 'SELECT STATUSID FROM status WHERE Status = ? LIMIT 1');
@@ -43,6 +47,17 @@ if ($conn) {
             $statusVerificadoId = (int) $statusVerificadoIdTmp;
         }
         mysqli_stmt_close($stmtStatusVerificado);
+    }
+
+    $stmtStatusAuditado = @mysqli_prepare($conn, 'SELECT STATUSID FROM status WHERE Status = ? LIMIT 1');
+    if ($stmtStatusAuditado) {
+        mysqli_stmt_bind_param($stmtStatusAuditado, 's', $statusAuditadoNombre);
+        mysqli_stmt_execute($stmtStatusAuditado);
+        mysqli_stmt_bind_result($stmtStatusAuditado, $statusAuditadoIdTmp);
+        if (mysqli_stmt_fetch($stmtStatusAuditado)) {
+            $statusAuditadoId = (int) $statusAuditadoIdTmp;
+        }
+        mysqli_stmt_close($stmtStatusAuditado);
     }
 }
 ?>
@@ -145,6 +160,10 @@ if ($conn) {
             'nombreStatusVerificado' => $statusVerificadoNombre,
             'puedeAsignarVerificado' => $puedeAsignarVerificado,
             'mensajeRestriccionVerificado' => $mensajeRestriccionVerificado,
+            'statusAuditadoId' => $statusAuditadoId,
+            'nombreStatusAuditado' => $statusAuditadoNombre,
+            'puedeAsignarAuditado' => $puedeAsignarAuditado,
+            'mensajeRestriccionAuditado' => $mensajeRestriccionAuditado,
         ], JSON_UNESCAPED_UNICODE); ?>;
     </script>
 

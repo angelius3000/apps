@@ -19,6 +19,11 @@
                                     <?php echo htmlspecialchars($statusVerificadoNombre, ENT_QUOTES, 'UTF-8'); ?><?php if (!$puedeAsignarVerificado) { ?> (solo supervisor, auditor o administrador)<?php } ?>
                                 </option>
                             <?php } ?>
+                            <?php if ($statusAuditadoId !== null) { ?>
+                                <option value="<?php echo htmlspecialchars((string) $statusAuditadoId, ENT_QUOTES, 'UTF-8'); ?>"<?php echo !$puedeAsignarAuditado ? ' data-requires-auditor="true"' : ''; ?>>
+                                    <?php echo htmlspecialchars($statusAuditadoNombre, ENT_QUOTES, 'UTF-8'); ?><?php if (!$puedeAsignarAuditado) { ?> (solo auditor)<?php } ?>
+                                </option>
+                            <?php } ?>
                         </select>
                     </div>
                 </div>

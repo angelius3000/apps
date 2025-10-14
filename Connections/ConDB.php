@@ -73,7 +73,7 @@ if ($conn === false) {
     }
 
     if ($puedeGestionarStatus) {
-        $estatusRequeridos = ['Verificado'];
+        $estatusRequeridos = ['Verificado', 'Auditado'];
         foreach ($estatusRequeridos as $estatus) {
             $stmtStatus = @mysqli_prepare(
                 $conn,

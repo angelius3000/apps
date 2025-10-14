@@ -19,6 +19,17 @@ $(document).ready(function() {
     ? configuracionCharolas.mensajeRestriccionVerificado
     : 'Solo un administrador, supervisor o auditor puede asignar el estatus Verificado.';
   var nombreStatusVerificadoNormalizado = '';
+  var statusAuditadoId = configuracionCharolas.statusAuditadoId !== null && configuracionCharolas.statusAuditadoId !== undefined
+    ? String(configuracionCharolas.statusAuditadoId)
+    : null;
+  var nombreStatusAuditado = typeof configuracionCharolas.nombreStatusAuditado === 'string' && configuracionCharolas.nombreStatusAuditado.trim() !== ''
+    ? configuracionCharolas.nombreStatusAuditado
+    : 'Auditado';
+  var puedeAsignarAuditado = !!configuracionCharolas.puedeAsignarAuditado;
+  var mensajeRestriccionAuditado = typeof configuracionCharolas.mensajeRestriccionAuditado === 'string' && configuracionCharolas.mensajeRestriccionAuditado.trim() !== ''
+    ? configuracionCharolas.mensajeRestriccionAuditado
+    : 'Solo un auditor puede asignar el estatus Auditado.';
+  var nombreStatusAuditadoNormalizado = '';
 
   function obtenerNombreVerificadoNormalizado() {
     if (!nombreStatusVerificadoNormalizado) {
@@ -46,6 +57,32 @@ $(document).ready(function() {
     return normalizarTexto(statusTexto) === nombreNormalizado;
   }
 
+  function obtenerNombreAuditadoNormalizado() {
+    if (!nombreStatusAuditadoNormalizado) {
+      nombreStatusAuditadoNormalizado = normalizarTexto(nombreStatusAuditado);
+    }
+    return nombreStatusAuditadoNormalizado;
+  }
+
+  function esStatusAuditado(statusId, statusTexto) {
+    var statusIdTexto = statusId !== null && statusId !== undefined ? String(statusId) : '';
+
+    if (statusAuditadoId && statusIdTexto === statusAuditadoId) {
+      return true;
+    }
+
+    if (statusTexto === undefined || statusTexto === null) {
+      return false;
+    }
+
+    var nombreNormalizado = obtenerNombreAuditadoNormalizado();
+    if (nombreNormalizado === '') {
+      return false;
+    }
+
+    return normalizarTexto(statusTexto) === nombreNormalizado;
+  }
+
   function obtenerBadge(statusId, orderId, statusTexto) {
     var statusIdTexto = statusId !== null && statusId !== undefined ? String(statusId) : '';
     var orderIdTexto = orderId !== null && orderId !== undefined ? String(orderId) : '';
@@ -53,6 +90,10 @@ $(document).ready(function() {
 
     if (esStatusVerificado(statusIdTexto, statusTexto)) {
       return '<span class="badge badge-primary badge-status" ' + mandarModal + '>' + escapeHtml(nombreStatusVerificado) + '</span>';
+    }
+
+    if (esStatusAuditado(statusIdTexto, statusTexto)) {
+      return '<span class="badge badge-info badge-status" ' + mandarModal + '>' + escapeHtml(nombreStatusAuditado) + '</span>';
     }
 
     switch (statusIdTexto) {
@@ -114,6 +155,10 @@ $(document).ready(function() {
   function obtenerNombreStatus(statusTexto, statusId) {
     if (esStatusVerificado(statusId, statusTexto)) {
       return nombreStatusVerificado;
+    }
+
+    if (esStatusAuditado(statusId, statusTexto)) {
+      return nombreStatusAuditado;
     }
 
     if (statusTexto && statusTexto.toString().trim() !== '') {
@@ -617,6 +662,16 @@ $(document).ready(function() {
         $('#NuevoStatusCharola').val('');
       }
       window.alert(mensajeRestriccionVerificado);
+      return;
+    }
+
+    if (!puedeAsignarAuditado && statusAuditadoId && statusId === statusAuditadoId) {
+      if (valorInicial !== undefined) {
+        $('#NuevoStatusCharola').val(String(valorInicial));
+      } else {
+        $('#NuevoStatusCharola').val('');
+      }
+      window.alert(mensajeRestriccionAuditado);
       return;
     }
 
