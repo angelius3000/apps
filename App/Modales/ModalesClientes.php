@@ -17,12 +17,12 @@
                                             <div class="row">
                                                 <div class="col-lg-6 col-sm-12 mb-4">
                                                     <label for="CLIENTESIAN" class="form-label">Número de cliente</label>
-                                                    <input type="text" class="form-control" id="CLIENTESIAN" autocomplete="off" placeholder="8923" name="CLIENTESIAN" required>
+                                                    <input type="text" class="form-control" id="CLIENTESIAN" autocomplete="off" placeholder="8923" name="CLIENTESIAN" data-parsley-requireclientnumber="#CLCSIAN" data-parsley-requireclientnumber-message="Captura al menos uno de los números de cliente" data-parsley-trigger="keyup change focusout">
 
                                                 </div>
                                                 <div class="col-lg-6 col-sm-12 mb-4">
                                                     <label for="CLCSIAN" class="form-label">Número de crédito</label>
-                                                    <input type="text" class="form-control" id="CLCSIAN" autocomplete="off" placeholder="107" name="CLCSIAN">
+                                                    <input type="text" class="form-control" id="CLCSIAN" autocomplete="off" placeholder="107" name="CLCSIAN" data-parsley-requireclientnumber="#CLIENTESIAN" data-parsley-requireclientnumber-message="Captura al menos uno de los números de cliente" data-parsley-trigger="keyup change focusout">
 
                                                 </div>
                                                 <div class="col-lg-6 col-sm-12 mb-4">
@@ -121,12 +121,12 @@
 
                                                 <div class="col-lg-6 col-sm-12 mb-4">
                                                     <label for="CLIENTESIANEditar" class="form-label">Número de cliente</label>
-                                                    <input type="text" class="form-control" id="CLIENTESIANEditar" autocomplete="off" placeholder="" name="CLIENTESIANEditar" required>
+                                                    <input type="text" class="form-control" id="CLIENTESIANEditar" autocomplete="off" placeholder="" name="CLIENTESIANEditar" data-parsley-requireclientnumber="#CLCSIANEditar" data-parsley-requireclientnumber-message="Captura al menos uno de los números de cliente" data-parsley-trigger="keyup change focusout">
 
                                                 </div>
                                                 <div class="col-lg-6 col-sm-12 mb-4">
                                                     <label for="CLCSIANEditar" class="form-label">Número de crédito</label>
-                                                    <input type="text" class="form-control" id="CLCSIANEditar" autocomplete="off" placeholder="107" name="CLCSIANEditar">
+                                                    <input type="text" class="form-control" id="CLCSIANEditar" autocomplete="off" placeholder="107" name="CLCSIANEditar" data-parsley-requireclientnumber="#CLIENTESIANEditar" data-parsley-requireclientnumber-message="Captura al menos uno de los números de cliente" data-parsley-trigger="keyup change focusout">
 
                                                 </div>
                                                 <div class="col-lg-6 col-sm-12 mb-4">
