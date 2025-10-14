@@ -22,16 +22,20 @@ function check_login($dbc, $username = '', $pass = '')
 	if (empty($username)) {
 		$errors[] = 'You forgot to enter your email address.';
 	} else {
-		$u = mysqli_real_escape_string($dbc, trim($username));
+		$trimmedUsername = trim($username);
+
+		if (!filter_var($trimmedUsername, FILTER_VALIDATE_EMAIL)) {
+			$errors[] = 'The email address is not valid.';
+		} else {
+			$u = $trimmedUsername;
+		}
 	}
 
 	// Validate the password:
 	if (empty($pass)) {
 		$errors[] = 'You forgot to enter your password.';
 	} else {
-		$p = mysqli_real_escape_string($dbc, trim($pass));
-		$p = SHA1($p); // Aqui encrypto el passowrd
-
+		$p = SHA1(trim($pass)); // Aqui encrypto el passowrd
 	}
 
 	if (empty($errors)) { // If everything's OK.
@@ -41,19 +45,39 @@ function check_login($dbc, $username = '', $pass = '')
 		LEFT JOIN tipodeusuarios ON usuarios.TIPODEUSUARIOID = tipodeusuarios.TIPODEUSUARIOID 
 		LEFT JOIN clientes ON usuarios.CLIENTEID = clientes.CLIENTEID
 		LEFT JOIN secciones ON usuarios.SECCIONINICIOID = secciones.SECCIONID
-		WHERE email='$u' AND Password ='$p'";		// 
-		$r = @mysqli_query($dbc, $q); // Run the query.
+		WHERE email = ? AND Password = ?";
 
-		// Check the result:
-		if (mysqli_num_rows($r) == 1) {
+		$stmt = @mysqli_prepare($dbc, $q);
 
-			// Fetch the record:
-			$row = mysqli_fetch_array($r, MYSQLI_ASSOC);
+		if ($stmt === false) {
+			$errors[] = 'Unable to process the login request at this time.';
+		} else {
+			mysqli_stmt_bind_param($stmt, 'ss', $u, $p);
+			mysqli_stmt_execute($stmt);
+			$r = mysqli_stmt_get_result($stmt);
 
-			// Return true and the record:
-			return array(true, $row);
-		} else { // Not a match!
-			$errors[] = 'The email address and password entered do not match those on file.';
+			// Check the result:
+			if ($r && mysqli_num_rows($r) == 1) {
+
+				// Fetch the record:
+				$row = mysqli_fetch_array($r, MYSQLI_ASSOC);
+
+				if ($r instanceof mysqli_result) {
+					mysqli_free_result($r);
+				}
+
+				mysqli_stmt_close($stmt);
+
+				// Return true and the record:
+				return array(true, $row);
+			} else { // Not a match!
+				$errors[] = 'The email address and password entered do not match those on file.';
+				if ($r instanceof mysqli_result) {
+					mysqli_free_result($r);
+				}
+
+				mysqli_stmt_close($stmt);
+			}
 		}
 	} // End of empty($errors) IF.
 
