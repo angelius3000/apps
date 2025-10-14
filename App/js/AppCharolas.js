@@ -7,9 +7,55 @@ $(document).ready(function() {
 
   var tablaOrdenes;
 
-  function obtenerBadge(statusId, orderId) {
-    var mandarModal = 'data-bs-toggle="modal" data-bs-target="#ModalCambioStatusCharola" data-order="' + orderId + '" data-status="' + statusId + '"';
-    switch (statusId) {
+  var configuracionCharolas = window.charolasConfig || {};
+  var statusVerificadoId = configuracionCharolas.statusVerificadoId !== null && configuracionCharolas.statusVerificadoId !== undefined
+    ? String(configuracionCharolas.statusVerificadoId)
+    : null;
+  var nombreStatusVerificado = typeof configuracionCharolas.nombreStatusVerificado === 'string' && configuracionCharolas.nombreStatusVerificado.trim() !== ''
+    ? configuracionCharolas.nombreStatusVerificado
+    : 'Verificado';
+  var puedeAsignarVerificado = !!configuracionCharolas.puedeAsignarVerificado;
+  var mensajeRestriccionVerificado = typeof configuracionCharolas.mensajeRestriccionVerificado === 'string' && configuracionCharolas.mensajeRestriccionVerificado.trim() !== ''
+    ? configuracionCharolas.mensajeRestriccionVerificado
+    : 'Solo un administrador, supervisor o auditor puede asignar el estatus Verificado.';
+  var nombreStatusVerificadoNormalizado = '';
+
+  function obtenerNombreVerificadoNormalizado() {
+    if (!nombreStatusVerificadoNormalizado) {
+      nombreStatusVerificadoNormalizado = normalizarTexto(nombreStatusVerificado);
+    }
+    return nombreStatusVerificadoNormalizado;
+  }
+
+  function esStatusVerificado(statusId, statusTexto) {
+    var statusIdTexto = statusId !== null && statusId !== undefined ? String(statusId) : '';
+
+    if (statusVerificadoId && statusIdTexto === statusVerificadoId) {
+      return true;
+    }
+
+    if (statusTexto === undefined || statusTexto === null) {
+      return false;
+    }
+
+    var nombreNormalizado = obtenerNombreVerificadoNormalizado();
+    if (nombreNormalizado === '') {
+      return false;
+    }
+
+    return normalizarTexto(statusTexto) === nombreNormalizado;
+  }
+
+  function obtenerBadge(statusId, orderId, statusTexto) {
+    var statusIdTexto = statusId !== null && statusId !== undefined ? String(statusId) : '';
+    var orderIdTexto = orderId !== null && orderId !== undefined ? String(orderId) : '';
+    var mandarModal = 'data-bs-toggle="modal" data-bs-target="#ModalCambioStatusCharola" data-order="' + escapeHtml(orderIdTexto) + '" data-status="' + escapeHtml(statusIdTexto) + '"';
+
+    if (esStatusVerificado(statusIdTexto, statusTexto)) {
+      return '<span class="badge badge-primary badge-status" ' + mandarModal + '>' + escapeHtml(nombreStatusVerificado) + '</span>';
+    }
+
+    switch (statusIdTexto) {
       case '1':
         return '<span class="badge badge-info badge-status" ' + mandarModal + '>Registrada</span>';
       case '2':
@@ -20,8 +66,13 @@ $(document).ready(function() {
         return '<span class="badge badge-dark badge-status" ' + mandarModal + '>Entregada</span>';
       case '5':
         return '<span class="badge badge-danger badge-status" ' + mandarModal + '>Cancelada</span>';
-      default:
+      default: {
+        var nombreStatus = obtenerNombreStatus(statusTexto, statusIdTexto);
+        if (nombreStatus) {
+          return '<span class="badge badge-secondary badge-status" ' + mandarModal + '>' + escapeHtml(nombreStatus) + '</span>';
+        }
         return '';
+      }
     }
   }
 
@@ -61,6 +112,10 @@ $(document).ready(function() {
   }
 
   function obtenerNombreStatus(statusTexto, statusId) {
+    if (esStatusVerificado(statusId, statusTexto)) {
+      return nombreStatusVerificado;
+    }
+
     if (statusTexto && statusTexto.toString().trim() !== '') {
       return statusTexto;
     }
@@ -372,7 +427,7 @@ $(document).ready(function() {
             DescripcionCharolas: row.DescripcionCharolas,
             Cantidad: row.Cantidad,
             STATUSID: row.STATUSID,
-            badgeHtml: obtenerBadge(row.STATUSID, row.ORDENCHAROLAID)
+            badgeHtml: obtenerBadge(row.STATUSID, row.ORDENCHAROLAID, row.Status)
           });
         });
 
@@ -538,23 +593,52 @@ $(document).ready(function() {
   $('#TablaOrdenesCharolas').on('click', '.badge-status', function() {
     var orderId = $(this).data('order');
     var statusId = $(this).data('status');
+    var statusIdTexto = statusId !== undefined && statusId !== null ? String(statusId) : '';
     $('#ORDENCHAROLAIDEditar').val(orderId);
-    $('#NuevoStatusCharola').val(statusId);
+    $('#NuevoStatusCharola').val(statusIdTexto);
+    $('#NuevoStatusCharola').data('valor-inicial', statusIdTexto);
   });
 
   $('#FormEditarStatusCharola').on('submit', function(e) {
     e.preventDefault();
     var orderId = $('#ORDENCHAROLAIDEditar').val();
     var statusId = $('#NuevoStatusCharola').val();
+    var valorInicial = $('#NuevoStatusCharola').data('valor-inicial');
+
+    if (valorInicial !== undefined && statusId === String(valorInicial)) {
+      $('#ModalCambioStatusCharola').modal('hide');
+      return;
+    }
+
+    if (!puedeAsignarVerificado && statusVerificadoId && statusId === statusVerificadoId) {
+      if (valorInicial !== undefined) {
+        $('#NuevoStatusCharola').val(String(valorInicial));
+      } else {
+        $('#NuevoStatusCharola').val('');
+      }
+      window.alert(mensajeRestriccionVerificado);
+      return;
+    }
 
     $.ajax({
       type: 'POST',
       url: 'App/Server/ServerUpdateOrdenCharolas.php',
       data: { ORDENCHAROLAID: orderId, STATUSID: statusId },
       dataType: 'json',
-      success: function() {
+      success: function(response) {
+        if (response && response.error) {
+          window.alert(response.error);
+          return;
+        }
         $('#ModalCambioStatusCharola').modal('hide');
         cargarOrdenes();
+      },
+      error: function(xhr) {
+        var mensaje = 'No se pudo actualizar el estatus.';
+        if (xhr && xhr.responseJSON && xhr.responseJSON.error) {
+          mensaje = xhr.responseJSON.error;
+        }
+        window.alert(mensaje);
       }
     });
   });
