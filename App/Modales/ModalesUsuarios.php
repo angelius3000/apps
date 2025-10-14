@@ -323,7 +323,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Deshabilitar usuarios</h5>
+                <h5 class="modal-title" id="ModalDeshabilitarUsuariosTitulo">Deshabilitar usuarios</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="btn-close"></button>
             </div>
 
@@ -332,10 +332,7 @@
                     <div class="col-sm-12">
                         <div class="card">
                             <div class="card-body">
-
-                                Deseas dehabilitar este usuario?
-
-                                <br>
+                                <p id="ModalDeshabilitarUsuariosMensaje">¿Deseas deshabilitar este usuario?</p>
                                 <br>
                                 <h3 id="NombreUsuarioDeshabilitar"></h3>
 
@@ -347,10 +344,11 @@
             <div class="modal-footer">
 
                 <input type="hidden" id="USUARIOIDDeshabilitar" name="USUARIOIDDeshabilitar">
+                <input type="hidden" id="EstadoNuevoUsuario" name="EstadoNuevoUsuario" value="1">
 
 
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <button type="button" id="DeshabilitarUsuario" class="btn btn-danger">
+                <button type="button" id="CambiarEstadoUsuario" class="btn btn-danger">
                     Deshabilitar</button>
             </div>
 
