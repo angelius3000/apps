@@ -37,6 +37,7 @@ if (!empty($requestData['search']['value'])) {
     foreach ($search_words as $word) {
         $sql_words[] = "(
             clientes.CLIENTESIAN LIKE '%" . $word . "%' OR
+            clientes.CLCSIAN LIKE '%" . $word . "%' OR
             clientes.NombreCliente LIKE '%" . $word . "%' OR
             clientes.EmailCliente LIKE '%" . $word . "%' OR
             clientes.TelefonoCliente LIKE '%" . $word . "%' OR
