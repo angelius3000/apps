@@ -102,6 +102,7 @@ if ($conn) {
     </div>
 
     <?php include("App/Modales/ModalesUsuarios.php") ?>
+    <?php include("App/Modales/ModalBorrarUsuarios.php") ?>
 
     <!-- Javascripts -->
     <script src="assets/plugins/jquery/jquery-3.5.1.min.js"></script>
