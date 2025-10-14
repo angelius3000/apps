@@ -160,6 +160,26 @@ $(document).ready(function() {
     $("#ModalDeshabilitarUsuarios").modal("toggle");
   });
 
+  $("body").on("click", "#BorrarUsuario", function() {
+    var USUARIOID = $("input#USUARIOIDBorrar").val();
+
+    var dataString = "USUARIOID=" + USUARIOID;
+
+    console.log(dataString);
+
+    $.ajax({
+      type: "POST",
+      url: "App/Server/ServerBorrarUsuarios.php",
+      data: dataString,
+      dataType: "json",
+      success: function(response) {
+        dataTableUsuarioDT.ajax.reload(null, false);
+      }
+    }).done(function() {});
+
+    $("#ModalBorrarUsuarios").modal("toggle");
+  });
+
   $(document).on("change", "#TIPODEUSUARIOID", function() {
     var TipoDeUsuario = $(this).val();
 
@@ -228,6 +248,18 @@ function TomarDatosParaModalUsuarios(val) {
       );
 
       $("input#USUARIOIDDeshabilitar").val(response.USUARIOID);
+
+      $("#NombreUsuarioBorrar").text(
+        response.PrimerNombre +
+          " " +
+          response.SegundoNombre +
+          " " +
+          response.ApellidoPaterno +
+          " " +
+          response.ApellidoMaterno
+      );
+
+      $("input#USUARIOIDBorrar").val(response.USUARIOID);
     },
   });
 }
