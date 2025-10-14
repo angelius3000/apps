@@ -6,6 +6,32 @@ $(document).ready(function() {
     return new bootstrap.Tooltip(tooltipTriggerEl);
   });
 
+  if (window.Parsley && window.Parsley.addValidator) {
+    window.Parsley.addValidator('requireclientnumber', {
+      requirementType: 'string',
+      validateString: function(value, requirement, parsleyInstance) {
+        var currentValue = $.trim(value);
+        if (currentValue !== '') {
+          return true;
+        }
+
+        var $form = parsleyInstance.$element.closest('form');
+        var $otherField = $form.find(requirement);
+        if ($otherField.length === 0) {
+          return false;
+        }
+
+        var otherValue = $.trim($otherField.val());
+
+        return otherValue !== '';
+      },
+      messages: {
+        es: 'Captura al menos uno de los números de cliente',
+        en: 'Provide at least one client number'
+      }
+    });
+  }
+
   $('#ModalAgregarClientes').on('shown.bs.modal', function () {
     $('#CLIENTEID').select2({
       dropdownParent: $('#ModalAgregarClientes'), // Ajuste importante
@@ -57,6 +83,14 @@ $(document).ready(function() {
   $("#ValidacionAgregarClientes").on("submit", function(e) {
     var form = $(this);
 
+    var clienteSian = $.trim(form.find('#CLIENTESIAN').val());
+    var clcSian = $.trim(form.find('#CLCSIAN').val());
+
+    if (clienteSian === '' && clcSian === '') {
+      form.find('#CLIENTESIAN').parsley().validate();
+      form.find('#CLCSIAN').parsley().validate();
+    }
+
     form.parsley().validate();
 
     if (form.parsley().isValid()) {
@@ -91,6 +125,14 @@ $(document).ready(function() {
   $("#ValidacionEditarClientes").on("submit", function(e) {
     var form = $(this);
 
+    var clienteSian = $.trim(form.find('#CLIENTESIANEditar').val());
+    var clcSian = $.trim(form.find('#CLCSIANEditar').val());
+
+    if (clienteSian === '' && clcSian === '') {
+      form.find('#CLIENTESIANEditar').parsley().validate();
+      form.find('#CLCSIANEditar').parsley().validate();
+    }
+
     form.parsley().validate();
 
     if (form.parsley().isValid()) {
@@ -117,6 +159,24 @@ $(document).ready(function() {
       }).done(function() {});
 
       $("#ModalEditarClientes").modal("toggle");
+    }
+  });
+
+  $(document).on('input change', '#CLIENTESIAN, #CLCSIAN, #CLIENTESIANEditar, #CLCSIANEditar', function() {
+    var $field = $(this);
+    var requirementSelector = $field.data('parsley-requireclientnumber');
+
+    if (typeof $field.parsley === 'function') {
+      $field.parsley().validate();
+    }
+
+    if (requirementSelector) {
+      var $form = $field.closest('form');
+      var $otherField = $form.find(requirementSelector);
+
+      if ($otherField.length && typeof $otherField.parsley === 'function') {
+        $otherField.parsley().validate();
+      }
     }
   });
 

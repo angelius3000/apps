@@ -3,11 +3,25 @@
 include("../../Connections/ConDB.php");
 include("../../includes/Funciones.php");
 
-$CLIENTESIAN = (isset($_POST['CLIENTESIAN']) && $_POST['CLIENTESIAN'] !== '')
-    ? "'" . mysqli_real_escape_string($conn, $_POST['CLIENTESIAN']) . "'"
+header('Content-Type: application/json');
+
+$clienteSianInput = isset($_POST['CLIENTESIAN']) ? trim($_POST['CLIENTESIAN']) : '';
+$clcSianInput = isset($_POST['CLCSIAN']) ? trim($_POST['CLCSIAN']) : '';
+
+if ($clienteSianInput === '' && $clcSianInput === '') {
+    http_response_code(400);
+    echo json_encode([
+        'error' => 'Captura al menos uno de los números de cliente (CLIENTESIAN o CLCSIAN).'
+    ]);
+    mysqli_close($conn);
+    exit;
+}
+
+$CLIENTESIAN = ($clienteSianInput !== '')
+    ? "'" . mysqli_real_escape_string($conn, $clienteSianInput) . "'"
     : "NULL";
-$CLCSIAN = (isset($_POST['CLCSIAN']) && $_POST['CLCSIAN'] !== '')
-    ? "'" . mysqli_real_escape_string($conn, $_POST['CLCSIAN']) . "'"
+$CLCSIAN = ($clcSianInput !== '')
+    ? "'" . mysqli_real_escape_string($conn, $clcSianInput) . "'"
     : "NULL";
 
 $NombreCliente = isset($_POST['NombreCliente']) ? mysqli_real_escape_string($conn, $_POST['NombreCliente']) : NULL;

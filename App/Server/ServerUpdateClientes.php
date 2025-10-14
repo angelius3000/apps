@@ -2,12 +2,26 @@
 
 include("../../Connections/ConDB.php");
 
-$CLIENTESIANEditar = (isset($_POST['CLIENTESIANEditar']) && $_POST['CLIENTESIANEditar'] !== '')
-    ? "'" . mysqli_real_escape_string($conn, $_POST['CLIENTESIANEditar']) . "'"
+header('Content-Type: application/json');
+
+$clienteSianEditarInput = isset($_POST['CLIENTESIANEditar']) ? trim($_POST['CLIENTESIANEditar']) : '';
+$clcSianEditarInput = isset($_POST['CLCSIANEditar']) ? trim($_POST['CLCSIANEditar']) : '';
+
+if ($clienteSianEditarInput === '' && $clcSianEditarInput === '') {
+    http_response_code(400);
+    echo json_encode([
+        'error' => 'Captura al menos uno de los números de cliente (CLIENTESIAN o CLCSIAN).'
+    ]);
+    mysqli_close($conn);
+    exit;
+}
+
+$CLIENTESIANEditar = ($clienteSianEditarInput !== '')
+    ? "'" . mysqli_real_escape_string($conn, $clienteSianEditarInput) . "'"
     : "NULL";
 
-$CLCSIANEditar = (isset($_POST['CLCSIANEditar']) && $_POST['CLCSIANEditar'] !== '')
-    ? "'" . mysqli_real_escape_string($conn, $_POST['CLCSIANEditar']) . "'"
+$CLCSIANEditar = ($clcSianEditarInput !== '')
+    ? "'" . mysqli_real_escape_string($conn, $clcSianEditarInput) . "'"
     : "NULL";
 
 $NombreClienteEditar = mysqli_real_escape_string($conn, $_POST['NombreClienteEditar']);
