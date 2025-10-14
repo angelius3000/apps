@@ -25,6 +25,26 @@ if ($conn) {
     $charolasError = $connectionError ?? 'No se pudo conectar a la base de datos.';
 }
 $totalRows_charolas = count($charolas);
+
+$statusVerificadoNombre = 'Verificado';
+$statusVerificadoId = null;
+$mensajeRestriccionVerificado = 'Solo un administrador, supervisor o auditor puede asignar el estatus Verificado.';
+$tiposPermitidosVerificado = ['administrador', 'supervisor', 'auditor'];
+$tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string) $_SESSION['TipoDeUsuario'])) : '';
+$puedeAsignarVerificado = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $tiposPermitidosVerificado, true);
+
+if ($conn) {
+    $stmtStatusVerificado = @mysqli_prepare($conn, 'SELECT STATUSID FROM status WHERE Status = ? LIMIT 1');
+    if ($stmtStatusVerificado) {
+        mysqli_stmt_bind_param($stmtStatusVerificado, 's', $statusVerificadoNombre);
+        mysqli_stmt_execute($stmtStatusVerificado);
+        mysqli_stmt_bind_result($stmtStatusVerificado, $statusVerificadoIdTmp);
+        if (mysqli_stmt_fetch($stmtStatusVerificado)) {
+            $statusVerificadoId = (int) $statusVerificadoIdTmp;
+        }
+        mysqli_stmt_close($stmtStatusVerificado);
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -118,6 +138,15 @@ $totalRows_charolas = count($charolas);
     </div>
 
     <?php include("App/Modales/ModalesCharolas.php"); ?>
+
+    <script>
+        window.charolasConfig = <?php echo json_encode([
+            'statusVerificadoId' => $statusVerificadoId,
+            'nombreStatusVerificado' => $statusVerificadoNombre,
+            'puedeAsignarVerificado' => $puedeAsignarVerificado,
+            'mensajeRestriccionVerificado' => $mensajeRestriccionVerificado,
+        ], JSON_UNESCAPED_UNICODE); ?>;
+    </script>
 
     <!-- Javascripts -->
     <script src="assets/plugins/jquery/jquery-3.7.1.min.js"></script>

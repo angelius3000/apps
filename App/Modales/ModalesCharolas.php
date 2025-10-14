@@ -14,6 +14,11 @@
                             <option value="2">En proceso</option>
                             <option value="3">Terminada</option>
                             <option value="4">Entregada</option>
+                            <?php if ($statusVerificadoId !== null) { ?>
+                                <option value="<?php echo htmlspecialchars((string) $statusVerificadoId, ENT_QUOTES, 'UTF-8'); ?>"<?php echo !$puedeAsignarVerificado ? ' data-requires-privilegios="true"' : ''; ?>>
+                                    <?php echo htmlspecialchars($statusVerificadoNombre, ENT_QUOTES, 'UTF-8'); ?><?php if (!$puedeAsignarVerificado) { ?> (solo supervisor, auditor o administrador)<?php } ?>
+                                </option>
+                            <?php } ?>
                         </select>
                     </div>
                 </div>

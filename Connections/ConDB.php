@@ -62,6 +62,49 @@ if ($conn === false) {
         }
     }
 
+    $puedeGestionarStatus = false;
+    $resultadoTablaStatus = @mysqli_query(
+        $conn,
+        "SHOW TABLES LIKE 'status'"
+    );
+    if ($resultadoTablaStatus instanceof mysqli_result) {
+        $puedeGestionarStatus = mysqli_num_rows($resultadoTablaStatus) > 0;
+        mysqli_free_result($resultadoTablaStatus);
+    }
+
+    if ($puedeGestionarStatus) {
+        $estatusRequeridos = ['Verificado'];
+        foreach ($estatusRequeridos as $estatus) {
+            $stmtStatus = @mysqli_prepare(
+                $conn,
+                'SELECT STATUSID FROM status WHERE Status = ? LIMIT 1'
+            );
+
+            if ($stmtStatus) {
+                mysqli_stmt_bind_param($stmtStatus, 's', $estatus);
+                mysqli_stmt_execute($stmtStatus);
+                mysqli_stmt_store_result($stmtStatus);
+
+                if (mysqli_stmt_num_rows($stmtStatus) === 0) {
+                    mysqli_stmt_close($stmtStatus);
+
+                    $insertStatus = @mysqli_prepare(
+                        $conn,
+                        'INSERT INTO status (Status) VALUES (?)'
+                    );
+
+                    if ($insertStatus) {
+                        mysqli_stmt_bind_param($insertStatus, 's', $estatus);
+                        mysqli_stmt_execute($insertStatus);
+                        mysqli_stmt_close($insertStatus);
+                    }
+                } else {
+                    mysqli_stmt_close($stmtStatus);
+                }
+            }
+        }
+    }
+
     // Ensure sections metadata exists so that permissions can be managed from
     // the application without needing a manual migration.
     $crearTablaSecciones = "CREATE TABLE IF NOT EXISTS secciones (
