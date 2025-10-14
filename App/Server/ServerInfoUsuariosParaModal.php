@@ -29,7 +29,8 @@ $msg = array(
     'CLIENTEID' => $row['CLIENTEID'],
     'TIPODEUSUARIOID' => $row['TIPODEUSUARIOID'],
     'SeccionInicioID' => $row['SECCIONINICIOID'],
-    'Permisos' => $permisos
+    'Permisos' => $permisos,
+    'Deshabilitado' => (int)$row['Deshabilitado']
 );
 
 // send data as json format

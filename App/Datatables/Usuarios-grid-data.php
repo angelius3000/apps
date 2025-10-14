@@ -89,6 +89,11 @@ while ($row = mysqli_fetch_array($query)) {  // preparing an array ... Preparand
         $BadgeActivo = '<span class="badge badge-danger">Inhabilitado</span>';
     }
 
+    $estaDeshabilitado = (int)$row["Deshabilitado"] === 1;
+    $textoBotonEstado = $estaDeshabilitado ? 'Habilitar' : 'Deshabilitar';
+    $claseBotonEstado = $estaDeshabilitado ? 'btn-success' : 'btn-danger';
+    $iconoBotonEstado = $estaDeshabilitado ? 'mdi mdi-account-check' : 'mdi mdi-block-helper';
+
     if (!empty($row["CLIENTEID"])) {
         $Empresa = $row["NombreCliente"];
     } else {
@@ -124,7 +129,7 @@ while ($row = mysqli_fetch_array($query)) {  // preparing an array ... Preparand
 
     <button type="button" class="btn btn-sm btn-primary waves-effect width-md waves-light" data-bs-toggle="modal" data-bs-target="#ModalEditarUsuarios" onclick="TomarDatosParaModalUsuarios(' . $row["USUARIOID"] . ')"><i class="mdi mdi-pencil"></i>Editar</button>
 
-    <button type="button" class="btn btn-sm btn-danger waves-effect width-md waves-light" data-bs-toggle="modal" data-bs-target="#ModalDeshabilitarUsuarios" onclick="TomarDatosParaModalUsuarios(' . $row["USUARIOID"] . ')"><i class="mdi mdi-block-helper"></i>Deshabilitar</button>
+    <button type="button" class="btn btn-sm ' . $claseBotonEstado . ' waves-effect width-md waves-light" data-bs-toggle="modal" data-bs-target="#ModalDeshabilitarUsuarios" onclick="TomarDatosParaModalUsuarios(' . $row["USUARIOID"] . ')"><i class="' . $iconoBotonEstado . '"></i>' . $textoBotonEstado . '</button>
 
     <button type="button" class="btn btn-sm btn-outline-danger waves-effect width-md waves-light" data-bs-toggle="modal" data-bs-target="#ModalBorrarUsuarios" onclick="TomarDatosParaModalUsuarios(' . $row["USUARIOID"] . ')"><i class="mdi mdi-delete"></i>Eliminar</button>
     ';

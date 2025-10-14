@@ -136,21 +136,23 @@ $(document).ready(function() {
     }
   });
 
-  // Deshabilitar Usuario
+  // Cambiar estado de Usuario (habilitar/deshabilitar)
 
-  $("body").on("click", "#DeshabilitarUsuario", function() {
+  $("body").on("click", "#CambiarEstadoUsuario", function() {
     var USUARIOID = $("input#USUARIOIDDeshabilitar").val();
+    var nuevoEstado = $("input#EstadoNuevoUsuario").val();
 
-    var dataString = "USUARIOID=" + USUARIOID;
-
-    console.log(dataString);
+    var payload = {
+      USUARIOID: USUARIOID,
+      Deshabilitado: nuevoEstado,
+    };
 
     // ajax
     $.ajax({
       //async: false,
       type: "POST",
       url: "App/Server/ServerDeshabilitarUsuarios.php",
-      data: dataString,
+      data: payload,
       dataType: "json",
       success: function(response) {
         dataTableUsuarioDT.ajax.reload(null, false);
@@ -248,6 +250,23 @@ function TomarDatosParaModalUsuarios(val) {
       );
 
       $("input#USUARIOIDDeshabilitar").val(response.USUARIOID);
+
+      var estaDeshabilitado = parseInt(response.Deshabilitado, 10) === 1;
+      var modalTitulo = estaDeshabilitado
+        ? "Habilitar usuario"
+        : "Deshabilitar usuarios";
+      var modalMensaje = estaDeshabilitado
+        ? "¿Deseas habilitar este usuario?"
+        : "¿Deseas deshabilitar este usuario?";
+
+      $("#ModalDeshabilitarUsuariosTitulo").text(modalTitulo);
+      $("#ModalDeshabilitarUsuariosMensaje").text(modalMensaje);
+      $("#EstadoNuevoUsuario").val(estaDeshabilitado ? 0 : 1);
+
+      $("#CambiarEstadoUsuario")
+        .toggleClass("btn-success", estaDeshabilitado)
+        .toggleClass("btn-danger", !estaDeshabilitado)
+        .text(estaDeshabilitado ? "Habilitar" : "Deshabilitar");
 
       $("#NombreUsuarioBorrar").text(
         response.PrimerNombre +
