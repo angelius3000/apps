@@ -6,8 +6,12 @@ if (!isset($_SESSION)) {
     session_start();
 }
 
+$tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string) $_SESSION['TipoDeUsuario'])) : '';
+$tiposPermitidosCambioEstatus = ['administrador', 'supervisor', 'auditor'];
+$puedeCambiarEstatus = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $tiposPermitidosCambioEstatus, true);
+
 // check request
-// storing request (ie, get/post) global array to a variable  
+// storing request (ie, get/post) global array to a variable
 $requestData = $_REQUEST;
 
 $StatusSelect = $_REQUEST['StatusSelect'];
@@ -197,7 +201,7 @@ $data = array();
 
 while ($row = mysqli_fetch_array($query)) {  // preparing an array ... Preparando el Arraigo
 
-    if ($_SESSION['TIPOUSUARIO'] == '1') {
+    if ($puedeCambiarEstatus) {
         $MandarModal = 'data-bs-toggle="modal" data-bs-target="#ModalCambioStatus" onclick="TomarDatosParaModalRepartos(' . $row["REPARTOID"] . ')"';
     } else {
         $MandarModal = '';

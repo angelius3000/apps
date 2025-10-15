@@ -1,4 +1,17 @@
 $(document).ready(function() {
+  var repartosConfig = window.repartosConfig || {};
+  var puedeCambiarEstatus = !!repartosConfig.puedeCambiarEstatus;
+  var mensajeRestriccionCambioEstatus = typeof repartosConfig.mensajeRestriccionCambioEstatus === 'string' && repartosConfig.mensajeRestriccionCambioEstatus.trim() !== ''
+    ? repartosConfig.mensajeRestriccionCambioEstatus
+    : 'Solo un administrador, supervisor o auditor puede cambiar el estatus.';
+
+  $('#ModalCambioStatus').on('show.bs.modal', function(event) {
+    if (!puedeCambiarEstatus) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      window.alert(mensajeRestriccionCambioEstatus);
+    }
+  });
 
   $('#ModalAgregarReparto').on('shown.bs.modal', function () {
     $('#CLIENTEID').select2({
@@ -372,6 +385,12 @@ $(document).ready(function() {
   // Evento para editar Status de reparto
 
   $("#ValidacionEditarStatus").on("submit", function(e) {
+    if (!puedeCambiarEstatus) {
+      e.preventDefault();
+      window.alert(mensajeRestriccionCambioEstatus);
+      $("#ModalCambioStatus").modal("hide");
+      return;
+    }
     var form = $(this);
 
     form.parsley().validate();
