@@ -36,8 +36,16 @@ if ($ordenCharolaId <= 0 || $statusIdEntrada === '') {
 
 $rolesPermitidos = ['administrador', 'supervisor', 'auditor'];
 $tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string) $_SESSION['TipoDeUsuario'])) : '';
-$puedeAsignarVerificado = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $rolesPermitidos, true);
+$puedeCambiarEstatus = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $rolesPermitidos, true);
+$puedeAsignarVerificado = $puedeCambiarEstatus;
 $puedeAsignarAuditado = $tipoUsuarioActual === 'auditor';
+
+if (!$puedeCambiarEstatus) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Solo un administrador, supervisor o auditor puede cambiar el estatus.']);
+    mysqli_close($conn);
+    exit;
+}
 
 $statusVerificadoId = null;
 $nombreStatusVerificado = 'Verificado';

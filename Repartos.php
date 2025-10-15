@@ -48,6 +48,11 @@ $query_Solicitantes = "SELECT * FROM usuarios WHERE usuarios.TIPODEUSUARIOID != 
 $Solicitantes = mysqli_query($conn, $query_Solicitantes) or die(mysqli_error($conn));
 $totalRows_Solicitantes = mysqli_num_rows($Solicitantes);
 
+$tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string) $_SESSION['TipoDeUsuario'])) : '';
+$tiposPermitidosCambioEstatus = ['administrador', 'supervisor', 'auditor'];
+$puedeCambiarEstatusRepartos = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $tiposPermitidosCambioEstatus, true);
+$mensajeRestriccionCambioEstatus = 'Solo un administrador, supervisor o auditor puede cambiar el estatus.';
+
 
 ?>
 
@@ -277,6 +282,13 @@ $totalRows_Solicitantes = mysqli_num_rows($Solicitantes);
     </div>
 
     <?php include("App/Modales/ModalesRepartos.php") ?>
+
+    <script>
+        window.repartosConfig = <?php echo json_encode([
+            'puedeCambiarEstatus' => $puedeCambiarEstatusRepartos,
+            'mensajeRestriccionCambioEstatus' => $mensajeRestriccionCambioEstatus,
+        ], JSON_UNESCAPED_UNICODE); ?>;
+    </script>
 
     <!-- Javascripts -->
     <!-- <script src="assets/plugins/jquery/jquery-3.5.1.min.js"></script> -->

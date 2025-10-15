@@ -29,9 +29,10 @@ $totalRows_charolas = count($charolas);
 $statusVerificadoNombre = 'Verificado';
 $statusVerificadoId = null;
 $mensajeRestriccionVerificado = 'Solo un administrador, supervisor o auditor puede asignar el estatus Verificado.';
-$tiposPermitidosVerificado = ['administrador', 'supervisor', 'auditor'];
+$tiposPermitidosCambioEstatus = ['administrador', 'supervisor', 'auditor'];
 $tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string) $_SESSION['TipoDeUsuario'])) : '';
-$puedeAsignarVerificado = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $tiposPermitidosVerificado, true);
+$puedeCambiarEstatusCharolas = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $tiposPermitidosCambioEstatus, true);
+$puedeAsignarVerificado = $puedeCambiarEstatusCharolas;
 $statusAuditadoNombre = 'Auditado';
 $statusAuditadoId = null;
 $mensajeRestriccionAuditado = 'Solo un auditor puede asignar el estatus Auditado.';
@@ -158,6 +159,7 @@ if ($conn) {
         window.charolasConfig = <?php echo json_encode([
             'statusVerificadoId' => $statusVerificadoId,
             'nombreStatusVerificado' => $statusVerificadoNombre,
+            'puedeCambiarEstatus' => $puedeCambiarEstatusCharolas,
             'puedeAsignarVerificado' => $puedeAsignarVerificado,
             'mensajeRestriccionVerificado' => $mensajeRestriccionVerificado,
             'statusAuditadoId' => $statusAuditadoId,

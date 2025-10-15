@@ -14,6 +14,7 @@ $(document).ready(function() {
   var nombreStatusVerificado = typeof configuracionCharolas.nombreStatusVerificado === 'string' && configuracionCharolas.nombreStatusVerificado.trim() !== ''
     ? configuracionCharolas.nombreStatusVerificado
     : 'Verificado';
+  var puedeCambiarEstatus = !!configuracionCharolas.puedeCambiarEstatus;
   var puedeAsignarVerificado = !!configuracionCharolas.puedeAsignarVerificado;
   var mensajeRestriccionVerificado = typeof configuracionCharolas.mensajeRestriccionVerificado === 'string' && configuracionCharolas.mensajeRestriccionVerificado.trim() !== ''
     ? configuracionCharolas.mensajeRestriccionVerificado
@@ -86,31 +87,36 @@ $(document).ready(function() {
   function obtenerBadge(statusId, orderId, statusTexto) {
     var statusIdTexto = statusId !== null && statusId !== undefined ? String(statusId) : '';
     var orderIdTexto = orderId !== null && orderId !== undefined ? String(orderId) : '';
-    var mandarModal = 'data-bs-toggle="modal" data-bs-target="#ModalCambioStatusCharola" data-order="' + escapeHtml(orderIdTexto) + '" data-status="' + escapeHtml(statusIdTexto) + '"';
+    var claseInteraccion = puedeCambiarEstatus ? ' badge-status' : '';
+    var mandarModal = '';
+
+    if (puedeCambiarEstatus) {
+      mandarModal = 'data-bs-toggle="modal" data-bs-target="#ModalCambioStatusCharola" data-order="' + escapeHtml(orderIdTexto) + '" data-status="' + escapeHtml(statusIdTexto) + '"';
+    }
 
     if (esStatusVerificado(statusIdTexto, statusTexto)) {
-      return '<span class="badge badge-primary badge-status" ' + mandarModal + '>' + escapeHtml(nombreStatusVerificado) + '</span>';
+      return '<span class="badge badge-primary' + claseInteraccion + '" ' + mandarModal + '>' + escapeHtml(nombreStatusVerificado) + '</span>';
     }
 
     if (esStatusAuditado(statusIdTexto, statusTexto)) {
-      return '<span class="badge badge-info badge-status" ' + mandarModal + '>' + escapeHtml(nombreStatusAuditado) + '</span>';
+      return '<span class="badge badge-info' + claseInteraccion + '" ' + mandarModal + '>' + escapeHtml(nombreStatusAuditado) + '</span>';
     }
 
     switch (statusIdTexto) {
       case '1':
-        return '<span class="badge badge-info badge-status" ' + mandarModal + '>Registrada</span>';
+        return '<span class="badge badge-info' + claseInteraccion + '" ' + mandarModal + '>Registrada</span>';
       case '2':
-        return '<span class="badge badge-warning badge-status" ' + mandarModal + '>En proceso</span>';
+        return '<span class="badge badge-warning' + claseInteraccion + '" ' + mandarModal + '>En proceso</span>';
       case '3':
-        return '<span class="badge badge-success badge-status" ' + mandarModal + '>Terminada</span>';
+        return '<span class="badge badge-success' + claseInteraccion + '" ' + mandarModal + '>Terminada</span>';
       case '4':
-        return '<span class="badge badge-dark badge-status" ' + mandarModal + '>Entregada</span>';
+        return '<span class="badge badge-dark' + claseInteraccion + '" ' + mandarModal + '>Entregada</span>';
       case '5':
-        return '<span class="badge badge-danger badge-status" ' + mandarModal + '>Cancelada</span>';
+        return '<span class="badge badge-danger' + claseInteraccion + '" ' + mandarModal + '>Cancelada</span>';
       default: {
         var nombreStatus = obtenerNombreStatus(statusTexto, statusIdTexto);
         if (nombreStatus) {
-          return '<span class="badge badge-secondary badge-status" ' + mandarModal + '>' + escapeHtml(nombreStatus) + '</span>';
+          return '<span class="badge badge-secondary' + claseInteraccion + '" ' + mandarModal + '>' + escapeHtml(nombreStatus) + '</span>';
         }
         return '';
       }
@@ -636,6 +642,9 @@ $(document).ready(function() {
   });
 
   $('#TablaOrdenesCharolas').on('click', '.badge-status', function() {
+    if (!puedeCambiarEstatus) {
+      return;
+    }
     var orderId = $(this).data('order');
     var statusId = $(this).data('status');
     var statusIdTexto = statusId !== undefined && statusId !== null ? String(statusId) : '';
@@ -646,6 +655,10 @@ $(document).ready(function() {
 
   $('#FormEditarStatusCharola').on('submit', function(e) {
     e.preventDefault();
+    if (!puedeCambiarEstatus) {
+      $('#ModalCambioStatusCharola').modal('hide');
+      return;
+    }
     var orderId = $('#ORDENCHAROLAIDEditar').val();
     var statusId = $('#NuevoStatusCharola').val();
     var valorInicial = $('#NuevoStatusCharola').data('valor-inicial');
