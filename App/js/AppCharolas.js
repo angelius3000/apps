@@ -42,7 +42,22 @@ $(document).ready(function() {
   var $botonesConfirmacion = $('#BotonesConfirmacionStatus');
   var $botonesFormulario = $('#BotonesFormularioStatus');
   var $btnConfirmarCambioStatus = $('#BtnConfirmarCambioStatus');
+  var $btnGenerarRequisicion = $('#GenerarRequisicionBtn');
   var statusEnProcesoId = '2';
+
+  function mostrarBotonGenerarRequisicion() {
+    if ($btnGenerarRequisicion.length) {
+      $btnGenerarRequisicion.removeClass('d-none');
+    }
+  }
+
+  function ocultarBotonGenerarRequisicion() {
+    if ($btnGenerarRequisicion.length) {
+      $btnGenerarRequisicion.addClass('d-none');
+    }
+  }
+
+  ocultarBotonGenerarRequisicion();
 
   function crearEstadoCambioInicial() {
     return {
@@ -798,6 +813,8 @@ $(document).ready(function() {
     var charolaId = $('#CHAROLASID').val();
     var cantidad = $('#CantidadCharolas').val();
 
+    ocultarBotonGenerarRequisicion();
+
     if (charolaId && cantidad && cantidad > 0) {
       $.ajax({
         type: 'POST',
@@ -817,9 +834,22 @@ $(document).ready(function() {
               '</tr>';
             tbody.append(fila);
           });
+
+          mostrarBotonGenerarRequisicion();
+        },
+        error: function() {
+          ocultarBotonGenerarRequisicion();
         }
       });
     }
+  });
+
+  $('#CHAROLASID').on('change', function() {
+    ocultarBotonGenerarRequisicion();
+  });
+
+  $('#CantidadCharolas').on('input', function() {
+    ocultarBotonGenerarRequisicion();
   });
 
   $('#GenerarRequisicionBtn').on('click', function() {
@@ -834,6 +864,7 @@ $(document).ready(function() {
         dataType: 'json',
         success: function() {
           $('#CantidadCharolas').val('');
+          ocultarBotonGenerarRequisicion();
           cargarOrdenes();
         }
       });

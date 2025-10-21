@@ -110,7 +110,7 @@ if ($conn) {
                         </div>
                         <div class="row mb-4">
                             <div class="col-md-3 ms-auto">
-                                <button type="button" class="btn btn-success w-100" id="GenerarRequisicionBtn" <?php echo $charolasError ? 'disabled' : ''; ?>>Generar requisición</button>
+                                <button type="button" class="btn btn-success w-100 d-none" id="GenerarRequisicionBtn" <?php echo $charolasError ? 'disabled' : ''; ?>>Generar requisición</button>
                             </div>
                         </div>
                         <div class="row">
