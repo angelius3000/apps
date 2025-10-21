@@ -731,7 +731,6 @@ $(document).ready(function() {
       $camposAuditado.addClass('d-none');
       camposAuditado.forEach(function($input) {
         $input.prop('required', false);
-        $input.val('');
       });
     }
   }
@@ -821,10 +820,6 @@ $(document).ready(function() {
       datosEnvio.SALIDA = salida;
       datosEnvio.ENTRADA = entrada;
       datosEnvio.ALMACEN = almacen;
-    } else {
-      datosEnvio.SALIDA = '';
-      datosEnvio.ENTRADA = '';
-      datosEnvio.ALMACEN = '';
     }
 
     var factura = ($facturaInput.val() || '').trim();

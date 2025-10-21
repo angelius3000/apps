@@ -85,9 +85,12 @@ if (!$conn) {
 
 $ordenCharolaId = isset($_POST['ORDENCHAROLAID']) ? (int) $_POST['ORDENCHAROLAID'] : 0;
 $statusIdEntrada = isset($_POST['STATUSID']) ? trim((string) $_POST['STATUSID']) : '';
-$salida = isset($_POST['SALIDA']) ? trim((string) $_POST['SALIDA']) : '';
-$entrada = isset($_POST['ENTRADA']) ? trim((string) $_POST['ENTRADA']) : '';
-$almacen = isset($_POST['ALMACEN']) ? trim((string) $_POST['ALMACEN']) : '';
+$salidaDefinido = array_key_exists('SALIDA', $_POST);
+$entradaDefinido = array_key_exists('ENTRADA', $_POST);
+$almacenDefinido = array_key_exists('ALMACEN', $_POST);
+$salida = $salidaDefinido ? trim((string) $_POST['SALIDA']) : null;
+$entrada = $entradaDefinido ? trim((string) $_POST['ENTRADA']) : null;
+$almacen = $almacenDefinido ? trim((string) $_POST['ALMACEN']) : null;
 $factura = isset($_POST['FACTURA']) ? trim((string) $_POST['FACTURA']) : '';
 
 if ($ordenCharolaId <= 0 || $statusIdEntrada === '') {
@@ -166,7 +169,7 @@ if ($requiereCamposAuditado && !$puedePersistirCamposAuditado) {
 }
 
 if ($requiereCamposAuditado) {
-    if ($salida === '' || $entrada === '' || $almacen === '') {
+    if ($salida === null || $salida === '' || $entrada === null || $entrada === '' || $almacen === null || $almacen === '') {
         http_response_code(400);
         echo json_encode(['error' => 'Los campos Salida, Entrada y Almacén son obligatorios para el estatus Auditado.']);
         mysqli_close($conn);
@@ -198,9 +201,35 @@ if ($requiereCamposAuditado) {
     $valores[] = $entrada;
     $valores[] = $almacen;
 } elseif ($puedePersistirCamposAuditado) {
-    $camposActualizar[] = 'Salida = NULL';
-    $camposActualizar[] = 'Entrada = NULL';
-    $camposActualizar[] = 'Almacen = NULL';
+    if ($salidaDefinido) {
+        if ($salida === null || $salida === '') {
+            $camposActualizar[] = 'Salida = NULL';
+        } else {
+            $camposActualizar[] = 'Salida = ?';
+            $tipos .= 's';
+            $valores[] = $salida;
+        }
+    }
+
+    if ($entradaDefinido) {
+        if ($entrada === null || $entrada === '') {
+            $camposActualizar[] = 'Entrada = NULL';
+        } else {
+            $camposActualizar[] = 'Entrada = ?';
+            $tipos .= 's';
+            $valores[] = $entrada;
+        }
+    }
+
+    if ($almacenDefinido) {
+        if ($almacen === null || $almacen === '') {
+            $camposActualizar[] = 'Almacen = NULL';
+        } else {
+            $camposActualizar[] = 'Almacen = ?';
+            $tipos .= 's';
+            $valores[] = $almacen;
+        }
+    }
 }
 
 if ($columnaFacturaDisponible) {
