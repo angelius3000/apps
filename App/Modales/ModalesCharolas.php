@@ -26,6 +26,20 @@
                             <?php } ?>
                         </select>
                     </div>
+                    <div id="CamposAuditado" class="row g-3 d-none">
+                        <div class="col-md-4">
+                            <label for="SalidaAuditado" class="form-label">Salida</label>
+                            <input type="text" class="form-control" id="SalidaAuditado" name="SALIDA" autocomplete="off">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="EntradaAuditado" class="form-label">Entrada</label>
+                            <input type="text" class="form-control" id="EntradaAuditado" name="ENTRADA" autocomplete="off">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="AlmacenAuditado" class="form-label">Almacén</label>
+                            <input type="text" class="form-control" id="AlmacenAuditado" name="ALMACEN" autocomplete="off">
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <input type="hidden" id="ORDENCHAROLAIDEditar" name="ORDENCHAROLAID">
