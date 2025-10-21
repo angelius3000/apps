@@ -31,6 +31,11 @@ $(document).ready(function() {
     ? configuracionCharolas.mensajeRestriccionAuditado
     : 'Solo un auditor puede asignar el estatus Auditado.';
   var nombreStatusAuditadoNormalizado = '';
+  var $camposAuditado = $('#CamposAuditado');
+  var $salidaAuditado = $('#SalidaAuditado');
+  var $entradaAuditado = $('#EntradaAuditado');
+  var $almacenAuditado = $('#AlmacenAuditado');
+  var camposAuditado = [$salidaAuditado, $entradaAuditado, $almacenAuditado];
 
   function obtenerNombreVerificadoNormalizado() {
     if (!nombreStatusVerificadoNormalizado) {
@@ -319,6 +324,9 @@ $(document).ready(function() {
     var totalTornilleria = renderMaterial(data, 'Tornilleria');
     var totalJuntaZeta = renderMaterial(data, 'Junta Zeta');
     var totalTraves = renderMaterial(data, 'Traves');
+    var salida = data.Salida ? data.Salida : '—';
+    var entrada = data.Entrada ? data.Entrada : '—';
+    var almacen = data.Almacen ? data.Almacen : '—';
 
     var html = '<div class="detalle-requisicion">';
 
@@ -328,6 +336,9 @@ $(document).ready(function() {
       '<div class="col-sm-12 col-lg-6"><div class="text-muted text-uppercase small">Descripción</div><div class="fw-semibold">' + escapeHtml(data.DescripcionCharolas) + '</div></div>' +
       '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Cantidad</div><div class="fw-semibold">' + escapeHtml(data.Cantidad) + '</div></div>' +
       '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Estatus</div><div class="fw-semibold">' + escapeHtml(obtenerNombreStatus(data.Status, data.STATUSID)) + '</div></div>' +
+      '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Salida</div><div class="fw-semibold">' + escapeHtml(salida) + '</div></div>' +
+      '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Entrada</div><div class="fw-semibold">' + escapeHtml(entrada) + '</div></div>' +
+      '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Almacén</div><div class="fw-semibold">' + escapeHtml(almacen) + '</div></div>' +
     '</div>';
 
     html += '<div class="row g-3 detalle-requisicion__totales mt-2">' +
@@ -392,6 +403,9 @@ $(document).ready(function() {
       '<th scope="col">SKU</th>' +
       '<th scope="col">Descripción</th>' +
       '<th scope="col">Cantidad</th>' +
+      '<th scope="col">Salida</th>' +
+      '<th scope="col">Entrada</th>' +
+      '<th scope="col">Almacén</th>' +
       '<th scope="col">Cambiar estatus</th>' +
     '</tr>';
 
@@ -404,7 +418,7 @@ $(document).ready(function() {
       thead.append(encabezado);
     } else {
       var celdas = fila.first().children('th');
-      if (celdas.length !== 6) {
+      if (celdas.length !== 9) {
         thead.html(encabezado);
       }
     }
@@ -468,6 +482,9 @@ $(document).ready(function() {
             STATUSID: row.STATUSID,
             Status: row.Status,
             Detalles: detalles,
+            Salida: typeof row.Salida === 'string' ? row.Salida : '',
+            Entrada: typeof row.Entrada === 'string' ? row.Entrada : '',
+            Almacen: typeof row.Almacen === 'string' ? row.Almacen : '',
             _totalesMateriales: normalizarTotalesMateriales(totales)
           };
 
@@ -478,6 +495,9 @@ $(document).ready(function() {
             DescripcionCharolas: row.DescripcionCharolas,
             Cantidad: row.Cantidad,
             STATUSID: row.STATUSID,
+            Salida: datosDetalle.Salida,
+            Entrada: datosDetalle.Entrada,
+            Almacen: datosDetalle.Almacen,
             badgeHtml: obtenerBadge(row.STATUSID, row.ORDENCHAROLAID, row.Status)
           });
         });
@@ -504,6 +524,24 @@ $(document).ready(function() {
             { data: 'SkuCharolas' },
             { data: 'DescripcionCharolas' },
             { data: 'Cantidad' },
+            {
+              data: 'Salida',
+              render: function(data) {
+                return escapeHtml(data || '');
+              }
+            },
+            {
+              data: 'Entrada',
+              render: function(data) {
+                return escapeHtml(data || '');
+              }
+            },
+            {
+              data: 'Almacen',
+              render: function(data) {
+                return escapeHtml(data || '');
+              }
+            },
             {
               data: 'badgeHtml',
               orderable: false,
@@ -648,10 +686,56 @@ $(document).ready(function() {
     var orderId = $(this).data('order');
     var statusId = $(this).data('status');
     var statusIdTexto = statusId !== undefined && statusId !== null ? String(statusId) : '';
+    var datosFila = null;
+    if (tablaOrdenes) {
+      var filaTabla = tablaOrdenes.row($(this).closest('tr'));
+      if (filaTabla && typeof filaTabla.data === 'function') {
+        var data = filaTabla.data();
+        if (data && typeof data === 'object') {
+          datosFila = data.datos && typeof data.datos === 'object' ? data.datos : data;
+        }
+      }
+    }
+    if (!datosFila || typeof datosFila !== 'object') {
+      datosFila = {};
+    }
     $('#ORDENCHAROLAIDEditar').val(orderId);
-    $('#NuevoStatusCharola').val(statusIdTexto);
+    $salidaAuditado.val(datosFila.Salida || '');
+    $entradaAuditado.val(datosFila.Entrada || '');
+    $almacenAuditado.val(datosFila.Almacen || '');
+    $('#NuevoStatusCharola').val(statusIdTexto).trigger('change');
     $('#NuevoStatusCharola').data('valor-inicial', statusIdTexto);
   });
+
+  function actualizarVisibilidadCamposAuditado(valorSeleccionado) {
+    var requiereCampos = !!statusAuditadoId && valorSeleccionado === statusAuditadoId;
+    if (requiereCampos) {
+      $camposAuditado.removeClass('d-none');
+      camposAuditado.forEach(function($input) {
+        $input.prop('required', true);
+      });
+    } else {
+      $camposAuditado.addClass('d-none');
+      camposAuditado.forEach(function($input) {
+        $input.prop('required', false);
+        $input.val('');
+      });
+    }
+  }
+
+  $('#NuevoStatusCharola').on('change', function() {
+    var valorSeleccionado = $(this).val();
+    var valorTexto = valorSeleccionado !== undefined && valorSeleccionado !== null ? String(valorSeleccionado) : '';
+    actualizarVisibilidadCamposAuditado(valorTexto);
+  });
+
+  $('#ModalCambioStatusCharola').on('hidden.bs.modal', function() {
+    $('#FormEditarStatusCharola')[0].reset();
+    $('#NuevoStatusCharola').data('valor-inicial', '');
+    actualizarVisibilidadCamposAuditado($('#NuevoStatusCharola').val() || '');
+  });
+
+  actualizarVisibilidadCamposAuditado($('#NuevoStatusCharola').val() || '');
 
   $('#FormEditarStatusCharola').on('submit', function(e) {
     e.preventDefault();
@@ -663,35 +747,62 @@ $(document).ready(function() {
     var statusId = $('#NuevoStatusCharola').val();
     var valorInicial = $('#NuevoStatusCharola').data('valor-inicial');
 
-    if (valorInicial !== undefined && statusId === String(valorInicial)) {
+    var statusIdTexto = statusId !== undefined && statusId !== null ? String(statusId) : '';
+
+    if (valorInicial !== undefined && statusIdTexto === String(valorInicial)) {
       $('#ModalCambioStatusCharola').modal('hide');
       return;
     }
 
-    if (!puedeAsignarVerificado && statusVerificadoId && statusId === statusVerificadoId) {
+    if (!puedeAsignarVerificado && statusVerificadoId && statusIdTexto === statusVerificadoId) {
       if (valorInicial !== undefined) {
-        $('#NuevoStatusCharola').val(String(valorInicial));
+        $('#NuevoStatusCharola').val(String(valorInicial)).trigger('change');
       } else {
-        $('#NuevoStatusCharola').val('');
+        $('#NuevoStatusCharola').val('').trigger('change');
       }
       window.alert(mensajeRestriccionVerificado);
       return;
     }
 
-    if (!puedeAsignarAuditado && statusAuditadoId && statusId === statusAuditadoId) {
+    if (!puedeAsignarAuditado && statusAuditadoId && statusIdTexto === statusAuditadoId) {
       if (valorInicial !== undefined) {
-        $('#NuevoStatusCharola').val(String(valorInicial));
+        $('#NuevoStatusCharola').val(String(valorInicial)).trigger('change');
       } else {
-        $('#NuevoStatusCharola').val('');
+        $('#NuevoStatusCharola').val('').trigger('change');
       }
       window.alert(mensajeRestriccionAuditado);
       return;
     }
 
+    var requiereCamposAuditado = !!statusAuditadoId && statusIdTexto === statusAuditadoId;
+    var datosEnvio = {
+      ORDENCHAROLAID: orderId,
+      STATUSID: statusIdTexto
+    };
+
+    if (requiereCamposAuditado) {
+      var salida = ($salidaAuditado.val() || '').trim();
+      var entrada = ($entradaAuditado.val() || '').trim();
+      var almacen = ($almacenAuditado.val() || '').trim();
+
+      if (!salida || !entrada || !almacen) {
+        window.alert('Debes capturar Salida, Entrada y Almacén para guardar el estatus Auditado.');
+        return;
+      }
+
+      datosEnvio.SALIDA = salida;
+      datosEnvio.ENTRADA = entrada;
+      datosEnvio.ALMACEN = almacen;
+    } else {
+      datosEnvio.SALIDA = '';
+      datosEnvio.ENTRADA = '';
+      datosEnvio.ALMACEN = '';
+    }
+
     $.ajax({
       type: 'POST',
       url: 'App/Server/ServerUpdateOrdenCharolas.php',
-      data: { ORDENCHAROLAID: orderId, STATUSID: statusId },
+      data: datosEnvio,
       dataType: 'json',
       success: function(response) {
         if (response && response.error) {

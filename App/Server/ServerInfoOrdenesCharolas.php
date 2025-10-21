@@ -99,7 +99,7 @@ if (!empty($prefijosSeleccionados)) {
     $columnasSeleccionadas = ', ' . implode(', ', $prefijosSeleccionados);
 }
 
-$query = "SELECT oc.ORDENCHAROLAID, oc.CHAROLASID, oc.Cantidad, oc.STATUSID, s.Status, c.SkuCharolas, c.DescripcionCharolas" . $columnasSeleccionadas . "
+$query = "SELECT oc.ORDENCHAROLAID, oc.CHAROLASID, oc.Cantidad, oc.STATUSID, s.Status, c.SkuCharolas, c.DescripcionCharolas, oc.Salida, oc.Entrada, oc.Almacen" . $columnasSeleccionadas . "
           FROM ordenes_charolas oc
           JOIN charolas c ON c.CHAROLASID = oc.CHAROLASID
           JOIN status s ON s.STATUSID = oc.STATUSID
@@ -187,10 +187,16 @@ while ($row = mysqli_fetch_assoc($result)) {
     }
 
     $row['Detalles'] = $detalles;
-    $row['Largueros'] = $largueros;
-    $row['Tornilleria'] = $tornilleria;
-    $row['JuntaZeta'] = $juntaZeta;
-    $row['Traves'] = $traves;
+    $row['TotalesMateriales'] = [
+        'Largueros' => (int) $totales['Largueros'],
+        'Tornilleria' => (int) $totales['Tornilleria'],
+        'JuntaZeta' => (int) $totales['JuntaZeta'],
+        'Traves' => (int) $totales['Traves'],
+    ];
+
+    $row['Salida'] = isset($row['Salida']) ? trim((string) $row['Salida']) : '';
+    $row['Entrada'] = isset($row['Entrada']) ? trim((string) $row['Entrada']) : '';
+    $row['Almacen'] = isset($row['Almacen']) ? trim((string) $row['Almacen']) : '';
     $ordenes[] = $row;
 }
 mysqli_free_result($result);
