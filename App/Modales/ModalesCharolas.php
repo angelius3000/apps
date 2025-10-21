@@ -26,6 +26,10 @@
                             <?php } ?>
                         </select>
                     </div>
+                    <div class="mb-3 d-none" id="CampoFacturaCharola">
+                        <label for="FacturaCharola" class="form-label">Factura</label>
+                        <input type="text" class="form-control" id="FacturaCharola" name="FACTURA" autocomplete="off">
+                    </div>
                     <div id="CamposAuditado" class="row g-3 d-none">
                         <div class="col-md-4">
                             <label for="SalidaAuditado" class="form-label">Salida</label>
