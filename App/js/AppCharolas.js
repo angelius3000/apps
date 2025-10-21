@@ -38,7 +38,87 @@ $(document).ready(function() {
   var camposAuditado = [$salidaAuditado, $entradaAuditado, $almacenAuditado];
   var $campoFacturaWrapper = $('#CampoFacturaCharola');
   var $facturaInput = $('#FacturaCharola');
+  var $textoConfirmacion = $('#TextoConfirmacionStatus');
+  var $botonesConfirmacion = $('#BotonesConfirmacionStatus');
+  var $botonesFormulario = $('#BotonesFormularioStatus');
+  var $btnConfirmarCambioStatus = $('#BtnConfirmarCambioStatus');
   var statusEnProcesoId = '2';
+
+  function crearEstadoCambioInicial() {
+    return {
+      ordenId: '',
+      statusActualId: '',
+      statusActualTexto: '',
+      siguienteStatusId: '',
+      mensaje: '',
+      requiereCamposAuditado: false,
+      requiereFactura: false,
+      requierePrivilegiosVerificado: false,
+      requierePrivilegiosAuditado: false,
+    };
+  }
+
+  var estadoCambio = crearEstadoCambioInicial();
+
+  function ocultarCamposAuditado() {
+    $camposAuditado.addClass('d-none');
+    camposAuditado.forEach(function($input) {
+      $input.prop('required', false);
+    });
+  }
+
+  function mostrarCamposAuditado() {
+    $camposAuditado.removeClass('d-none');
+    camposAuditado.forEach(function($input) {
+      $input.prop('required', true);
+    });
+  }
+
+  function ocultarCampoFactura() {
+    $facturaInput.prop('required', false);
+    $campoFacturaWrapper.addClass('d-none');
+  }
+
+  function mostrarCampoFactura() {
+    $campoFacturaWrapper.removeClass('d-none');
+    $facturaInput.prop('required', true);
+  }
+
+  function mostrarConfirmacionStatus() {
+    ocultarCamposAuditado();
+    ocultarCampoFactura();
+    $botonesConfirmacion.removeClass('d-none').addClass('d-flex');
+    $botonesFormulario.addClass('d-none').removeClass('d-flex');
+  }
+
+  function mostrarFormularioStatus() {
+    if (estadoCambio.requiereCamposAuditado) {
+      mostrarCamposAuditado();
+    } else {
+      ocultarCamposAuditado();
+    }
+
+    if (estadoCambio.requiereFactura) {
+      mostrarCampoFactura();
+    } else {
+      ocultarCampoFactura();
+    }
+
+    $botonesConfirmacion.addClass('d-none').removeClass('d-flex');
+    $botonesFormulario.removeClass('d-none').addClass('d-flex');
+  }
+
+  function resetFormularioStatus() {
+    var formulario = $('#FormEditarStatusCharola')[0];
+    if (formulario) {
+      formulario.reset();
+    }
+    estadoCambio = crearEstadoCambioInicial();
+    $textoConfirmacion.text('');
+    mostrarConfirmacionStatus();
+  }
+
+  mostrarConfirmacionStatus();
 
   function obtenerNombreVerificadoNormalizado() {
     if (!nombreStatusVerificadoNormalizado) {
@@ -92,13 +172,82 @@ $(document).ready(function() {
     return normalizarTexto(statusTexto) === nombreNormalizado;
   }
 
+  function obtenerConfiguracionCambio(statusId, statusTexto) {
+    var statusIdTexto = statusId !== null && statusId !== undefined ? String(statusId) : '';
+
+    if (statusIdTexto === '1') {
+      if (!statusVerificadoId) {
+        return null;
+      }
+      return {
+        siguienteStatusId: statusVerificadoId,
+        mensaje: '¿Deseas dar por verificada esta requisición?',
+        requiereCamposAuditado: false,
+        requiereFactura: false,
+        requierePrivilegiosVerificado: true,
+        requierePrivilegiosAuditado: false,
+      };
+    }
+
+    if (esStatusVerificado(statusIdTexto, statusTexto)) {
+      if (!statusAuditadoId) {
+        return null;
+      }
+      return {
+        siguienteStatusId: statusAuditadoId,
+        mensaje: '¿Deseas dar por auditada esta requisición?',
+        requiereCamposAuditado: true,
+        requiereFactura: false,
+        requierePrivilegiosVerificado: false,
+        requierePrivilegiosAuditado: true,
+      };
+    }
+
+    if (esStatusAuditado(statusIdTexto, statusTexto)) {
+      return {
+        siguienteStatusId: statusEnProcesoId,
+        mensaje: '¿Deseas cambiar el estatus de esta requisición a "En Proceso"?',
+        requiereCamposAuditado: false,
+        requiereFactura: true,
+        requierePrivilegiosVerificado: false,
+        requierePrivilegiosAuditado: false,
+      };
+    }
+
+    if (statusIdTexto === statusEnProcesoId) {
+      return {
+        siguienteStatusId: '3',
+        mensaje: '¿Deseas dar por terminado el armado?',
+        requiereCamposAuditado: false,
+        requiereFactura: false,
+        requierePrivilegiosVerificado: false,
+        requierePrivilegiosAuditado: false,
+      };
+    }
+
+    if (statusIdTexto === '3') {
+      return {
+        siguienteStatusId: '4',
+        mensaje: '¿Cambiar el estatus a entregada?',
+        requiereCamposAuditado: false,
+        requiereFactura: false,
+        requierePrivilegiosVerificado: false,
+        requierePrivilegiosAuditado: false,
+      };
+    }
+
+    return null;
+  }
+
   function obtenerBadge(statusId, orderId, statusTexto) {
     var statusIdTexto = statusId !== null && statusId !== undefined ? String(statusId) : '';
     var orderIdTexto = orderId !== null && orderId !== undefined ? String(orderId) : '';
-    var claseInteraccion = puedeCambiarEstatus ? ' badge-status' : '';
+    var configuracionCambio = obtenerConfiguracionCambio(statusIdTexto, statusTexto);
+    var puedeInteractuar = puedeCambiarEstatus && configuracionCambio !== null;
+    var claseInteraccion = puedeInteractuar ? ' badge-status' : '';
     var mandarModal = '';
 
-    if (puedeCambiarEstatus) {
+    if (puedeInteractuar) {
       mandarModal = 'data-bs-toggle="modal" data-bs-target="#ModalCambioStatusCharola" data-order="' + escapeHtml(orderIdTexto) + '" data-status="' + escapeHtml(statusIdTexto) + '"';
     }
 
@@ -695,10 +844,12 @@ $(document).ready(function() {
     if (!puedeCambiarEstatus) {
       return;
     }
+
     var orderId = $(this).data('order');
     var statusId = $(this).data('status');
     var statusIdTexto = statusId !== undefined && statusId !== null ? String(statusId) : '';
     var datosFila = null;
+
     if (tablaOrdenes) {
       var filaTabla = tablaOrdenes.row($(this).closest('tr'));
       if (filaTabla && typeof filaTabla.data === 'function') {
@@ -708,106 +859,113 @@ $(document).ready(function() {
         }
       }
     }
+
     if (!datosFila || typeof datosFila !== 'object') {
       datosFila = {};
     }
+
+    var textoStatusFila = datosFila.Status !== undefined && datosFila.Status !== null ? datosFila.Status : $(this).text();
+    var configuracionCambio = obtenerConfiguracionCambio(statusIdTexto, textoStatusFila);
+
+    if (!configuracionCambio || !configuracionCambio.siguienteStatusId) {
+      return;
+    }
+
+    estadoCambio = {
+      ordenId: orderId !== undefined && orderId !== null ? String(orderId) : '',
+      statusActualId: statusIdTexto,
+      statusActualTexto: textoStatusFila !== undefined && textoStatusFila !== null ? String(textoStatusFila) : '',
+      siguienteStatusId: configuracionCambio.siguienteStatusId,
+      mensaje: configuracionCambio.mensaje,
+      requiereCamposAuditado: !!configuracionCambio.requiereCamposAuditado,
+      requiereFactura: !!configuracionCambio.requiereFactura,
+      requierePrivilegiosVerificado: !!configuracionCambio.requierePrivilegiosVerificado,
+      requierePrivilegiosAuditado: !!configuracionCambio.requierePrivilegiosAuditado,
+    };
+
     $('#ORDENCHAROLAIDEditar').val(orderId);
+    $('#NuevoStatusCharola').val(configuracionCambio.siguienteStatusId);
+    $textoConfirmacion.text(configuracionCambio.mensaje);
+
     $salidaAuditado.val(datosFila.Salida || '');
     $entradaAuditado.val(datosFila.Entrada || '');
     $almacenAuditado.val(datosFila.Almacen || '');
     $facturaInput.val(datosFila.Factura || '');
-    $('#NuevoStatusCharola').val(statusIdTexto).trigger('change');
-    $('#NuevoStatusCharola').data('valor-inicial', statusIdTexto);
-  });
 
-  function actualizarVisibilidadCamposAuditado(valorSeleccionado) {
-    var requiereCampos = !!statusAuditadoId && valorSeleccionado === statusAuditadoId;
-    if (requiereCampos) {
-      $camposAuditado.removeClass('d-none');
-      camposAuditado.forEach(function($input) {
-        $input.prop('required', true);
-      });
-    } else {
-      $camposAuditado.addClass('d-none');
-      camposAuditado.forEach(function($input) {
-        $input.prop('required', false);
-      });
-    }
-  }
-
-  function actualizarVisibilidadCampoFactura(valorSeleccionado) {
-    var requiereFactura = valorSeleccionado === statusEnProcesoId;
-    if (requiereFactura) {
-      $campoFacturaWrapper.removeClass('d-none');
-      $facturaInput.prop('required', true);
-    } else {
-      $facturaInput.prop('required', false);
-      $campoFacturaWrapper.addClass('d-none');
-    }
-  }
-
-  $('#NuevoStatusCharola').on('change', function() {
-    var valorSeleccionado = $(this).val();
-    var valorTexto = valorSeleccionado !== undefined && valorSeleccionado !== null ? String(valorSeleccionado) : '';
-    actualizarVisibilidadCamposAuditado(valorTexto);
-    actualizarVisibilidadCampoFactura(valorTexto);
+    mostrarConfirmacionStatus();
   });
 
   $('#ModalCambioStatusCharola').on('hidden.bs.modal', function() {
-    $('#FormEditarStatusCharola')[0].reset();
-    $('#NuevoStatusCharola').data('valor-inicial', '');
-    actualizarVisibilidadCamposAuditado($('#NuevoStatusCharola').val() || '');
-    actualizarVisibilidadCampoFactura($('#NuevoStatusCharola').val() || '');
-    $facturaInput.val('');
+    resetFormularioStatus();
   });
 
-  actualizarVisibilidadCamposAuditado($('#NuevoStatusCharola').val() || '');
-  actualizarVisibilidadCampoFactura($('#NuevoStatusCharola').val() || '');
-
-  $('#FormEditarStatusCharola').on('submit', function(e) {
-    e.preventDefault();
+  $btnConfirmarCambioStatus.on('click', function() {
     if (!puedeCambiarEstatus) {
       $('#ModalCambioStatusCharola').modal('hide');
       return;
     }
-    var orderId = $('#ORDENCHAROLAIDEditar').val();
-    var statusId = $('#NuevoStatusCharola').val();
-    var valorInicial = $('#NuevoStatusCharola').data('valor-inicial');
 
-    var statusIdTexto = statusId !== undefined && statusId !== null ? String(statusId) : '';
-
-    if (valorInicial !== undefined && statusIdTexto === String(valorInicial)) {
+    if (!estadoCambio || !estadoCambio.siguienteStatusId) {
       $('#ModalCambioStatusCharola').modal('hide');
       return;
     }
 
-    if (!puedeAsignarVerificado && statusVerificadoId && statusIdTexto === statusVerificadoId) {
-      if (valorInicial !== undefined) {
-        $('#NuevoStatusCharola').val(String(valorInicial)).trigger('change');
-      } else {
-        $('#NuevoStatusCharola').val('').trigger('change');
-      }
+    if (estadoCambio.requierePrivilegiosVerificado && !puedeAsignarVerificado) {
+      window.alert(mensajeRestriccionVerificado);
+      $('#ModalCambioStatusCharola').modal('hide');
+      return;
+    }
+
+    if (estadoCambio.requierePrivilegiosAuditado && !puedeAsignarAuditado) {
+      window.alert(mensajeRestriccionAuditado);
+      $('#ModalCambioStatusCharola').modal('hide');
+      return;
+    }
+
+    if (estadoCambio.requiereCamposAuditado || estadoCambio.requiereFactura) {
+      mostrarFormularioStatus();
+      return;
+    }
+
+    enviarCambioStatus();
+  });
+
+  $('#FormEditarStatusCharola').on('submit', function(e) {
+    e.preventDefault();
+    enviarCambioStatus();
+  });
+
+  function enviarCambioStatus() {
+    if (!puedeCambiarEstatus) {
+      $('#ModalCambioStatusCharola').modal('hide');
+      return;
+    }
+
+    if (estadoCambio.requierePrivilegiosVerificado && !puedeAsignarVerificado) {
       window.alert(mensajeRestriccionVerificado);
       return;
     }
 
-    if (!puedeAsignarAuditado && statusAuditadoId && statusIdTexto === statusAuditadoId) {
-      if (valorInicial !== undefined) {
-        $('#NuevoStatusCharola').val(String(valorInicial)).trigger('change');
-      } else {
-        $('#NuevoStatusCharola').val('').trigger('change');
-      }
+    if (estadoCambio.requierePrivilegiosAuditado && !puedeAsignarAuditado) {
       window.alert(mensajeRestriccionAuditado);
       return;
     }
 
-    var requiereCamposAuditado = !!statusAuditadoId && statusIdTexto === statusAuditadoId;
+    var orderId = $('#ORDENCHAROLAIDEditar').val();
+    var statusId = $('#NuevoStatusCharola').val();
+    var statusIdTexto = statusId !== undefined && statusId !== null ? String(statusId) : '';
+
+    if (!orderId || !statusIdTexto) {
+      $('#ModalCambioStatusCharola').modal('hide');
+      return;
+    }
+
     var datosEnvio = {
       ORDENCHAROLAID: orderId,
       STATUSID: statusIdTexto
     };
 
-    if (requiereCamposAuditado) {
+    if (estadoCambio.requiereCamposAuditado) {
       var salida = ($salidaAuditado.val() || '').trim();
       var entrada = ($entradaAuditado.val() || '').trim();
       var almacen = ($almacenAuditado.val() || '').trim();
@@ -823,7 +981,8 @@ $(document).ready(function() {
     }
 
     var factura = ($facturaInput.val() || '').trim();
-    if (statusIdTexto === statusEnProcesoId && !factura) {
+
+    if (estadoCambio.requiereFactura && !factura) {
       window.alert('Debes capturar el número de factura para guardar el estatus En proceso.');
       return;
     }
@@ -855,5 +1014,5 @@ $(document).ready(function() {
         window.alert(mensaje);
       }
     });
-  });
+  }
 });
