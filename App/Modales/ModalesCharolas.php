@@ -7,30 +7,8 @@
             </div>
             <form id="FormEditarStatusCharola">
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="NuevoStatusCharola" class="form-label">Status</label>
-                        <select class="form-select" id="NuevoStatusCharola" name="STATUSID" required>
-                            <option value="1">Registrada</option>
-                            <option value="2">En proceso</option>
-                            <option value="3">Terminada</option>
-                            <option value="4">Entregada</option>
-                            <?php if ($statusVerificadoId !== null) { ?>
-                                <option value="<?php echo htmlspecialchars((string) $statusVerificadoId, ENT_QUOTES, 'UTF-8'); ?>"<?php echo !$puedeAsignarVerificado ? ' data-requires-privilegios="true"' : ''; ?>>
-                                    <?php echo htmlspecialchars($statusVerificadoNombre, ENT_QUOTES, 'UTF-8'); ?><?php if (!$puedeAsignarVerificado) { ?> (solo supervisor, auditor o administrador)<?php } ?>
-                                </option>
-                            <?php } ?>
-                            <?php if ($statusAuditadoId !== null) { ?>
-                                <option value="<?php echo htmlspecialchars((string) $statusAuditadoId, ENT_QUOTES, 'UTF-8'); ?>"<?php echo !$puedeAsignarAuditado ? ' data-requires-auditor="true"' : ''; ?>>
-                                    <?php echo htmlspecialchars($statusAuditadoNombre, ENT_QUOTES, 'UTF-8'); ?><?php if (!$puedeAsignarAuditado) { ?> (solo auditor)<?php } ?>
-                                </option>
-                            <?php } ?>
-                        </select>
-                    </div>
-                    <div class="mb-3 d-none" id="CampoFacturaCharola">
-                        <label for="FacturaCharola" class="form-label">Factura</label>
-                        <input type="text" class="form-control" id="FacturaCharola" name="FACTURA" autocomplete="off">
-                    </div>
-                    <div id="CamposAuditado" class="row g-3 d-none">
+                    <p id="TextoConfirmacionStatus" class="mb-0"></p>
+                    <div id="CamposAuditado" class="row g-3 d-none mt-3">
                         <div class="col-md-4">
                             <label for="SalidaAuditado" class="form-label">Salida</label>
                             <input type="text" class="form-control" id="SalidaAuditado" name="SALIDA" autocomplete="off">
@@ -44,11 +22,22 @@
                             <input type="text" class="form-control" id="AlmacenAuditado" name="ALMACEN" autocomplete="off">
                         </div>
                     </div>
+                    <div class="mb-3 d-none mt-3" id="CampoFacturaCharola">
+                        <label for="FacturaCharola" class="form-label">Factura</label>
+                        <input type="text" class="form-control" id="FacturaCharola" name="FACTURA" autocomplete="off">
+                    </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer flex-column flex-sm-row">
                     <input type="hidden" id="ORDENCHAROLAIDEditar" name="ORDENCHAROLAID">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <input type="hidden" id="NuevoStatusCharola" name="STATUSID">
+                    <div class="w-100 d-flex justify-content-end gap-2" id="BotonesConfirmacionStatus">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                        <button type="button" class="btn btn-primary" id="BtnConfirmarCambioStatus">Sí</button>
+                    </div>
+                    <div class="w-100 d-none justify-content-end gap-2" id="BotonesFormularioStatus">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
                 </div>
             </form>
         </div>
