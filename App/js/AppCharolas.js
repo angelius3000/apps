@@ -36,6 +36,9 @@ $(document).ready(function() {
   var $entradaAuditado = $('#EntradaAuditado');
   var $almacenAuditado = $('#AlmacenAuditado');
   var camposAuditado = [$salidaAuditado, $entradaAuditado, $almacenAuditado];
+  var $campoFacturaWrapper = $('#CampoFacturaCharola');
+  var $facturaInput = $('#FacturaCharola');
+  var statusEnProcesoId = '2';
 
   function obtenerNombreVerificadoNormalizado() {
     if (!nombreStatusVerificadoNormalizado) {
@@ -406,6 +409,7 @@ $(document).ready(function() {
       '<th scope="col">Salida</th>' +
       '<th scope="col">Entrada</th>' +
       '<th scope="col">Almacén</th>' +
+      '<th scope="col">Factura</th>' +
       '<th scope="col">Cambiar estatus</th>' +
     '</tr>';
 
@@ -418,7 +422,7 @@ $(document).ready(function() {
       thead.append(encabezado);
     } else {
       var celdas = fila.first().children('th');
-      if (celdas.length !== 9) {
+      if (celdas.length !== 10) {
         thead.html(encabezado);
       }
     }
@@ -485,6 +489,7 @@ $(document).ready(function() {
             Salida: typeof row.Salida === 'string' ? row.Salida : '',
             Entrada: typeof row.Entrada === 'string' ? row.Entrada : '',
             Almacen: typeof row.Almacen === 'string' ? row.Almacen : '',
+            Factura: typeof row.Factura === 'string' ? row.Factura : '',
             _totalesMateriales: normalizarTotalesMateriales(totales)
           };
 
@@ -498,6 +503,7 @@ $(document).ready(function() {
             Salida: datosDetalle.Salida,
             Entrada: datosDetalle.Entrada,
             Almacen: datosDetalle.Almacen,
+            Factura: datosDetalle.Factura,
             badgeHtml: obtenerBadge(row.STATUSID, row.ORDENCHAROLAID, row.Status)
           });
         });
@@ -538,6 +544,12 @@ $(document).ready(function() {
             },
             {
               data: 'Almacen',
+              render: function(data) {
+                return escapeHtml(data || '');
+              }
+            },
+            {
+              data: 'Factura',
               render: function(data) {
                 return escapeHtml(data || '');
               }
@@ -703,6 +715,7 @@ $(document).ready(function() {
     $salidaAuditado.val(datosFila.Salida || '');
     $entradaAuditado.val(datosFila.Entrada || '');
     $almacenAuditado.val(datosFila.Almacen || '');
+    $facturaInput.val(datosFila.Factura || '');
     $('#NuevoStatusCharola').val(statusIdTexto).trigger('change');
     $('#NuevoStatusCharola').data('valor-inicial', statusIdTexto);
   });
@@ -723,19 +736,34 @@ $(document).ready(function() {
     }
   }
 
+  function actualizarVisibilidadCampoFactura(valorSeleccionado) {
+    var requiereFactura = valorSeleccionado === statusEnProcesoId;
+    if (requiereFactura) {
+      $campoFacturaWrapper.removeClass('d-none');
+      $facturaInput.prop('required', true);
+    } else {
+      $facturaInput.prop('required', false);
+      $campoFacturaWrapper.addClass('d-none');
+    }
+  }
+
   $('#NuevoStatusCharola').on('change', function() {
     var valorSeleccionado = $(this).val();
     var valorTexto = valorSeleccionado !== undefined && valorSeleccionado !== null ? String(valorSeleccionado) : '';
     actualizarVisibilidadCamposAuditado(valorTexto);
+    actualizarVisibilidadCampoFactura(valorTexto);
   });
 
   $('#ModalCambioStatusCharola').on('hidden.bs.modal', function() {
     $('#FormEditarStatusCharola')[0].reset();
     $('#NuevoStatusCharola').data('valor-inicial', '');
     actualizarVisibilidadCamposAuditado($('#NuevoStatusCharola').val() || '');
+    actualizarVisibilidadCampoFactura($('#NuevoStatusCharola').val() || '');
+    $facturaInput.val('');
   });
 
   actualizarVisibilidadCamposAuditado($('#NuevoStatusCharola').val() || '');
+  actualizarVisibilidadCampoFactura($('#NuevoStatusCharola').val() || '');
 
   $('#FormEditarStatusCharola').on('submit', function(e) {
     e.preventDefault();
@@ -798,6 +826,18 @@ $(document).ready(function() {
       datosEnvio.ENTRADA = '';
       datosEnvio.ALMACEN = '';
     }
+
+    var factura = ($facturaInput.val() || '').trim();
+    if (statusIdTexto === statusEnProcesoId && !factura) {
+      window.alert('Debes capturar el número de factura para guardar el estatus En proceso.');
+      return;
+    }
+
+    if (factura.length > 100) {
+      factura = factura.slice(0, 100);
+    }
+
+    datosEnvio.FACTURA = factura;
 
     $.ajax({
       type: 'POST',

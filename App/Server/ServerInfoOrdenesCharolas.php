@@ -98,6 +98,25 @@ function asegurarColumnasAuditado($conn)
     return $columnas;
 }
 
+function asegurarColumnaFactura($conn)
+{
+    $columnaFactura = false;
+
+    $consulta = mysqli_query($conn, "SHOW COLUMNS FROM ordenes_charolas LIKE 'Factura'");
+    if ($consulta instanceof mysqli_result) {
+        $columnaFactura = mysqli_num_rows($consulta) > 0;
+        mysqli_free_result($consulta);
+    }
+
+    if (!$columnaFactura) {
+        if (mysqli_query($conn, 'ALTER TABLE ordenes_charolas ADD COLUMN `Factura` VARCHAR(100) NULL')) {
+            $columnaFactura = true;
+        }
+    }
+
+    return $columnaFactura;
+}
+
 function calcularTotalesMateriales($detalles, $cantidadOrden)
 {
     $totales = [
@@ -153,7 +172,10 @@ if (!empty($seleccionAuditado)) {
     $seleccionAuditadoSql = ', ' . implode(', ', $seleccionAuditado);
 }
 
-$query = "SELECT oc.ORDENCHAROLAID, oc.CHAROLASID, oc.Cantidad, oc.STATUSID, s.Status, c.SkuCharolas, c.DescripcionCharolas" . $seleccionAuditadoSql . $columnasSeleccionadas . "
+$columnaFacturaDisponible = asegurarColumnaFactura($conn);
+$seleccionFacturaSql = $columnaFacturaDisponible ? ', oc.Factura AS Factura' : ', NULL AS Factura';
+
+$query = "SELECT oc.ORDENCHAROLAID, oc.CHAROLASID, oc.Cantidad, oc.STATUSID, s.Status, c.SkuCharolas, c.DescripcionCharolas" . $seleccionAuditadoSql . $seleccionFacturaSql . $columnasSeleccionadas . "
           FROM ordenes_charolas oc
           JOIN charolas c ON c.CHAROLASID = oc.CHAROLASID
           JOIN status s ON s.STATUSID = oc.STATUSID
@@ -251,6 +273,7 @@ while ($row = mysqli_fetch_assoc($result)) {
     $row['Salida'] = isset($row['Salida']) ? trim((string) $row['Salida']) : '';
     $row['Entrada'] = isset($row['Entrada']) ? trim((string) $row['Entrada']) : '';
     $row['Almacen'] = isset($row['Almacen']) ? trim((string) $row['Almacen']) : '';
+    $row['Factura'] = isset($row['Factura']) ? trim((string) $row['Factura']) : '';
     $ordenes[] = $row;
 }
 mysqli_free_result($result);
