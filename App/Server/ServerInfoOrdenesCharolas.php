@@ -58,6 +58,46 @@ function obtenerColumnasMateriales($conn)
     return $columnas;
 }
 
+function asegurarColumnasAuditado($conn)
+{
+    $columnas = [
+        'Salida' => false,
+        'Entrada' => false,
+        'Almacen' => false,
+    ];
+
+    $definiciones = [
+        'Salida' => 'VARCHAR(100) NULL',
+        'Entrada' => 'VARCHAR(100) NULL',
+        'Almacen' => 'VARCHAR(100) NULL',
+    ];
+
+    $consulta = mysqli_query($conn, 'SHOW COLUMNS FROM ordenes_charolas');
+    if ($consulta instanceof mysqli_result) {
+        while ($columna = mysqli_fetch_assoc($consulta)) {
+            $nombre = isset($columna['Field']) ? $columna['Field'] : null;
+            if ($nombre !== null && array_key_exists($nombre, $columnas)) {
+                $columnas[$nombre] = true;
+            }
+        }
+        mysqli_free_result($consulta);
+    }
+
+    foreach ($columnas as $nombre => $presente) {
+        if ($presente) {
+            continue;
+        }
+
+        $definicion = isset($definiciones[$nombre]) ? $definiciones[$nombre] : 'VARCHAR(100) NULL';
+        $sqlAlter = sprintf('ALTER TABLE ordenes_charolas ADD COLUMN `%s` %s', $nombre, $definicion);
+        if (mysqli_query($conn, $sqlAlter)) {
+            $columnas[$nombre] = true;
+        }
+    }
+
+    return $columnas;
+}
+
 function calcularTotalesMateriales($detalles, $cantidadOrden)
 {
     $totales = [
@@ -99,7 +139,21 @@ if (!empty($prefijosSeleccionados)) {
     $columnasSeleccionadas = ', ' . implode(', ', $prefijosSeleccionados);
 }
 
-$query = "SELECT oc.ORDENCHAROLAID, oc.CHAROLASID, oc.Cantidad, oc.STATUSID, s.Status, c.SkuCharolas, c.DescripcionCharolas, oc.Salida, oc.Entrada, oc.Almacen" . $columnasSeleccionadas . "
+$columnasAuditado = asegurarColumnasAuditado($conn);
+$seleccionAuditado = [];
+foreach ($columnasAuditado as $nombre => $disponible) {
+    if ($disponible) {
+        $seleccionAuditado[] = 'oc.' . $nombre;
+    } else {
+        $seleccionAuditado[] = sprintf('NULL AS `%s`', $nombre);
+    }
+}
+$seleccionAuditadoSql = '';
+if (!empty($seleccionAuditado)) {
+    $seleccionAuditadoSql = ', ' . implode(', ', $seleccionAuditado);
+}
+
+$query = "SELECT oc.ORDENCHAROLAID, oc.CHAROLASID, oc.Cantidad, oc.STATUSID, s.Status, c.SkuCharolas, c.DescripcionCharolas" . $seleccionAuditadoSql . $columnasSeleccionadas . "
           FROM ordenes_charolas oc
           JOIN charolas c ON c.CHAROLASID = oc.CHAROLASID
           JOIN status s ON s.STATUSID = oc.STATUSID
