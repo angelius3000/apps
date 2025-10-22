@@ -162,6 +162,12 @@ if ($conn === false) {
             'Ruta' => 'Usuarios.php',
             'Orden' => 5,
         ],
+        [
+            'Nombre' => 'Administración',
+            'Slug' => 'administracion',
+            'Ruta' => 'Administracion.php',
+            'Orden' => 6,
+        ],
     ];
 
     $stmtInsertSeccion = @mysqli_prepare(

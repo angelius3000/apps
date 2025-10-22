@@ -5,6 +5,7 @@
         </li> -->
         <?php
         $permisosSecciones = $_SESSION['PermisosSecciones'] ?? [];
+        $tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string) $_SESSION['TipoDeUsuario'])) : '';
         $menuSecciones = [
             [
                 'slug' => 'aplicaciones',
@@ -36,11 +37,22 @@
                 'icono' => 'person_add_alt',
                 'nombre' => 'Usuarios',
             ],
+            [
+                'slug' => 'administracion',
+                'ruta' => 'Administracion.php',
+                'icono' => 'settings',
+                'nombre' => 'Administración',
+                'soloAdministrador' => true,
+            ],
         ];
 
         foreach ($menuSecciones as $seccionMenu) {
             $slug = $seccionMenu['slug'];
             $mostrar = !isset($permisosSecciones[$slug]) || (int)$permisosSecciones[$slug] === 1;
+
+            if (!empty($seccionMenu['soloAdministrador']) && $tipoUsuarioActual !== 'administrador') {
+                $mostrar = false;
+            }
 
             if ($mostrar) {
                 echo '<li>';
