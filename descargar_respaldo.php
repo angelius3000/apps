@@ -15,7 +15,14 @@ if ($tipoUsuarioActual !== 'administrador') {
 }
 
 $archivoSolicitado = $_GET['file'] ?? '';
-$ruta = dbBackupResolvePath($archivoSolicitado);
+$scope = $_GET['scope'] ?? 'database';
+
+if ($scope === 'table') {
+    $tablaSolicitada = $_GET['table'] ?? '';
+    $ruta = dbBackupResolveTablePath($tablaSolicitada, $archivoSolicitado);
+} else {
+    $ruta = dbBackupResolvePath($archivoSolicitado);
+}
 
 if ($ruta === null) {
     http_response_code(404);
