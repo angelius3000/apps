@@ -177,7 +177,14 @@ $(document).ready(function() {
 
     if (statusIdTexto === '1') {
       if (!statusVerificadoId) {
-        return null;
+        return {
+          siguienteStatusId: statusEnProcesoId,
+          mensaje: '¿Deseas cambiar el estatus de esta requisición a "En Proceso"?',
+          requiereCamposAuditado: false,
+          requiereFactura: false,
+          requierePrivilegiosVerificado: false,
+          requierePrivilegiosAuditado: false,
+        };
       }
       return {
         siguienteStatusId: statusVerificadoId,
@@ -191,7 +198,14 @@ $(document).ready(function() {
 
     if (esStatusVerificado(statusIdTexto, statusTexto)) {
       if (!statusAuditadoId) {
-        return null;
+        return {
+          siguienteStatusId: statusEnProcesoId,
+          mensaje: '¿Deseas cambiar el estatus de esta requisición a "En Proceso"?',
+          requiereCamposAuditado: false,
+          requiereFactura: false,
+          requierePrivilegiosVerificado: false,
+          requierePrivilegiosAuditado: false,
+        };
       }
       return {
         siguienteStatusId: statusAuditadoId,
