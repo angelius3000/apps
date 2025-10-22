@@ -38,6 +38,19 @@ if (!isset($conn) || $conn === false) {
             } else {
                 $mensajesError[] = $mensajeRespaldo;
             }
+        } elseif ($accionGeneral === 'create_table_backup') {
+            $tablaParaRespaldo = isset($_POST['selected_table']) ? (string) $_POST['selected_table'] : '';
+            [$exitoRespaldoTabla, $mensajeRespaldoTabla, $archivoGeneradoTabla] = dbBackupCreateTable($conn, $tablaParaRespaldo);
+
+            if ($exitoRespaldoTabla) {
+                $mensajeFinal = $mensajeRespaldoTabla;
+                if ($archivoGeneradoTabla !== null) {
+                    $mensajeFinal .= ' Archivo generado: ' . $archivoGeneradoTabla . '.';
+                }
+                $mensajesExito[] = $mensajeFinal;
+            } else {
+                $mensajesError[] = $mensajeRespaldoTabla;
+            }
         } elseif ($accionGeneral === 'restore_existing_backup') {
             $archivoSeleccionado = $_POST['backup_file'] ?? '';
             $rutaRespaldo = dbBackupResolvePath($archivoSeleccionado);
@@ -443,6 +456,12 @@ $respaldosDisponibles = dbBackupListFiles();
                                                 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
                                                     <h6 class="mb-0">Registros de "<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>"</h6>
                                                     <div class="d-flex flex-wrap ms-md-auto gap-2">
+                                                        <form method="post">
+                                                            <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
+                                                            <button type="submit" name="action" value="create_table_backup" class="btn btn-outline-primary btn-sm" data-requires-confirmation="true" data-confirmation-message="Se generará un respaldo que solo contiene la tabla seleccionada. ¿Deseas continuar?">
+                                                                Respaldar tabla
+                                                            </button>
+                                                        </form>
                                                         <?php if ($columnaAutoIncremental !== null) : ?>
                                                             <form method="post">
                                                                 <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
