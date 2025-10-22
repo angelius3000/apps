@@ -191,6 +191,23 @@ if (!isset($conn) || $conn === false) {
                         $mensajesError[] = 'No se pudo determinar el siguiente valor autoincremental.';
                     }
                 }
+            } elseif ($accion === 'truncate_table') {
+                $consultaTruncate = 'TRUNCATE TABLE `' . $tablaSeleccionada . '`';
+                $resultadoTruncate = @mysqli_query($conn, $consultaTruncate);
+
+                if ($resultadoTruncate) {
+                    $mensajesExito[] = 'La tabla se vació correctamente.';
+                } else {
+                    $consultaDeleteTodos = 'DELETE FROM `' . $tablaSeleccionada . '`';
+                    if (@mysqli_query($conn, $consultaDeleteTodos)) {
+                        if ($columnaAutoIncremental !== null) {
+                            @mysqli_query($conn, 'ALTER TABLE `' . $tablaSeleccionada . '` AUTO_INCREMENT = 1');
+                        }
+                        $mensajesExito[] = 'Se eliminaron todos los registros de la tabla seleccionada.';
+                    } else {
+                        $mensajesError[] = 'No fue posible vaciar la tabla seleccionada: ' . mysqli_error($conn);
+                    }
+                }
             }
         }
 
@@ -243,6 +260,10 @@ if (!isset($conn) || $conn === false) {
                                         <h5 class="card-title">Administración de bases de datos</h5>
                                         <p class="card-text">Gestiona las tablas disponibles en la base de datos. Puedes editar registros existentes, eliminarlos y restablecer el valor autoincremental cuando sea necesario.</p>
 
+                                        <div class="alert alert-warning" role="alert">
+                                            <strong>Advertencia:</strong> Las acciones de esta sección pueden modificar o eliminar información de forma permanente. Revisa cuidadosamente los datos antes de confirmar cualquier cambio.
+                                        </div>
+
                                         <?php foreach ($mensajesError as $mensaje) : ?>
                                             <div class="alert alert-danger" role="alert">
                                                 <?php echo htmlspecialchars($mensaje, ENT_QUOTES, 'UTF-8'); ?>
@@ -279,14 +300,22 @@ if (!isset($conn) || $conn === false) {
                                             <?php if (!empty($tablaSeleccionada)) : ?>
                                                 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
                                                     <h6 class="mb-0">Registros de "<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>"</h6>
-                                                    <?php if ($columnaAutoIncremental !== null) : ?>
-                                                        <form method="post" class="ms-md-auto">
+                                                    <div class="d-flex flex-wrap ms-md-auto gap-2">
+                                                        <?php if ($columnaAutoIncremental !== null) : ?>
+                                                            <form method="post">
+                                                                <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
+                                                                <button type="submit" name="action" value="reset_auto_increment" class="btn btn-outline-secondary btn-sm" data-requires-confirmation="true" data-confirmation-message="¿Seguro que deseas restablecer el valor autoincremental?">
+                                                                    Resetear autoincremental
+                                                                </button>
+                                                            </form>
+                                                        <?php endif; ?>
+                                                        <form method="post">
                                                             <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
-                                                            <button type="submit" name="action" value="reset_auto_increment" class="btn btn-outline-secondary btn-sm" onclick="return confirm('¿Seguro que deseas restablecer el valor autoincremental?');">
-                                                                Resetear autoincremental
+                                                            <button type="submit" name="action" value="truncate_table" class="btn btn-outline-danger btn-sm" data-requires-confirmation="true" data-confirmation-message="Esta acción eliminará todos los registros de la tabla seleccionada. ¿Deseas continuar?">
+                                                                Vaciar tabla
                                                             </button>
                                                         </form>
-                                                    <?php endif; ?>
+                                                    </div>
                                                 </div>
 
                                                 <?php if (empty($registrosTabla)) : ?>
@@ -331,8 +360,8 @@ if (!isset($conn) || $conn === false) {
                                                                                 <input type="hidden" name="original_primary_key_value" value="<?php echo htmlspecialchars((string) ($columnaLlavePrimaria !== null ? ($registro[$columnaLlavePrimaria] ?? '') : ''), ENT_QUOTES, 'UTF-8'); ?>">
                                                                             </form>
                                                                             <div class="btn-group btn-group-sm" role="group">
-                                                                                <button form="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" type="submit" name="action" value="update" class="btn btn-primary" <?php echo $accionesDeshabilitadas ? 'disabled' : ''; ?>>Guardar</button>
-                                                                                <button form="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" type="submit" name="action" value="delete" class="btn btn-outline-danger" onclick="return confirm('¿Seguro que deseas eliminar este registro? Esta acción no se puede deshacer.');" <?php echo $accionesDeshabilitadas ? 'disabled' : ''; ?>>Eliminar</button>
+                                                                                <button form="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" type="submit" name="action" value="update" class="btn btn-primary" data-requires-confirmation="true" data-confirmation-message="¿Deseas guardar los cambios realizados en este registro?" <?php echo $accionesDeshabilitadas ? 'disabled' : ''; ?>>Guardar</button>
+                                                                                <button form="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" type="submit" name="action" value="delete" class="btn btn-outline-danger" data-requires-confirmation="true" data-confirmation-message="¿Seguro que deseas eliminar este registro? Esta acción no se puede deshacer." <?php echo $accionesDeshabilitadas ? 'disabled' : ''; ?>>Eliminar</button>
                                                                             </div>
                                                                         </td>
                                                                     </tr>
@@ -353,6 +382,24 @@ if (!isset($conn) || $conn === false) {
         </div>
     </div>
 
+    <div class="modal fade" id="actionConfirmationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar acción</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="actionConfirmationMessage" class="mb-0">¿Deseas continuar con esta acción?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="confirmActionButton">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Javascripts -->
     <script src="assets/plugins/jquery/jquery-3.7.1.min.js"></script>
     <script src="assets/plugins/bootstrap/js/popper.min.js"></script>
@@ -363,6 +410,71 @@ if (!isset($conn) || $conn === false) {
     <script src="assets/js/main.min.js"></script>
     <script src="assets/js/custom.js"></script>
     <script src="App/js/AppCambiarContrasena.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var modalElement = document.getElementById('actionConfirmationModal');
+            if (!modalElement || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+                return;
+            }
+
+            var messageContainer = modalElement.querySelector('#actionConfirmationMessage');
+            var confirmButton = modalElement.querySelector('#confirmActionButton');
+
+            if (!messageContainer || !confirmButton) {
+                return;
+            }
+
+            var confirmationModal = new bootstrap.Modal(modalElement);
+            var pendingButton = null;
+
+            var buttons = document.querySelectorAll('[data-requires-confirmation="true"]');
+            buttons.forEach(function (button) {
+                button.addEventListener('click', function (event) {
+                    if (button.disabled) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    pendingButton = button;
+                    var message = button.getAttribute('data-confirmation-message');
+                    messageContainer.textContent = message && message.trim().length > 0
+                        ? message
+                        : '¿Deseas continuar con esta acción?';
+                    confirmationModal.show();
+                });
+            });
+
+            confirmButton.addEventListener('click', function () {
+                if (!pendingButton) {
+                    confirmationModal.hide();
+                    return;
+                }
+
+                var form = pendingButton.form;
+                if (form) {
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit(pendingButton);
+                    } else {
+                        if (pendingButton.name) {
+                            var hiddenInput = document.createElement('input');
+                            hiddenInput.type = 'hidden';
+                            hiddenInput.name = pendingButton.name;
+                            hiddenInput.value = pendingButton.value;
+                            form.appendChild(hiddenInput);
+                        }
+                        form.submit();
+                    }
+                }
+
+                pendingButton = null;
+                confirmationModal.hide();
+            });
+
+            modalElement.addEventListener('hidden.bs.modal', function () {
+                pendingButton = null;
+            });
+        });
+    </script>
 </body>
 
 </html>
