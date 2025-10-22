@@ -15,6 +15,63 @@ function dbBackupDirectory(): string
 }
 
 /**
+ * Returns the directory that stores table specific backups.
+ */
+function dbBackupTablesRootDirectory(): string
+{
+    return dbBackupDirectory() . DIRECTORY_SEPARATOR . 'tables';
+}
+
+/**
+ * Normalizes a table name to ensure it is safe for filesystem usage.
+ */
+function dbBackupNormalizeTableName(string $tableName): ?string
+{
+    $normalized = trim($tableName);
+    if ($normalized === '') {
+        return null;
+    }
+
+    $normalized = str_replace('`', '', $normalized);
+    if (!preg_match('/^[A-Za-z0-9_]+$/', $normalized)) {
+        return null;
+    }
+
+    return $normalized;
+}
+
+/**
+ * Ensures the directory for a specific table backup exists and is writable.
+ */
+function dbBackupEnsureTableDirectory(string $tableName): ?string
+{
+    $normalized = dbBackupNormalizeTableName($tableName);
+    if ($normalized === null) {
+        return null;
+    }
+
+    if (!dbBackupEnsureDirectory()) {
+        return null;
+    }
+
+    $tablesRoot = dbBackupTablesRootDirectory();
+    if (!is_dir($tablesRoot) && !@mkdir($tablesRoot, 0775, true)) {
+        return null;
+    }
+
+    $tableDirectory = $tablesRoot . DIRECTORY_SEPARATOR . $normalized;
+    if (!is_dir($tableDirectory) && !@mkdir($tableDirectory, 0775, true)) {
+        return null;
+    }
+
+    if (!is_writable($tableDirectory)) {
+        return null;
+    }
+
+    return $tableDirectory;
+}
+
+/**
  * Ensures the backup directory exists and is writable.
  */
 function dbBackupEnsureDirectory(): bool
@@ -43,6 +100,34 @@ function dbBackupResolvePath(string $fileName): ?string
     }
 
     $path = dbBackupDirectory() . DIRECTORY_SEPARATOR . $normalized;
+    if (!is_file($path)) {
+        return null;
+    }
+
+    return $path;
+}
+
+/**
+ * Builds a safe path for a backup file stored for a specific table.
+ */
+function dbBackupResolveTablePath(string $tableName, string $fileName): ?string
+{
+    $normalizedTable = dbBackupNormalizeTableName($tableName);
+    if ($normalizedTable === null) {
+        return null;
+    }
+
+    $normalizedFile = trim($fileName);
+    if ($normalizedFile === '') {
+        return null;
+    }
+
+    $normalizedFile = basename($normalizedFile);
+    if (!preg_match('/^[A-Za-z0-9_.-]+$/', $normalizedFile)) {
+        return null;
+    }
+
+    $path = dbBackupTablesRootDirectory() . DIRECTORY_SEPARATOR . $normalizedTable . DIRECTORY_SEPARATOR . $normalizedFile;
     if (!is_file($path)) {
         return null;
     }
@@ -91,6 +176,111 @@ function dbBackupListFiles(): array
     });
 
     return $backups;
+}
+
+/**
+ * Returns the list of backups available for a specific table.
+ */
+function dbBackupListTableFiles(string $tableName): array
+{
+    $normalized = dbBackupNormalizeTableName($tableName);
+    if ($normalized === null) {
+        return [];
+    }
+
+    $directory = dbBackupTablesRootDirectory() . DIRECTORY_SEPARATOR . $normalized;
+    if (!is_dir($directory)) {
+        return [];
+    }
+
+    $files = scandir($directory);
+    if ($files === false) {
+        return [];
+    }
+
+    $backups = [];
+    foreach ($files as $file) {
+        if ($file === '.' || $file === '..') {
+            continue;
+        }
+
+        $path = $directory . DIRECTORY_SEPARATOR . $file;
+        if (!is_file($path) || !preg_match('/\.sql$/i', $file)) {
+            continue;
+        }
+
+        $backups[] = [
+            'name' => $file,
+            'table' => $normalized,
+            'path' => $path,
+            'size' => filesize($path),
+            'mtime' => filemtime($path),
+        ];
+    }
+
+    usort($backups, static function (array $a, array $b): int {
+        return ($b['mtime'] ?? 0) <=> ($a['mtime'] ?? 0);
+    });
+
+    return $backups;
+}
+
+/**
+ * Deletes a database backup file stored on the server.
+ *
+ * @return array{0:bool,1:string}
+ */
+function dbBackupDeleteFile(string $fileName): array
+{
+    $path = dbBackupResolvePath($fileName);
+    if ($path === null) {
+        return [false, 'El respaldo seleccionado no es válido o ya no existe.'];
+    }
+
+    if (!@unlink($path)) {
+        return [false, 'No fue posible eliminar el respaldo seleccionado del servidor.'];
+    }
+
+    return [true, 'El respaldo se eliminó correctamente.'];
+}
+
+/**
+ * Deletes a table specific backup file and cleans up the directory if empty.
+ *
+ * @return array{0:bool,1:string}
+ */
+function dbBackupDeleteTableFile(string $tableName, string $fileName): array
+{
+    $path = dbBackupResolveTablePath($tableName, $fileName);
+    if ($path === null) {
+        return [false, 'El respaldo seleccionado no es válido o ya no existe.'];
+    }
+
+    if (!@unlink($path)) {
+        return [false, 'No fue posible eliminar el respaldo seleccionado del servidor.'];
+    }
+
+    $directory = dirname($path);
+    if (is_dir($directory)) {
+        $remaining = @scandir($directory);
+        if ($remaining !== false) {
+            $hasEntries = false;
+            foreach ($remaining as $entry) {
+                if ($entry === '.' || $entry === '..') {
+                    continue;
+                }
+
+                $hasEntries = true;
+                break;
+            }
+
+            if (!$hasEntries) {
+                @rmdir($directory);
+            }
+        }
+    }
+
+    return [true, 'El respaldo de la tabla se eliminó correctamente.'];
 }
 
 /**
@@ -236,6 +426,139 @@ function dbBackupCreate(mysqli $connection): array
     fclose($fileHandle);
 
     return [true, 'El respaldo se generó correctamente.', $fileName];
+}
+
+/**
+ * Creates a new SQL dump containing only the requested table.
+ *
+ * @return array{0:bool,1:string,2:?string}
+ */
+function dbBackupCreateTable(mysqli $connection, string $tableName): array
+{
+    $rawTable = trim($tableName);
+    if ($rawTable === '') {
+        return [false, 'Selecciona una tabla válida para generar el respaldo.', null];
+    }
+
+    $normalizedTable = dbBackupNormalizeTableName($rawTable);
+    if ($normalizedTable === null) {
+        return [false, 'El nombre de la tabla no es válido para crear un respaldo.', null];
+    }
+
+    $stmtVerify = @mysqli_prepare(
+        $connection,
+        'SELECT TABLE_NAME, TABLE_TYPE FROM information_schema.tables WHERE table_schema = DATABASE() AND TABLE_NAME = ? LIMIT 1'
+    );
+
+    if (!$stmtVerify) {
+        return [false, 'No fue posible verificar la tabla seleccionada para generar el respaldo.', null];
+    }
+
+    $nombreTablaDb = '';
+    $tipoTablaDb = '';
+
+    if (
+        !@mysqli_stmt_bind_param($stmtVerify, 's', $normalizedTable)
+        || !@mysqli_stmt_execute($stmtVerify)
+        || !@mysqli_stmt_bind_result($stmtVerify, $nombreTablaDb, $tipoTablaDb)
+    ) {
+        mysqli_stmt_close($stmtVerify);
+        return [false, 'Ocurrió un error al preparar la información de la tabla a respaldar.', null];
+    }
+
+    $tablaEncontrada = @mysqli_stmt_fetch($stmtVerify) === true;
+    mysqli_stmt_close($stmtVerify);
+
+    if (!$tablaEncontrada) {
+        return [false, 'La tabla seleccionada no existe en la base de datos.', null];
+    }
+
+    $tipoTablaNormalizado = strtoupper((string) $tipoTablaDb);
+    if ($tipoTablaNormalizado !== 'BASE TABLE') {
+        return [false, 'Solo es posible generar respaldos individuales para tablas de datos.', null];
+    }
+
+    $tableDirectory = dbBackupEnsureTableDirectory($normalizedTable);
+    if ($tableDirectory === null) {
+        return [false, 'No fue posible preparar el directorio de respaldos en el servidor.', null];
+    }
+
+    $timestamp = date('Ymd_His');
+    $fileName = 'backup_' . $normalizedTable . '_' . $timestamp . '.sql';
+    $filePath = $tableDirectory . DIRECTORY_SEPARATOR . $fileName;
+
+    $fileHandle = @fopen($filePath, 'w');
+    if ($fileHandle === false) {
+        return [false, 'No fue posible crear el archivo de respaldo en el servidor.', null];
+    }
+
+    $header = sprintf(
+        "-- Respaldo de la tabla %s generado el %s\nSET NAMES utf8mb4;\nSET FOREIGN_KEY_CHECKS=0;\n\n",
+        '`' . $normalizedTable . '`',
+        date('Y-m-d H:i:s')
+    );
+
+    fwrite($fileHandle, $header);
+    @set_time_limit(0);
+
+    $createTableResult = @mysqli_query($connection, 'SHOW CREATE TABLE `' . $normalizedTable . '`');
+    if (!$createTableResult instanceof mysqli_result) {
+        fclose($fileHandle);
+        @unlink($filePath);
+        return [false, 'No fue posible obtener la estructura de la tabla seleccionada.', null];
+    }
+
+    $createTableRow = mysqli_fetch_assoc($createTableResult);
+    mysqli_free_result($createTableResult);
+
+    if (!isset($createTableRow['Create Table'])) {
+        fclose($fileHandle);
+        @unlink($filePath);
+        return [false, 'La tabla seleccionada no devolvió información de creación.', null];
+    }
+
+    fwrite($fileHandle, "DROP TABLE IF EXISTS `{$normalizedTable}`;\n");
+    fwrite($fileHandle, $createTableRow['Create Table'] . ';' . "\n\n");
+
+    $dataResult = @mysqli_query($connection, 'SELECT * FROM `' . $normalizedTable . '`');
+    if (!$dataResult instanceof mysqli_result) {
+        fclose($fileHandle);
+        @unlink($filePath);
+        return [false, 'No fue posible obtener los datos de la tabla seleccionada.', null];
+    }
+
+    if (mysqli_num_rows($dataResult) > 0) {
+        $fields = mysqli_fetch_fields($dataResult);
+        $columnNames = array_map(static function ($field): string {
+            return '`' . $field->name . '`';
+        }, $fields);
+        $columnList = implode(', ', $columnNames);
+
+        while ($rowData = mysqli_fetch_row($dataResult)) {
+            $values = [];
+            foreach ($rowData as $value) {
+                if ($value === null) {
+                    $values[] = 'NULL';
+                    continue;
+                }
+
+                $escaped = mysqli_real_escape_string($connection, (string) $value);
+                $escaped = str_replace(["\r", "\n"], ['\\r', '\\n'], $escaped);
+                $values[] = "'" . $escaped . "'";
+            }
+
+            $insertStatement = 'INSERT INTO `' . $normalizedTable . '` (' . $columnList . ') VALUES (' . implode(', ', $values) . ');';
+            fwrite($fileHandle, $insertStatement . "\n");
+        }
+        fwrite($fileHandle, "\n");
+    }
+
+    mysqli_free_result($dataResult);
+
+    fwrite($fileHandle, "SET FOREIGN_KEY_CHECKS=1;\n");
+    fclose($fileHandle);
+
+    return [true, 'El respaldo de la tabla se generó correctamente.', $fileName];
 }
 
 /**
