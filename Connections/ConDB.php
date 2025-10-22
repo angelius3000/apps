@@ -113,6 +113,7 @@ if ($conn === false) {
         Slug VARCHAR(100) NOT NULL,
         Ruta VARCHAR(255) DEFAULT NULL,
         Orden INT DEFAULT 0,
+        MostrarEnMenu TINYINT(1) NOT NULL DEFAULT 1,
         PRIMARY KEY (SECCIONID),
         UNIQUE KEY Slug_UNIQUE (Slug)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
@@ -131,60 +132,83 @@ if ($conn === false) {
     @mysqli_query($conn, $crearTablaSecciones);
     @mysqli_query($conn, $crearTablaUsuarioSecciones);
 
+    $columnaMostrarEnMenu = @mysqli_query(
+        $conn,
+        "SHOW COLUMNS FROM secciones LIKE 'MostrarEnMenu'"
+    );
+
+    if ($columnaMostrarEnMenu && mysqli_num_rows($columnaMostrarEnMenu) === 0) {
+        @mysqli_query(
+            $conn,
+            'ALTER TABLE secciones ADD COLUMN MostrarEnMenu TINYINT(1) NOT NULL DEFAULT 1 AFTER Orden'
+        );
+    }
+
+    if ($columnaMostrarEnMenu) {
+        mysqli_free_result($columnaMostrarEnMenu);
+    }
+
     $seccionesBase = [
         [
             'Nombre' => 'Aplicaciones',
             'Slug' => 'aplicaciones',
             'Ruta' => 'main.php',
             'Orden' => 1,
+            'MostrarEnMenu' => 1,
         ],
         [
             'Nombre' => 'Charolas',
             'Slug' => 'charolas',
             'Ruta' => 'charolas.php',
             'Orden' => 2,
+            'MostrarEnMenu' => 1,
         ],
         [
             'Nombre' => 'Reparto',
             'Slug' => 'reparto',
             'Ruta' => 'Repartos.php',
             'Orden' => 3,
+            'MostrarEnMenu' => 1,
         ],
         [
             'Nombre' => 'Clientes',
             'Slug' => 'clientes',
             'Ruta' => 'Clientes.php',
             'Orden' => 4,
+            'MostrarEnMenu' => 1,
         ],
         [
             'Nombre' => 'Usuarios',
             'Slug' => 'usuarios',
             'Ruta' => 'Usuarios.php',
             'Orden' => 5,
+            'MostrarEnMenu' => 1,
         ],
         [
             'Nombre' => 'Administración',
             'Slug' => 'administracion',
             'Ruta' => 'Administracion.php',
             'Orden' => 6,
+            'MostrarEnMenu' => 1,
         ],
     ];
 
     $stmtInsertSeccion = @mysqli_prepare(
         $conn,
-        'INSERT INTO secciones (Nombre, Slug, Ruta, Orden) VALUES (?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE Nombre = VALUES(Nombre), Ruta = VALUES(Ruta), Orden = VALUES(Orden)'
+        'INSERT INTO secciones (Nombre, Slug, Ruta, Orden, MostrarEnMenu) VALUES (?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE Nombre = VALUES(Nombre), Ruta = VALUES(Ruta), Orden = VALUES(Orden), MostrarEnMenu = VALUES(MostrarEnMenu)'
     );
 
     if ($stmtInsertSeccion) {
         foreach ($seccionesBase as $seccion) {
             mysqli_stmt_bind_param(
                 $stmtInsertSeccion,
-                'sssi',
+                'sssii',
                 $seccion['Nombre'],
                 $seccion['Slug'],
                 $seccion['Ruta'],
-                $seccion['Orden']
+                $seccion['Orden'],
+                $seccion['MostrarEnMenu']
             );
             mysqli_stmt_execute($stmtInsertSeccion);
         }
