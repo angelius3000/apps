@@ -1,4 +1,6 @@
-<?php include("includes/HeaderScripts.php");
+<?php
+include("includes/HeaderScripts.php");
+require_once __DIR__ . '/Connections/ConDB.php';
 
 $pageTitle = 'Edison - Administración';
 
@@ -6,6 +8,206 @@ $tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string
 if ($tipoUsuarioActual !== 'administrador') {
     header("Location: main.php");
     exit;
+}
+
+$tablasDisponibles = [];
+$tablaSeleccionada = '';
+$metadataColumnas = [];
+$columnaLlavePrimaria = null;
+$columnaAutoIncremental = null;
+$mensajesExito = [];
+$mensajesError = [];
+$registrosTabla = [];
+
+if (!isset($conn) || $conn === false) {
+    $mensajesError[] = 'No se pudo establecer conexión con la base de datos. Por favor revisa la configuración.';
+} else {
+    $resultadoTablas = @mysqli_query($conn, 'SHOW TABLES');
+    if ($resultadoTablas instanceof mysqli_result) {
+        while ($filaTabla = mysqli_fetch_row($resultadoTablas)) {
+            if (!empty($filaTabla[0])) {
+                $tablasDisponibles[] = $filaTabla[0];
+            }
+        }
+        mysqli_free_result($resultadoTablas);
+    }
+
+    if (!empty($tablasDisponibles)) {
+        $tablaSeleccionada = $_POST['selected_table']
+            ?? $_GET['selected_table']
+            ?? $tablasDisponibles[0];
+
+        if (!in_array($tablaSeleccionada, $tablasDisponibles, true)) {
+            $tablaSeleccionada = $tablasDisponibles[0];
+        }
+
+        $consultaDescribe = @mysqli_query($conn, 'DESCRIBE `' . $tablaSeleccionada . '`');
+        if ($consultaDescribe instanceof mysqli_result) {
+            while ($columna = mysqli_fetch_assoc($consultaDescribe)) {
+                $metadataColumnas[$columna['Field']] = $columna;
+
+                if ($columnaLlavePrimaria === null && isset($columna['Key']) && $columna['Key'] === 'PRI') {
+                    $columnaLlavePrimaria = $columna['Field'];
+                }
+
+                if (
+                    $columnaAutoIncremental === null
+                    && isset($columna['Extra'])
+                    && strpos(strtolower((string) $columna['Extra']), 'auto_increment') !== false
+                ) {
+                    $columnaAutoIncremental = $columna['Field'];
+                }
+            }
+            mysqli_free_result($consultaDescribe);
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['selected_table'] === $tablaSeleccionada) {
+            $accion = $_POST['action'];
+
+            if ($accion === 'update') {
+                if ($columnaLlavePrimaria === null) {
+                    $mensajesError[] = 'No se encontró una llave primaria para actualizar el registro seleccionado.';
+                } else {
+                    $datosFila = isset($_POST['row_data']) && is_array($_POST['row_data']) ? $_POST['row_data'] : [];
+                    $llaveOriginal = $_POST['original_primary_key_value'] ?? '';
+
+                    if ($llaveOriginal === '') {
+                        $mensajesError[] = 'No se proporcionó la llave primaria del registro a actualizar.';
+                    } else {
+                        $columnasActualizar = [];
+                        $valoresActualizar = [];
+
+                        foreach ($metadataColumnas as $nombreColumna => $infoColumna) {
+                            if (!array_key_exists($nombreColumna, $datosFila)) {
+                                continue;
+                            }
+
+                            $permiteNulos = isset($infoColumna['Null']) && strtoupper((string) $infoColumna['Null']) === 'YES';
+                            $valorCampo = $datosFila[$nombreColumna];
+
+                            if ($permiteNulos && $valorCampo === '') {
+                                $valorNormalizado = null;
+                            } else {
+                                $valorNormalizado = (string) $valorCampo;
+                            }
+
+                            $columnasActualizar[] = '`' . $nombreColumna . '` = ?';
+                            $valoresActualizar[] = $valorNormalizado;
+                        }
+
+                        if (empty($columnasActualizar)) {
+                            $mensajesError[] = 'No se enviaron datos para actualizar en la tabla seleccionada.';
+                        } else {
+                            $consultaUpdate = 'UPDATE `' . $tablaSeleccionada . '` SET ' . implode(', ', $columnasActualizar)
+                                . ' WHERE `' . $columnaLlavePrimaria . '` = ?';
+
+                            $stmtUpdate = @mysqli_prepare($conn, $consultaUpdate);
+
+                            if ($stmtUpdate) {
+                                $tipos = str_repeat('s', count($valoresActualizar) + 1);
+                                $parametros = [$tipos];
+
+                                foreach ($valoresActualizar as $indice => $valor) {
+                                    $parametros[] = &$valoresActualizar[$indice];
+                                }
+
+                                $llaveOriginalParam = (string) $llaveOriginal;
+                                $parametros[] = &$llaveOriginalParam;
+
+                                $resultadoBind = @call_user_func_array([$stmtUpdate, 'bind_param'], $parametros);
+
+                                if ($resultadoBind) {
+                                    if (@mysqli_stmt_execute($stmtUpdate)) {
+                                        if (mysqli_stmt_affected_rows($stmtUpdate) > 0) {
+                                            $mensajesExito[] = 'El registro se actualizó correctamente.';
+                                        } else {
+                                            $mensajesError[] = 'No se realizaron cambios en el registro seleccionado.';
+                                        }
+                                    } else {
+                                        $mensajesError[] = 'Ocurrió un error al actualizar el registro: ' . mysqli_stmt_error($stmtUpdate);
+                                    }
+                                } else {
+                                    $mensajesError[] = 'No fue posible preparar los datos para actualizar el registro.';
+                                }
+
+                                mysqli_stmt_close($stmtUpdate);
+                            } else {
+                                $mensajesError[] = 'No fue posible preparar la consulta para actualizar el registro.';
+                            }
+                        }
+                    }
+                }
+            } elseif ($accion === 'delete') {
+                if ($columnaLlavePrimaria === null) {
+                    $mensajesError[] = 'No se puede eliminar el registro porque la tabla no tiene una llave primaria definida.';
+                } else {
+                    $llaveOriginal = $_POST['original_primary_key_value'] ?? '';
+
+                    if ($llaveOriginal === '') {
+                        $mensajesError[] = 'No se proporcionó la llave primaria del registro a eliminar.';
+                    } else {
+                        $consultaDelete = 'DELETE FROM `' . $tablaSeleccionada . '` WHERE `' . $columnaLlavePrimaria . '` = ? LIMIT 1';
+                        $stmtDelete = @mysqli_prepare($conn, $consultaDelete);
+
+                        if ($stmtDelete) {
+                            $llaveOriginalParam = (string) $llaveOriginal;
+                            @mysqli_stmt_bind_param($stmtDelete, 's', $llaveOriginalParam);
+
+                            if (@mysqli_stmt_execute($stmtDelete)) {
+                                if (mysqli_stmt_affected_rows($stmtDelete) > 0) {
+                                    $mensajesExito[] = 'El registro se eliminó correctamente.';
+                                } else {
+                                    $mensajesError[] = 'No se encontró el registro que intentaste eliminar.';
+                                }
+                            } else {
+                                $mensajesError[] = 'Ocurrió un error al eliminar el registro: ' . mysqli_stmt_error($stmtDelete);
+                            }
+
+                            mysqli_stmt_close($stmtDelete);
+                        } else {
+                            $mensajesError[] = 'No fue posible preparar la consulta para eliminar el registro.';
+                        }
+                    }
+                }
+            } elseif ($accion === 'reset_auto_increment') {
+                if ($columnaAutoIncremental === null) {
+                    $mensajesError[] = 'La tabla seleccionada no tiene una columna autoincremental para reiniciar.';
+                } else {
+                    $consultaMaximo = 'SELECT IFNULL(MAX(`' . $columnaAutoIncremental . '`), 0) + 1 AS proximoValor FROM `' . $tablaSeleccionada . '`';
+                    $resultadoMaximo = @mysqli_query($conn, $consultaMaximo);
+
+                    if ($resultadoMaximo instanceof mysqli_result) {
+                        $filaMaximo = mysqli_fetch_assoc($resultadoMaximo);
+                        $siguienteValor = isset($filaMaximo['proximoValor']) ? (int) $filaMaximo['proximoValor'] : 1;
+                        mysqli_free_result($resultadoMaximo);
+
+                        $consultaReset = 'ALTER TABLE `' . $tablaSeleccionada . '` AUTO_INCREMENT = ' . $siguienteValor;
+                        if (@mysqli_query($conn, $consultaReset)) {
+                            $mensajesExito[] = 'El valor autoincremental se restableció correctamente.';
+                        } else {
+                            $mensajesError[] = 'Ocurrió un error al restablecer el autoincremental: ' . mysqli_error($conn);
+                        }
+                    } else {
+                        $mensajesError[] = 'No se pudo determinar el siguiente valor autoincremental.';
+                    }
+                }
+            }
+        }
+
+        $consultaRegistros = 'SELECT * FROM `' . $tablaSeleccionada . '`';
+        if ($columnaLlavePrimaria !== null) {
+            $consultaRegistros .= ' ORDER BY `' . $columnaLlavePrimaria . '` ASC';
+        }
+        $consultaRegistros .= ' LIMIT 50';
+
+        $resultadoRegistros = @mysqli_query($conn, $consultaRegistros);
+        if ($resultadoRegistros instanceof mysqli_result) {
+            while ($filaRegistro = mysqli_fetch_assoc($resultadoRegistros)) {
+                $registrosTabla[] = $filaRegistro;
+            }
+            mysqli_free_result($resultadoRegistros);
+        }
+    }
 }
 
 ?>
@@ -38,8 +240,109 @@ if ($tipoUsuarioActual !== 'administrador') {
                             <div class="col">
                                 <div class="card">
                                     <div class="card-body">
-                                        <h5 class="card-title">Panel de control</h5>
-                                        <p class="card-text">Esta sección está reservada para usuarios con el rol de Administrador. Aquí podrás añadir componentes adicionales conforme se definan los requerimientos.</p>
+                                        <h5 class="card-title">Administración de bases de datos</h5>
+                                        <p class="card-text">Gestiona las tablas disponibles en la base de datos. Puedes editar registros existentes, eliminarlos y restablecer el valor autoincremental cuando sea necesario.</p>
+
+                                        <?php foreach ($mensajesError as $mensaje) : ?>
+                                            <div class="alert alert-danger" role="alert">
+                                                <?php echo htmlspecialchars($mensaje, ENT_QUOTES, 'UTF-8'); ?>
+                                            </div>
+                                        <?php endforeach; ?>
+
+                                        <?php foreach ($mensajesExito as $mensaje) : ?>
+                                            <div class="alert alert-success" role="alert">
+                                                <?php echo htmlspecialchars($mensaje, ENT_QUOTES, 'UTF-8'); ?>
+                                            </div>
+                                        <?php endforeach; ?>
+
+                                        <?php if (empty($tablasDisponibles)) : ?>
+                                            <div class="alert alert-warning mb-0" role="alert">
+                                                No se encontraron tablas disponibles en la base de datos seleccionada.
+                                            </div>
+                                        <?php else : ?>
+                                            <form method="get" class="row g-3 align-items-end mb-4">
+                                                <div class="col-md-6 col-lg-4">
+                                                    <label for="selected_table" class="form-label">Tabla</label>
+                                                    <select class="form-select" id="selected_table" name="selected_table" onchange="this.form.submit()">
+                                                        <?php foreach ($tablasDisponibles as $tabla) : ?>
+                                                            <option value="<?php echo htmlspecialchars($tabla, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $tabla === $tablaSeleccionada ? 'selected' : ''; ?>>
+                                                                <?php echo htmlspecialchars($tabla, ENT_QUOTES, 'UTF-8'); ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-auto d-none d-md-block">
+                                                    <button type="submit" class="btn btn-primary">Ver tabla</button>
+                                                </div>
+                                            </form>
+
+                                            <?php if (!empty($tablaSeleccionada)) : ?>
+                                                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                                                    <h6 class="mb-0">Registros de "<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>"</h6>
+                                                    <?php if ($columnaAutoIncremental !== null) : ?>
+                                                        <form method="post" class="ms-md-auto">
+                                                            <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
+                                                            <button type="submit" name="action" value="reset_auto_increment" class="btn btn-outline-secondary btn-sm" onclick="return confirm('¿Seguro que deseas restablecer el valor autoincremental?');">
+                                                                Resetear autoincremental
+                                                            </button>
+                                                        </form>
+                                                    <?php endif; ?>
+                                                </div>
+
+                                                <?php if (empty($registrosTabla)) : ?>
+                                                    <p class="text-muted mb-0">No se encontraron registros para la tabla seleccionada.</p>
+                                                <?php else : ?>
+                                                    <?php $accionesDeshabilitadas = $columnaLlavePrimaria === null; ?>
+                                                    <?php if ($accionesDeshabilitadas) : ?>
+                                                        <div class="alert alert-info">Esta tabla no tiene una llave primaria definida. Solo es posible visualizar los registros.</div>
+                                                    <?php endif; ?>
+                                                    <p class="text-muted">Mostrando hasta 50 registros. Utiliza el botón "Guardar" para aplicar los cambios en cada fila.</p>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm table-striped align-middle">
+                                                            <thead>
+                                                                <tr>
+                                                                    <?php foreach (array_keys($metadataColumnas) as $nombreColumna) : ?>
+                                                                        <th><?php echo htmlspecialchars($nombreColumna, ENT_QUOTES, 'UTF-8'); ?></th>
+                                                                    <?php endforeach; ?>
+                                                                    <th class="text-nowrap">Acciones</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <?php foreach ($registrosTabla as $indiceRegistro => $registro) : ?>
+                                                                    <?php $formId = 'form-row-' . $indiceRegistro; ?>
+                                                                    <tr>
+                                                                        <?php foreach ($metadataColumnas as $nombreColumna => $infoColumna) : ?>
+                                                                            <?php
+                                                                            $valorCelda = $registro[$nombreColumna] ?? '';
+                                                                            $tipoColumna = strtolower((string) ($infoColumna['Type'] ?? ''));
+                                                                            $esTextoLargo = strpos($tipoColumna, 'text') !== false || strpos($tipoColumna, 'blob') !== false;
+                                                                            ?>
+                                                                            <td style="min-width: 160px;">
+                                                                                <?php if ($esTextoLargo) : ?>
+                                                                                    <textarea form="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" name="row_data[<?php echo htmlspecialchars($nombreColumna, ENT_QUOTES, 'UTF-8'); ?>]" class="form-control form-control-sm" rows="2"><?php echo htmlspecialchars((string) $valorCelda, ENT_QUOTES, 'UTF-8'); ?></textarea>
+                                                                                <?php else : ?>
+                                                                                    <input form="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" type="text" name="row_data[<?php echo htmlspecialchars($nombreColumna, ENT_QUOTES, 'UTF-8'); ?>]" class="form-control form-control-sm" value="<?php echo htmlspecialchars((string) $valorCelda, ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                <?php endif; ?>
+                                                                            </td>
+                                                                        <?php endforeach; ?>
+                                                                        <td class="text-nowrap">
+                                                                            <form id="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" method="post" class="d-inline">
+                                                                                <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                <input type="hidden" name="original_primary_key_value" value="<?php echo htmlspecialchars((string) ($columnaLlavePrimaria !== null ? ($registro[$columnaLlavePrimaria] ?? '') : ''), ENT_QUOTES, 'UTF-8'); ?>">
+                                                                            </form>
+                                                                            <div class="btn-group btn-group-sm" role="group">
+                                                                                <button form="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" type="submit" name="action" value="update" class="btn btn-primary" <?php echo $accionesDeshabilitadas ? 'disabled' : ''; ?>>Guardar</button>
+                                                                                <button form="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" type="submit" name="action" value="delete" class="btn btn-outline-danger" onclick="return confirm('¿Seguro que deseas eliminar este registro? Esta acción no se puede deshacer.');" <?php echo $accionesDeshabilitadas ? 'disabled' : ''; ?>>Eliminar</button>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                <?php endforeach; ?>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
