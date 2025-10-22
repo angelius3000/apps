@@ -593,6 +593,47 @@ function dbBackupRestoreFromFile(mysqli $connection, string $filePath): array
 }
 
 /**
+ * Restores a specific table using a previously generated table backup file.
+ *
+ * @return array{0:bool,1:string}
+ */
+function dbBackupRestoreTableFromBackup(mysqli $connection, string $tableName, string $fileName): array
+{
+    $normalizedTable = dbBackupNormalizeTableName($tableName);
+    if ($normalizedTable === null) {
+        return [false, 'Selecciona una tabla válida para restaurar.'];
+    }
+
+    $filePath = dbBackupResolveTablePath($normalizedTable, $fileName);
+    if ($filePath === null) {
+        return [false, 'El respaldo seleccionado de la tabla no es válido o ya no existe.'];
+    }
+
+    if (!is_readable($filePath)) {
+        return [false, 'El archivo de respaldo de la tabla no está disponible para su lectura.'];
+    }
+
+    $sql = file_get_contents($filePath);
+    if ($sql === false || trim($sql) === '') {
+        return [false, 'El archivo de respaldo de la tabla está vacío o no se pudo leer.'];
+    }
+
+    @set_time_limit(0);
+
+    if (!@mysqli_multi_query($connection, $sql)) {
+        return [false, 'Ocurrió un error al restaurar la tabla seleccionada: ' . mysqli_error($connection)];
+    }
+
+    do {
+        if ($result = mysqli_store_result($connection)) {
+            mysqli_free_result($result);
+        }
+    } while (mysqli_more_results($connection) && mysqli_next_result($connection));
+
+    return [true, 'La tabla `' . $normalizedTable . '` se restauró correctamente a partir del respaldo seleccionado.'];
+}
+
+/**
  * Stores an uploaded backup file inside the backup directory.
  *
  * @param array $uploadedFile Structure from $_FILES.

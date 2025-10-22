@@ -92,6 +92,20 @@ if (!isset($conn) || $conn === false) {
                     }
                 }
             }
+        } elseif ($accionGeneral === 'restore_table_backup') {
+            $tablaObjetivo = isset($_POST['selected_table']) ? (string) $_POST['selected_table'] : '';
+            $archivoRestaurarTabla = $_POST['backup_file'] ?? '';
+
+            [$exitoRestaurarTabla, $mensajeRestaurarTabla] = dbBackupRestoreTableFromBackup($conn, $tablaObjetivo, $archivoRestaurarTabla);
+            if ($exitoRestaurarTabla) {
+                $mensajeFinal = $mensajeRestaurarTabla;
+                if ($archivoRestaurarTabla !== '') {
+                    $mensajeFinal .= ' Respaldo utilizado: ' . $archivoRestaurarTabla . '.';
+                }
+                $mensajesExito[] = $mensajeFinal;
+            } else {
+                $mensajesError[] = $mensajeRestaurarTabla;
+            }
         } elseif ($accionGeneral === 'delete_backup') {
             $archivoEliminar = $_POST['backup_file'] ?? '';
             [$exitoEliminar, $mensajeEliminar] = dbBackupDeleteFile($archivoEliminar);
@@ -549,6 +563,13 @@ $respaldosDisponibles = dbBackupListFiles();
                                                                             <td class="text-nowrap">
                                                                                 <div class="d-flex flex-wrap gap-1">
                                                                                     <a href="descargar_respaldo.php?scope=table&amp;table=<?php echo urlencode($tablaSeleccionada); ?>&amp;file=<?php echo urlencode($respaldoTabla['name']); ?>" class="btn btn-outline-primary btn-sm">Descargar</a>
+                                                                                    <form method="post" class="d-inline">
+                                                                                        <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                        <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldoTabla['name'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                        <button type="submit" name="action" value="restore_table_backup" class="btn btn-outline-warning btn-sm" data-requires-confirmation="true" data-confirmation-message="Se restaurará la tabla seleccionada utilizando este respaldo. ¿Deseas continuar?">
+                                                                                            Restaurar
+                                                                                        </button>
+                                                                                    </form>
                                                                                     <form method="post" class="d-inline">
                                                                                         <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
                                                                                         <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldoTabla['name'], ENT_QUOTES, 'UTF-8'); ?>">
