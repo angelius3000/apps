@@ -15,6 +15,63 @@ function dbBackupDirectory(): string
 }
 
 /**
+ * Returns the directory that stores table specific backups.
+ */
+function dbBackupTablesRootDirectory(): string
+{
+    return dbBackupDirectory() . DIRECTORY_SEPARATOR . 'tables';
+}
+
+/**
+ * Normalizes a table name to ensure it is safe for filesystem usage.
+ */
+function dbBackupNormalizeTableName(string $tableName): ?string
+{
+    $normalized = trim($tableName);
+    if ($normalized === '') {
+        return null;
+    }
+
+    $normalized = str_replace('`', '', $normalized);
+    if (!preg_match('/^[A-Za-z0-9_]+$/', $normalized)) {
+        return null;
+    }
+
+    return $normalized;
+}
+
+/**
+ * Ensures the directory for a specific table backup exists and is writable.
+ */
+function dbBackupEnsureTableDirectory(string $tableName): ?string
+{
+    $normalized = dbBackupNormalizeTableName($tableName);
+    if ($normalized === null) {
+        return null;
+    }
+
+    if (!dbBackupEnsureDirectory()) {
+        return null;
+    }
+
+    $tablesRoot = dbBackupTablesRootDirectory();
+    if (!is_dir($tablesRoot) && !@mkdir($tablesRoot, 0775, true)) {
+        return null;
+    }
+
+    $tableDirectory = $tablesRoot . DIRECTORY_SEPARATOR . $normalized;
+    if (!is_dir($tableDirectory) && !@mkdir($tableDirectory, 0775, true)) {
+        return null;
+    }
+
+    if (!is_writable($tableDirectory)) {
+        return null;
+    }
+
+    return $tableDirectory;
+}
+
+/**
  * Ensures the backup directory exists and is writable.
  */
 function dbBackupEnsureDirectory(): bool
@@ -43,6 +100,34 @@ function dbBackupResolvePath(string $fileName): ?string
     }
 
     $path = dbBackupDirectory() . DIRECTORY_SEPARATOR . $normalized;
+    if (!is_file($path)) {
+        return null;
+    }
+
+    return $path;
+}
+
+/**
+ * Builds a safe path for a backup file stored for a specific table.
+ */
+function dbBackupResolveTablePath(string $tableName, string $fileName): ?string
+{
+    $normalizedTable = dbBackupNormalizeTableName($tableName);
+    if ($normalizedTable === null) {
+        return null;
+    }
+
+    $normalizedFile = trim($fileName);
+    if ($normalizedFile === '') {
+        return null;
+    }
+
+    $normalizedFile = basename($normalizedFile);
+    if (!preg_match('/^[A-Za-z0-9_.-]+$/', $normalizedFile)) {
+        return null;
+    }
+
+    $path = dbBackupTablesRootDirectory() . DIRECTORY_SEPARATOR . $normalizedTable . DIRECTORY_SEPARATOR . $normalizedFile;
     if (!is_file($path)) {
         return null;
     }
@@ -80,6 +165,53 @@ function dbBackupListFiles(): array
 
         $backups[] = [
             'name' => $file,
+            'path' => $path,
+            'size' => filesize($path),
+            'mtime' => filemtime($path),
+        ];
+    }
+
+    usort($backups, static function (array $a, array $b): int {
+        return ($b['mtime'] ?? 0) <=> ($a['mtime'] ?? 0);
+    });
+
+    return $backups;
+}
+
+/**
+ * Returns the list of backups available for a specific table.
+ */
+function dbBackupListTableFiles(string $tableName): array
+{
+    $normalized = dbBackupNormalizeTableName($tableName);
+    if ($normalized === null) {
+        return [];
+    }
+
+    $directory = dbBackupTablesRootDirectory() . DIRECTORY_SEPARATOR . $normalized;
+    if (!is_dir($directory)) {
+        return [];
+    }
+
+    $files = scandir($directory);
+    if ($files === false) {
+        return [];
+    }
+
+    $backups = [];
+    foreach ($files as $file) {
+        if ($file === '.' || $file === '..') {
+            continue;
+        }
+
+        $path = $directory . DIRECTORY_SEPARATOR . $file;
+        if (!is_file($path) || !preg_match('/\.sql$/i', $file)) {
+            continue;
+        }
+
+        $backups[] = [
+            'name' => $file,
+            'table' => $normalized,
             'path' => $path,
             'size' => filesize($path),
             'mtime' => filemtime($path),
@@ -245,13 +377,13 @@ function dbBackupCreate(mysqli $connection): array
  */
 function dbBackupCreateTable(mysqli $connection, string $tableName): array
 {
-    $normalizedTable = trim($tableName);
-    if ($normalizedTable === '') {
+    $rawTable = trim($tableName);
+    if ($rawTable === '') {
         return [false, 'Selecciona una tabla válida para generar el respaldo.', null];
     }
 
-    $normalizedTable = str_replace('`', '', $normalizedTable);
-    if (!preg_match('/^[A-Za-z0-9_]+$/', $normalizedTable)) {
+    $normalizedTable = dbBackupNormalizeTableName($rawTable);
+    if ($normalizedTable === null) {
         return [false, 'El nombre de la tabla no es válido para crear un respaldo.', null];
     }
 
@@ -288,13 +420,14 @@ function dbBackupCreateTable(mysqli $connection, string $tableName): array
         return [false, 'Solo es posible generar respaldos individuales para tablas de datos.', null];
     }
 
-    if (!dbBackupEnsureDirectory()) {
+    $tableDirectory = dbBackupEnsureTableDirectory($normalizedTable);
+    if ($tableDirectory === null) {
         return [false, 'No fue posible preparar el directorio de respaldos en el servidor.', null];
     }
 
     $timestamp = date('Ymd_His');
     $fileName = 'backup_' . $normalizedTable . '_' . $timestamp . '.sql';
-    $filePath = dbBackupDirectory() . DIRECTORY_SEPARATOR . $fileName;
+    $filePath = $tableDirectory . DIRECTORY_SEPARATOR . $fileName;
 
     $fileHandle = @fopen($filePath, 'w');
     if ($fileHandle === false) {

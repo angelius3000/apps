@@ -20,6 +20,7 @@ $mensajesExito = [];
 $mensajesError = [];
 $registrosTabla = [];
 $respaldosDisponibles = [];
+$respaldosTablaSeleccionada = [];
 
 if (!isset($conn) || $conn === false) {
     $mensajesError[] = 'No se pudo establecer conexión con la base de datos. Por favor revisa la configuración.';
@@ -287,6 +288,8 @@ if (!isset($conn) || $conn === false) {
             }
         }
 
+        $respaldosTablaSeleccionada = dbBackupListTableFiles($tablaSeleccionada);
+
         $consultaRegistros = 'SELECT * FROM `' . $tablaSeleccionada . '`';
         if ($columnaLlavePrimaria !== null) {
             $consultaRegistros .= ' ORDER BY `' . $columnaLlavePrimaria . '` ASC';
@@ -455,13 +458,13 @@ $respaldosDisponibles = dbBackupListFiles();
                                             <?php if (!empty($tablaSeleccionada)) : ?>
                                                 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
                                                     <h6 class="mb-0">Registros de "<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>"</h6>
-                                                    <div class="d-flex flex-wrap ms-md-auto gap-2">
-                                                        <form method="post">
-                                                            <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
-                                                            <button type="submit" name="action" value="create_table_backup" class="btn btn-outline-primary btn-sm" data-requires-confirmation="true" data-confirmation-message="Se generará un respaldo que solo contiene la tabla seleccionada. ¿Deseas continuar?">
-                                                                Respaldar tabla
-                                                            </button>
-                                                        </form>
+                                                <div class="d-flex flex-wrap ms-md-auto gap-2">
+                                                    <form method="post">
+                                                        <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
+                                                        <button type="submit" name="action" value="create_table_backup" class="btn btn-outline-primary btn-sm" data-requires-confirmation="true" data-confirmation-message="Se generará un respaldo que solo contiene la tabla seleccionada. ¿Deseas continuar?">
+                                                            Respaldar tabla
+                                                        </button>
+                                                    </form>
                                                         <?php if ($columnaAutoIncremental !== null) : ?>
                                                             <form method="post">
                                                                 <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
@@ -477,6 +480,47 @@ $respaldosDisponibles = dbBackupListFiles();
                                                             </button>
                                                         </form>
                                                     </div>
+                                                </div>
+
+                                                <div class="mb-4 w-100">
+                                                    <h6 class="mb-2">Respaldos de "<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>"</h6>
+                                                    <?php if (empty($respaldosTablaSeleccionada)) : ?>
+                                                        <p class="text-muted mb-0">Aún no se han generado respaldos para esta tabla.</p>
+                                                    <?php else : ?>
+                                                        <div class="table-responsive">
+                                                            <table class="table table-sm align-middle mb-0">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Archivo</th>
+                                                                        <th>Fecha de creación</th>
+                                                                        <th>Tamaño</th>
+                                                                        <th class="text-nowrap">Acciones</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <?php foreach ($respaldosTablaSeleccionada as $respaldoTabla) : ?>
+                                                                        <?php
+                                                                        $tamanoTablaKb = 0;
+                                                                        if (isset($respaldoTabla['size']) && is_numeric($respaldoTabla['size'])) {
+                                                                            $tamanoTablaKb = max((float) $respaldoTabla['size'], 0) / 1024;
+                                                                        }
+                                                                        $marcaTablaTiempo = isset($respaldoTabla['mtime']) && is_numeric($respaldoTabla['mtime'])
+                                                                            ? (int) $respaldoTabla['mtime']
+                                                                            : time();
+                                                                        ?>
+                                                                        <tr>
+                                                                            <td class="text-break"><?php echo htmlspecialchars($respaldoTabla['name'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                                                            <td><?php echo date('d/m/Y H:i:s', $marcaTablaTiempo); ?></td>
+                                                                            <td><?php echo number_format($tamanoTablaKb, 2); ?> KB</td>
+                                                                            <td class="text-nowrap">
+                                                                                <a href="descargar_respaldo.php?scope=table&amp;table=<?php echo urlencode($tablaSeleccionada); ?>&amp;file=<?php echo urlencode($respaldoTabla['name']); ?>" class="btn btn-outline-primary btn-sm">Descargar</a>
+                                                                            </td>
+                                                                        </tr>
+                                                                    <?php endforeach; ?>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    <?php endif; ?>
                                                 </div>
 
                                                 <?php if (empty($registrosTabla)) : ?>
