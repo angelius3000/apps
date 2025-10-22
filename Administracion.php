@@ -391,114 +391,124 @@ $respaldosDisponibles = dbBackupListFiles();
                                     </div>
                                 <?php endif; ?>
 
-                                <div class="card mb-4">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Respaldos de la base de datos</h5>
-                                        <p class="card-text">Genera, descarga y restaura respaldos de la base de datos del sistema directamente desde esta sección.</p>
+                                <ul class="nav nav-tabs mb-4" id="adminSubsections" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="database-tab" data-bs-toggle="tab" data-bs-target="#databaseSection" type="button" role="tab" aria-controls="databaseSection" aria-selected="true">
+                                            Bases de datos
+                                        </button>
+                                    </li>
+                                </ul>
 
-                                        <div class="alert alert-warning" role="alert">
-                                            <strong>Importante:</strong> Restaurar un respaldo reemplazará la información actual por la contenida en el archivo seleccionado.
-                                        </div>
+                                <div class="tab-content" id="adminSubsectionsContent">
+                                    <div class="tab-pane fade show active" id="databaseSection" role="tabpanel" aria-labelledby="database-tab">
+                                        <div class="card mb-4">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Respaldos de la base de datos</h5>
+                                                <p class="card-text">Genera, descarga y restaura respaldos de la base de datos del sistema directamente desde esta sección.</p>
 
-                                        <div class="d-flex flex-column flex-lg-row align-items-start gap-3 mb-4">
-                                            <form method="post" class="d-inline">
-                                                <button type="submit" name="action" value="create_backup" class="btn btn-primary btn-sm" data-requires-confirmation="true" data-confirmation-message="Se generará un nuevo archivo de respaldo de la base de datos. ¿Deseas continuar?">
-                                                    Crear respaldo
-                                                </button>
-                                            </form>
-                                            <form method="post" enctype="multipart/form-data" class="d-flex flex-column flex-sm-row align-items-start gap-2">
-                                                <div>
-                                                    <label for="backup_upload" class="form-label mb-1">Cargar respaldo (.sql)</label>
-                                                    <input class="form-control form-control-sm" type="file" id="backup_upload" name="backup_upload" accept=".sql" required>
+                                                <div class="alert alert-warning" role="alert">
+                                                    <strong>Importante:</strong> Restaurar un respaldo reemplazará la información actual por la contenida en el archivo seleccionado.
                                                 </div>
-                                                <div class="pt-sm-4">
-                                                    <button type="submit" name="action" value="restore_backup_upload" class="btn btn-outline-primary btn-sm" data-requires-confirmation="true" data-confirmation-message="El contenido del archivo cargado reemplazará los datos actuales. ¿Deseas continuar?">
-                                                        Restaurar respaldo cargado
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
 
-                                        <?php if (empty($respaldosDisponibles)) : ?>
-                                            <p class="text-muted mb-0">Aún no se han generado respaldos en el servidor.</p>
-                                        <?php else : ?>
-                                            <div class="table-responsive">
-                                                <table class="table table-sm align-middle mb-0">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Archivo</th>
-                                                            <th>Fecha de creación</th>
-                                                            <th>Tamaño</th>
-                                                            <th class="text-nowrap">Acciones</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <?php foreach ($respaldosDisponibles as $respaldo) : ?>
-                                                            <?php
-                                                            $tamanoKb = 0;
-                                                            if (isset($respaldo['size']) && is_numeric($respaldo['size'])) {
-                                                                $tamanoKb = max((float) $respaldo['size'], 0) / 1024;
-                                                            }
-                                                            $marcaTiempo = isset($respaldo['mtime']) && is_numeric($respaldo['mtime'])
-                                                                ? (int) $respaldo['mtime']
-                                                                : time();
-                                                            ?>
-                                                            <tr>
-                                                                <td class="text-break"><?php echo htmlspecialchars($respaldo['name'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                                                <td><?php echo date('d/m/Y H:i:s', $marcaTiempo); ?></td>
-                                                                <td><?php echo number_format($tamanoKb, 2); ?> KB</td>
-                                                                <td class="text-nowrap">
-                                                                    <div class="d-flex flex-wrap gap-1">
-                                                                        <a href="descargar_respaldo.php?file=<?php echo urlencode($respaldo['name']); ?>" class="btn btn-outline-primary btn-sm">Descargar</a>
-                                                                        <form method="post" class="d-inline">
-                                                                            <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldo['name'], ENT_QUOTES, 'UTF-8'); ?>">
-                                                                            <button type="submit" name="action" value="restore_existing_backup" class="btn btn-outline-warning btn-sm" data-requires-confirmation="true" data-confirmation-message="Se restaurará la base de datos utilizando este respaldo. ¿Deseas continuar?">
-                                                                                Restaurar
-                                                                            </button>
-                                                                        </form>
-                                                                        <form method="post" class="d-inline">
-                                                                            <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldo['name'], ENT_QUOTES, 'UTF-8'); ?>">
-                                                                            <button type="submit" name="action" value="delete_backup" class="btn btn-outline-danger btn-sm" data-requires-confirmation="true" data-confirmation-message="¿Deseas eliminar este respaldo? Esta acción no se puede deshacer.">
-                                                                                Eliminar
-                                                                            </button>
-                                                                        </form>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        <?php endforeach; ?>
-                                                    </tbody>
-                                                </table>
+                                                <div class="d-flex flex-column flex-lg-row align-items-start gap-3 mb-4">
+                                                    <form method="post" class="d-inline">
+                                                        <button type="submit" name="action" value="create_backup" class="btn btn-primary btn-sm" data-requires-confirmation="true" data-confirmation-message="Se generará un nuevo archivo de respaldo de la base de datos. ¿Deseas continuar?">
+                                                            Crear respaldo
+                                                        </button>
+                                                    </form>
+                                                    <form method="post" enctype="multipart/form-data" class="d-flex flex-column flex-sm-row align-items-start gap-2">
+                                                        <div>
+                                                            <label for="backup_upload" class="form-label mb-1">Cargar respaldo (.sql)</label>
+                                                            <input class="form-control form-control-sm" type="file" id="backup_upload" name="backup_upload" accept=".sql" required>
+                                                        </div>
+                                                        <div class="pt-sm-4">
+                                                            <button type="submit" name="action" value="restore_backup_upload" class="btn btn-outline-primary btn-sm" data-requires-confirmation="true" data-confirmation-message="El contenido del archivo cargado reemplazará los datos actuales. ¿Deseas continuar?">
+                                                                Restaurar respaldo cargado
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+
+                                                <?php if (empty($respaldosDisponibles)) : ?>
+                                                    <p class="text-muted mb-0">Aún no se han generado respaldos en el servidor.</p>
+                                                <?php else : ?>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm align-middle mb-0">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Archivo</th>
+                                                                    <th>Fecha de creación</th>
+                                                                    <th>Tamaño</th>
+                                                                    <th class="text-nowrap">Acciones</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <?php foreach ($respaldosDisponibles as $respaldo) : ?>
+                                                                    <?php
+                                                                    $tamanoKb = 0;
+                                                                    if (isset($respaldo['size']) && is_numeric($respaldo['size'])) {
+                                                                        $tamanoKb = max((float) $respaldo['size'], 0) / 1024;
+                                                                    }
+                                                                    $marcaTiempo = isset($respaldo['mtime']) && is_numeric($respaldo['mtime'])
+                                                                        ? (int) $respaldo['mtime']
+                                                                        : time();
+                                                                    ?>
+                                                                    <tr>
+                                                                        <td class="text-break"><?php echo htmlspecialchars($respaldo['name'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                                                        <td><?php echo date('d/m/Y H:i:s', $marcaTiempo); ?></td>
+                                                                        <td><?php echo number_format($tamanoKb, 2); ?> KB</td>
+                                                                        <td class="text-nowrap">
+                                                                            <div class="d-flex flex-wrap gap-1">
+                                                                                <a href="descargar_respaldo.php?file=<?php echo urlencode($respaldo['name']); ?>" class="btn btn-outline-primary btn-sm">Descargar</a>
+                                                                                <form method="post" class="d-inline">
+                                                                                    <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldo['name'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                    <button type="submit" name="action" value="restore_existing_backup" class="btn btn-outline-warning btn-sm" data-requires-confirmation="true" data-confirmation-message="Se restaurará la base de datos utilizando este respaldo. ¿Deseas continuar?">
+                                                                                        Restaurar
+                                                                                    </button>
+                                                                                </form>
+                                                                                <form method="post" class="d-inline">
+                                                                                    <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldo['name'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                    <button type="submit" name="action" value="delete_backup" class="btn btn-outline-danger btn-sm" data-requires-confirmation="true" data-confirmation-message="¿Deseas eliminar este respaldo? Esta acción no se puede deshacer.">
+                                                                                        Eliminar
+                                                                                    </button>
+                                                                                </form>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                <?php endforeach; ?>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                <?php endif; ?>
                                             </div>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Administración de bases de datos</h5>
-                                        <p class="card-text">Gestiona las tablas disponibles en la base de datos. Puedes editar registros existentes, eliminarlos y restablecer el valor autoincremental cuando sea necesario.</p>
-
-                                        <div class="alert alert-warning" role="alert">
-                                            <strong>Advertencia:</strong> Las acciones de esta sección pueden modificar o eliminar información de forma permanente. Revisa cuidadosamente los datos antes de confirmar cualquier cambio.
                                         </div>
 
-                                        <?php if (empty($tablasDisponibles)) : ?>
-                                            <div class="alert alert-warning mb-0" role="alert">
-                                                No se encontraron tablas disponibles en la base de datos seleccionada.
-                                            </div>
-                                        <?php else : ?>
-                                            <form method="get" class="row g-3 align-items-end mb-4">
-                                                <div class="col-md-6 col-lg-4">
-                                                    <label for="selected_table" class="form-label">Tabla</label>
-                                                    <select class="form-select" id="selected_table" name="selected_table" onchange="this.form.submit()">
-                                                        <?php foreach ($tablasDisponibles as $tabla) : ?>
-                                                            <option value="<?php echo htmlspecialchars($tabla, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $tabla === $tablaSeleccionada ? 'selected' : ''; ?>>
-                                                                <?php echo htmlspecialchars($tabla, ENT_QUOTES, 'UTF-8'); ?>
-                                                            </option>
-                                                        <?php endforeach; ?>
-                                                    </select>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Administración de bases de datos</h5>
+                                                <p class="card-text">Gestiona las tablas disponibles en la base de datos. Puedes editar registros existentes, eliminarlos y restablecer el valor autoincremental cuando sea necesario.</p>
+
+                                                <div class="alert alert-warning" role="alert">
+                                                    <strong>Advertencia:</strong> Las acciones de esta sección pueden modificar o eliminar información de forma permanente. Revisa cuidadosamente los datos antes de confirmar cualquier cambio.
                                                 </div>
-                                                <div class="col-auto d-none d-md-block">
+
+                                                <?php if (empty($tablasDisponibles)) : ?>
+                                                    <div class="alert alert-warning mb-0" role="alert">
+                                                        No se encontraron tablas disponibles en la base de datos seleccionada.
+                                                    </div>
+                                                <?php else : ?>
+                                                    <form method="get" class="row g-3 align-items-end mb-4">
+                                                        <div class="col-md-6 col-lg-4">
+                                                            <label for="selected_table" class="form-label">Tabla</label>
+                                                            <select class="form-select" id="selected_table" name="selected_table" onchange="this.form.submit()">
+                                                                <?php foreach ($tablasDisponibles as $tabla) : ?>
+                                                                    <option value="<?php echo htmlspecialchars($tabla, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $tabla === $tablaSeleccionada ? 'selected' : ''; ?>>
+                                                                        <?php echo htmlspecialchars($tabla, ENT_QUOTES, 'UTF-8'); ?>
+                                                                    </option>
+                                                                <?php endforeach; ?>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-auto d-none d-md-block">
                                                     <button type="submit" class="btn btn-primary">Ver tabla</button>
                                                 </div>
                                             </form>
