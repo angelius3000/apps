@@ -226,6 +226,64 @@ function dbBackupListTableFiles(string $tableName): array
 }
 
 /**
+ * Deletes a database backup file stored on the server.
+ *
+ * @return array{0:bool,1:string}
+ */
+function dbBackupDeleteFile(string $fileName): array
+{
+    $path = dbBackupResolvePath($fileName);
+    if ($path === null) {
+        return [false, 'El respaldo seleccionado no es válido o ya no existe.'];
+    }
+
+    if (!@unlink($path)) {
+        return [false, 'No fue posible eliminar el respaldo seleccionado del servidor.'];
+    }
+
+    return [true, 'El respaldo se eliminó correctamente.'];
+}
+
+/**
+ * Deletes a table specific backup file and cleans up the directory if empty.
+ *
+ * @return array{0:bool,1:string}
+ */
+function dbBackupDeleteTableFile(string $tableName, string $fileName): array
+{
+    $path = dbBackupResolveTablePath($tableName, $fileName);
+    if ($path === null) {
+        return [false, 'El respaldo seleccionado no es válido o ya no existe.'];
+    }
+
+    if (!@unlink($path)) {
+        return [false, 'No fue posible eliminar el respaldo seleccionado del servidor.'];
+    }
+
+    $directory = dirname($path);
+    if (is_dir($directory)) {
+        $remaining = @scandir($directory);
+        if ($remaining !== false) {
+            $hasEntries = false;
+            foreach ($remaining as $entry) {
+                if ($entry === '.' || $entry === '..') {
+                    continue;
+                }
+
+                $hasEntries = true;
+                break;
+            }
+
+            if (!$hasEntries) {
+                @rmdir($directory);
+            }
+        }
+    }
+
+    return [true, 'El respaldo de la tabla se eliminó correctamente.'];
+}
+
+/**
  * Creates a new SQL dump of the database using the provided connection.
  *
  * @return array{0:bool,1:string,2:?string}

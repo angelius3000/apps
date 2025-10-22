@@ -92,6 +92,32 @@ if (!isset($conn) || $conn === false) {
                     }
                 }
             }
+        } elseif ($accionGeneral === 'delete_backup') {
+            $archivoEliminar = $_POST['backup_file'] ?? '';
+            [$exitoEliminar, $mensajeEliminar] = dbBackupDeleteFile($archivoEliminar);
+            if ($exitoEliminar) {
+                $mensajeFinal = $mensajeEliminar;
+                if ($archivoEliminar !== '') {
+                    $mensajeFinal .= ' Archivo eliminado: ' . $archivoEliminar . '.';
+                }
+                $mensajesExito[] = $mensajeFinal;
+            } else {
+                $mensajesError[] = $mensajeEliminar;
+            }
+        } elseif ($accionGeneral === 'delete_table_backup') {
+            $tablaObjetivo = isset($_POST['selected_table']) ? (string) $_POST['selected_table'] : '';
+            $archivoEliminarTabla = $_POST['backup_file'] ?? '';
+
+            [$exitoEliminarTabla, $mensajeEliminarTabla] = dbBackupDeleteTableFile($tablaObjetivo, $archivoEliminarTabla);
+            if ($exitoEliminarTabla) {
+                $mensajeFinal = $mensajeEliminarTabla;
+                if ($archivoEliminarTabla !== '') {
+                    $mensajeFinal .= ' Archivo eliminado: ' . $archivoEliminarTabla . '.';
+                }
+                $mensajesExito[] = $mensajeFinal;
+            } else {
+                $mensajesError[] = $mensajeEliminarTabla;
+            }
         }
     }
 
@@ -408,13 +434,21 @@ $respaldosDisponibles = dbBackupListFiles();
                                                                 <td><?php echo date('d/m/Y H:i:s', $marcaTiempo); ?></td>
                                                                 <td><?php echo number_format($tamanoKb, 2); ?> KB</td>
                                                                 <td class="text-nowrap">
-                                                                    <a href="descargar_respaldo.php?file=<?php echo urlencode($respaldo['name']); ?>" class="btn btn-outline-primary btn-sm">Descargar</a>
-                                                                    <form method="post" class="d-inline">
-                                                                        <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldo['name'], ENT_QUOTES, 'UTF-8'); ?>">
-                                                                        <button type="submit" name="action" value="restore_existing_backup" class="btn btn-outline-warning btn-sm" data-requires-confirmation="true" data-confirmation-message="Se restaurará la base de datos utilizando este respaldo. ¿Deseas continuar?">
-                                                                            Restaurar
-                                                                        </button>
-                                                                    </form>
+                                                                    <div class="d-flex flex-wrap gap-1">
+                                                                        <a href="descargar_respaldo.php?file=<?php echo urlencode($respaldo['name']); ?>" class="btn btn-outline-primary btn-sm">Descargar</a>
+                                                                        <form method="post" class="d-inline">
+                                                                            <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldo['name'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                                            <button type="submit" name="action" value="restore_existing_backup" class="btn btn-outline-warning btn-sm" data-requires-confirmation="true" data-confirmation-message="Se restaurará la base de datos utilizando este respaldo. ¿Deseas continuar?">
+                                                                                Restaurar
+                                                                            </button>
+                                                                        </form>
+                                                                        <form method="post" class="d-inline">
+                                                                            <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldo['name'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                                            <button type="submit" name="action" value="delete_backup" class="btn btn-outline-danger btn-sm" data-requires-confirmation="true" data-confirmation-message="¿Deseas eliminar este respaldo? Esta acción no se puede deshacer.">
+                                                                                Eliminar
+                                                                            </button>
+                                                                        </form>
+                                                                    </div>
                                                                 </td>
                                                             </tr>
                                                         <?php endforeach; ?>
@@ -513,7 +547,16 @@ $respaldosDisponibles = dbBackupListFiles();
                                                                             <td><?php echo date('d/m/Y H:i:s', $marcaTablaTiempo); ?></td>
                                                                             <td><?php echo number_format($tamanoTablaKb, 2); ?> KB</td>
                                                                             <td class="text-nowrap">
-                                                                                <a href="descargar_respaldo.php?scope=table&amp;table=<?php echo urlencode($tablaSeleccionada); ?>&amp;file=<?php echo urlencode($respaldoTabla['name']); ?>" class="btn btn-outline-primary btn-sm">Descargar</a>
+                                                                                <div class="d-flex flex-wrap gap-1">
+                                                                                    <a href="descargar_respaldo.php?scope=table&amp;table=<?php echo urlencode($tablaSeleccionada); ?>&amp;file=<?php echo urlencode($respaldoTabla['name']); ?>" class="btn btn-outline-primary btn-sm">Descargar</a>
+                                                                                    <form method="post" class="d-inline">
+                                                                                        <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                        <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldoTabla['name'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                        <button type="submit" name="action" value="delete_table_backup" class="btn btn-outline-danger btn-sm" data-requires-confirmation="true" data-confirmation-message="¿Deseas eliminar este respaldo de la tabla? Esta acción no se puede deshacer.">
+                                                                                            Eliminar
+                                                                                        </button>
+                                                                                    </form>
+                                                                                </div>
                                                                             </td>
                                                                         </tr>
                                                                     <?php endforeach; ?>
