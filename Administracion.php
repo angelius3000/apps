@@ -24,11 +24,15 @@ $respaldosTablaSeleccionada = [];
 $listaSecciones = [];
 $tabActivo = 'database';
 
+$tabSolicitado = null;
 if (isset($_POST['active_tab'])) {
     $tabSolicitado = (string) $_POST['active_tab'];
-    if (in_array($tabSolicitado, ['database', 'sections'], true)) {
-        $tabActivo = $tabSolicitado;
-    }
+} elseif (isset($_GET['tab'])) {
+    $tabSolicitado = (string) $_GET['tab'];
+}
+
+if ($tabSolicitado !== null && in_array($tabSolicitado, ['database', 'sections'], true)) {
+    $tabActivo = $tabSolicitado;
 }
 
 if (!isset($conn) || $conn === false) {
@@ -499,29 +503,30 @@ if (isset($conn) && $conn !== false) {
 
                                 <style>
                                     #adminSubsectionsContent .tab-pane {
-                                        display: none;
+                                        display: none !important;
                                     }
 
-                                    #adminSubsectionsContent .tab-pane.active {
-                                        display: block;
+                                    #adminSubsectionsContent[data-active-tab="database"] .tab-pane[data-tab-panel="database"],
+                                    #adminSubsectionsContent[data-active-tab="sections"] .tab-pane[data-tab-panel="sections"] {
+                                        display: block !important;
                                     }
                                 </style>
 
                                 <ul class="nav nav-tabs mb-4" id="adminSubsections" role="tablist">
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link <?php echo $tabActivo === 'database' ? 'active' : ''; ?>" id="database-tab" data-bs-toggle="tab" data-bs-target="#databaseSection" type="button" role="tab" aria-controls="databaseSection" aria-selected="<?php echo $tabActivo === 'database' ? 'true' : 'false'; ?>">
+                                        <button class="nav-link <?php echo $tabActivo === 'database' ? 'active' : ''; ?>" id="database-tab" data-bs-toggle="tab" data-bs-target="#databaseSection" data-tab-value="database" type="button" role="tab" aria-controls="databaseSection" aria-selected="<?php echo $tabActivo === 'database' ? 'true' : 'false'; ?>">
                                             Bases de datos
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link <?php echo $tabActivo === 'sections' ? 'active' : ''; ?>" id="sections-tab" data-bs-toggle="tab" data-bs-target="#sectionsSection" type="button" role="tab" aria-controls="sectionsSection" aria-selected="<?php echo $tabActivo === 'sections' ? 'true' : 'false'; ?>">
+                                        <button class="nav-link <?php echo $tabActivo === 'sections' ? 'active' : ''; ?>" id="sections-tab" data-bs-toggle="tab" data-bs-target="#sectionsSection" data-tab-value="sections" type="button" role="tab" aria-controls="sectionsSection" aria-selected="<?php echo $tabActivo === 'sections' ? 'true' : 'false'; ?>">
                                             Secciones
                                         </button>
                                     </li>
                                 </ul>
 
-                                <div class="tab-content" id="adminSubsectionsContent">
-                                    <div class="tab-pane fade <?php echo $tabActivo === 'database' ? 'show active' : ''; ?>" id="databaseSection" role="tabpanel" aria-labelledby="database-tab" style="<?php echo $tabActivo === 'database' ? '' : 'display: none;'; ?>">
+                                <div class="tab-content" id="adminSubsectionsContent" data-active-tab="<?php echo htmlspecialchars($tabActivo, ENT_QUOTES, 'UTF-8'); ?>">
+                                    <div class="tab-pane fade <?php echo $tabActivo === 'database' ? 'show active' : ''; ?>" id="databaseSection" role="tabpanel" aria-labelledby="database-tab" data-tab-panel="database">
                                         <div class="card mb-4">
                                             <div class="card-body">
                                                 <h5 class="card-title">Respaldos de la base de datos</h5>
@@ -783,7 +788,7 @@ if (isset($conn) && $conn !== false) {
                                             <?php endif; ?>
                                         <?php endif; ?>
                                     </div>
-                                    <div class="tab-pane fade <?php echo $tabActivo === 'sections' ? 'show active' : ''; ?>" id="sectionsSection" role="tabpanel" aria-labelledby="sections-tab" style="<?php echo $tabActivo === 'sections' ? '' : 'display: none;'; ?>">
+                                    <div class="tab-pane fade <?php echo $tabActivo === 'sections' ? 'show active' : ''; ?>" id="sectionsSection" role="tabpanel" aria-labelledby="sections-tab" data-tab-panel="sections">
                                         <div class="card">
                                             <div class="card-body">
                                                 <h5 class="card-title">Control de visibilidad del panel lateral</h5>
@@ -892,14 +897,15 @@ if (isset($conn) && $conn !== false) {
                 var adminTabPanes = adminTabsContent.querySelectorAll('.tab-pane');
                 var bootstrapAvailable = typeof bootstrap !== 'undefined' && typeof bootstrap.Tab === 'function';
 
-                var actualizarVisibilidadPanes = function () {
-                    adminTabPanes.forEach(function (pane) {
-                        if (pane.classList.contains('show') && pane.classList.contains('active')) {
-                            pane.style.display = '';
-                        } else {
-                            pane.style.display = 'none';
-                        }
-                    });
+                var obtenerValorTab = function (button) {
+                    return button.getAttribute('data-tab-value') || '';
+                };
+
+                var establecerTabActivo = function (tabValue) {
+                    if (!tabValue) {
+                        return;
+                    }
+                    adminTabsContent.setAttribute('data-active-tab', tabValue);
                 };
 
                 var activarTabManual = function (button) {
@@ -908,43 +914,52 @@ if (isset($conn) && $conn !== false) {
                         return;
                     }
 
+                    var targetPane = adminTabsContent.querySelector(targetSelector);
+                    if (!targetPane) {
+                        return;
+                    }
+
                     adminTabButtons.forEach(function (otroBoton) {
-                        if (otroBoton === button) {
-                            otroBoton.classList.add('active');
-                            otroBoton.setAttribute('aria-selected', 'true');
-                        } else {
-                            otroBoton.classList.remove('active');
-                            otroBoton.setAttribute('aria-selected', 'false');
-                        }
+                        var esActual = otroBoton === button;
+                        otroBoton.classList.toggle('active', esActual);
+                        otroBoton.setAttribute('aria-selected', esActual ? 'true' : 'false');
                     });
 
                     adminTabPanes.forEach(function (pane) {
-                        if ('#' + pane.id === targetSelector) {
-                            pane.classList.add('show', 'active');
-                        } else {
-                            pane.classList.remove('show', 'active');
-                        }
+                        var esObjetivo = pane === targetPane;
+                        pane.classList.toggle('show', esObjetivo);
+                        pane.classList.toggle('active', esObjetivo);
                     });
+
+                    establecerTabActivo(obtenerValorTab(button));
                 };
 
-                actualizarVisibilidadPanes();
+                if (bootstrapAvailable) {
+                    adminTabButtons.forEach(function (button) {
+                        button.addEventListener('shown.bs.tab', function () {
+                            establecerTabActivo(obtenerValorTab(button));
+                        });
+                    });
+                }
 
                 adminTabButtons.forEach(function (button) {
-                    if (bootstrapAvailable) {
-                        button.addEventListener('shown.bs.tab', function () {
-                            actualizarVisibilidadPanes();
-                        });
-                    }
-
                     button.addEventListener('click', function (event) {
                         if (!bootstrapAvailable) {
                             event.preventDefault();
                             activarTabManual(button);
+                            return;
                         }
 
-                        window.setTimeout(actualizarVisibilidadPanes, 0);
+                        window.setTimeout(function () {
+                            establecerTabActivo(obtenerValorTab(button));
+                        }, 0);
                     });
                 });
+
+                var botonInicial = adminTabsContainer.querySelector('.nav-link.active[data-tab-value]');
+                if (botonInicial) {
+                    establecerTabActivo(obtenerValorTab(botonInicial));
+                }
             }
 
             var modalElement = document.getElementById('actionConfirmationModal');
