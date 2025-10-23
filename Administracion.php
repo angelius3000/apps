@@ -552,8 +552,8 @@ if (isset($conn) && $conn !== false) {
                                         position: relative;
                                     }
 
-                                    .admin-subsection-panel {
-                                        display: none;
+                                    .admin-subsection-panel[hidden] {
+                                        display: none !important;
                                     }
 
                                     .admin-subsection-panel.is-active {
@@ -584,7 +584,7 @@ if (isset($conn) && $conn !== false) {
                                 </div>
 
                                 <div class="admin-subsections-content" id="adminSubsectionsContent" data-active-tab="<?php echo htmlspecialchars($tabActivo, ENT_QUOTES, 'UTF-8'); ?>">
-                                    <div class="admin-subsection-panel <?php echo $tabActivo === 'database' ? 'is-active' : ''; ?>" id="databaseSection" role="tabpanel" aria-labelledby="database-tab" data-tab-panel="database">
+                                    <div class="admin-subsection-panel <?php echo $tabActivo === 'database' ? 'is-active' : ''; ?>" id="databaseSection" role="tabpanel" aria-labelledby="database-tab" data-tab-panel="database" <?php echo $tabActivo === 'database' ? '' : 'hidden'; ?> aria-hidden="<?php echo $tabActivo === 'database' ? 'false' : 'true'; ?>">
                                         <div class="card mb-4">
                                             <div class="card-body">
                                                 <h5 class="card-title">Respaldos de la base de datos</h5>
@@ -846,10 +846,10 @@ if (isset($conn) && $conn !== false) {
                                             <?php endif; ?>
                                         <?php endif; ?>
                                     </div>
-                                    <div class="admin-subsection-panel <?php echo $tabActivo === 'sections' ? 'is-active' : ''; ?>" id="sectionsSection" role="tabpanel" aria-labelledby="sections-tab" data-tab-panel="sections">
+                                    <div class="admin-subsection-panel <?php echo $tabActivo === 'sections' ? 'is-active' : ''; ?>" id="sectionsSection" role="tabpanel" aria-labelledby="sections-tab" data-tab-panel="sections" <?php echo $tabActivo === 'sections' ? '' : 'hidden'; ?> aria-hidden="<?php echo $tabActivo === 'sections' ? 'false' : 'true'; ?>">
                                         <div class="card">
                                             <div class="card-body">
-                                                <h5 class="card-title">Control de visibilidad del panel lateral</h5>
+                                                <h5 class="card-title">Control de visualización del panel</h5>
                                                 <p class="card-text">Selecciona las secciones que deben mostrarse en el menú lateral. Los cambios se aplican para todos los usuarios que tengan permiso de acceder a cada sección.</p>
 
                                                 <?php if (empty($listaSecciones)) : ?>
@@ -992,6 +992,8 @@ if (isset($conn) && $conn !== false) {
                     adminTabPanes.forEach(function (pane) {
                         var esObjetivo = pane === targetPane;
                         pane.classList.toggle('is-active', esObjetivo);
+                        pane.hidden = !esObjetivo;
+                        pane.setAttribute('aria-hidden', esObjetivo ? 'false' : 'true');
                     });
 
                     establecerTabActivo(obtenerValorTab(button));
