@@ -39,15 +39,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                      ORDER BY s.Orden, s.Nombre'
                 );
 
+                $configuracionSecciones = [];
                 if ($stmtPermisos) {
                     mysqli_stmt_bind_param($stmtPermisos, 'i', $_SESSION['USUARIOID']);
                     mysqli_stmt_execute($stmtPermisos);
                     mysqli_stmt_bind_result($stmtPermisos, $slugPermiso, $puedeVerPermiso, $mostrarEnMenu);
 
-                    $configuracionSecciones = [];
                     while (mysqli_stmt_fetch($stmtPermisos)) {
-                        $permisos[$slugPermiso] = (int)$puedeVerPermiso;
-                        $configuracionSecciones[$slugPermiso] = (int)$mostrarEnMenu;
+                        $slugNormalizado = strtolower((string)$slugPermiso);
+                        $permisos[$slugNormalizado] = (int)$puedeVerPermiso;
+                        $configuracionSecciones[$slugNormalizado] = (int)$mostrarEnMenu;
                     }
 
                     mysqli_stmt_close($stmtPermisos);
@@ -59,8 +60,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $destino = 'main.php';
                 if (!empty($seccionInicioRuta)) {
                     $puedeIngresar = true;
-                    if ($seccionInicioSlug !== '') {
-                        $puedeIngresar = !isset($permisos[$seccionInicioSlug]) || (int)$permisos[$seccionInicioSlug] === 1;
+                    $slugInicioNormalizado = strtolower((string)$seccionInicioSlug);
+                    if ($slugInicioNormalizado !== '') {
+                        $estaDisponible = !isset($configuracionSecciones[$slugInicioNormalizado])
+                            || (int)$configuracionSecciones[$slugInicioNormalizado] === 1;
+                        if (!$estaDisponible) {
+                            $puedeIngresar = false;
+                        } else {
+                            $puedeIngresar = !isset($permisos[$slugInicioNormalizado])
+                                || (int)$permisos[$slugInicioNormalizado] === 1;
+                        }
                     }
                     if ($puedeIngresar) {
                         $destino = $seccionInicioRuta;
