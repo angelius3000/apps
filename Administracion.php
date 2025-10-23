@@ -573,18 +573,18 @@ if (isset($conn) && $conn !== false) {
                                 </style>
 
                                 <div class="admin-subsections-nav" id="adminSubsections" role="tablist">
-                                    <button class="admin-subsection-button <?php echo $tabActivo === 'database' ? 'active' : ''; ?>" id="database-tab" data-bs-toggle="tab" data-bs-target="#databaseSection" data-tab-target="#databaseSection" data-tab-value="database" type="button" role="tab" aria-controls="databaseSection" aria-selected="<?php echo $tabActivo === 'database' ? 'true' : 'false'; ?>">
+                                    <button class="admin-subsection-button <?php echo $tabActivo === 'database' ? 'active' : ''; ?>" id="database-tab" data-tab-target="#databaseSection" data-tab-value="database" type="button" role="tab" aria-controls="databaseSection" aria-selected="<?php echo $tabActivo === 'database' ? 'true' : 'false'; ?>">
                                         <span class="material-icons-two-tone" aria-hidden="true">storage</span>
                                         <span>Bases de datos</span>
                                     </button>
-                                    <button class="admin-subsection-button <?php echo $tabActivo === 'sections' ? 'active' : ''; ?>" id="sections-tab" data-bs-toggle="tab" data-bs-target="#sectionsSection" data-tab-target="#sectionsSection" data-tab-value="sections" type="button" role="tab" aria-controls="sectionsSection" aria-selected="<?php echo $tabActivo === 'sections' ? 'true' : 'false'; ?>">
+                                    <button class="admin-subsection-button <?php echo $tabActivo === 'sections' ? 'active' : ''; ?>" id="sections-tab" data-tab-target="#sectionsSection" data-tab-value="sections" type="button" role="tab" aria-controls="sectionsSection" aria-selected="<?php echo $tabActivo === 'sections' ? 'true' : 'false'; ?>">
                                         <span class="material-icons-two-tone" aria-hidden="true">view_day</span>
                                         <span>Secciones</span>
                                     </button>
                                 </div>
 
-                                <div class="admin-subsections-content tab-content" id="adminSubsectionsContent" data-active-tab="<?php echo htmlspecialchars($tabActivo, ENT_QUOTES, 'UTF-8'); ?>">
-                                    <div class="admin-subsection-panel tab-pane fade <?php echo $tabActivo === 'database' ? 'show active is-active' : ''; ?>" id="databaseSection" role="tabpanel" aria-labelledby="database-tab" data-tab-panel="database" <?php echo $tabActivo === 'database' ? '' : 'hidden'; ?> aria-hidden="<?php echo $tabActivo === 'database' ? 'false' : 'true'; ?>">
+                                <div class="admin-subsections-content" id="adminSubsectionsContent" data-active-tab="<?php echo htmlspecialchars($tabActivo, ENT_QUOTES, 'UTF-8'); ?>">
+                                    <div class="admin-subsection-panel <?php echo $tabActivo === 'database' ? 'is-active' : ''; ?>" id="databaseSection" role="tabpanel" aria-labelledby="database-tab" data-tab-panel="database" <?php echo $tabActivo === 'database' ? '' : 'hidden'; ?> aria-hidden="<?php echo $tabActivo === 'database' ? 'false' : 'true'; ?>">
                                         <div class="card mb-4">
                                             <div class="card-body">
                                                 <h5 class="card-title">Respaldos de la base de datos</h5>
@@ -846,7 +846,7 @@ if (isset($conn) && $conn !== false) {
                                             <?php endif; ?>
                                         <?php endif; ?>
                                     </div>
-                                    <div class="admin-subsection-panel tab-pane fade <?php echo $tabActivo === 'sections' ? 'show active is-active' : ''; ?>" id="sectionsSection" role="tabpanel" aria-labelledby="sections-tab" data-tab-panel="sections" <?php echo $tabActivo === 'sections' ? '' : 'hidden'; ?> aria-hidden="<?php echo $tabActivo === 'sections' ? 'false' : 'true'; ?>">
+                                    <div class="admin-subsection-panel <?php echo $tabActivo === 'sections' ? 'is-active' : ''; ?>" id="sectionsSection" role="tabpanel" aria-labelledby="sections-tab" data-tab-panel="sections" <?php echo $tabActivo === 'sections' ? '' : 'hidden'; ?> aria-hidden="<?php echo $tabActivo === 'sections' ? 'false' : 'true'; ?>">
                                         <div class="card">
                                             <div class="card-body">
                                                 <h5 class="card-title">Control de visualización del panel</h5>
@@ -958,7 +958,6 @@ if (isset($conn) && $conn !== false) {
                 }
 
                 var adminTabPanes = adminTabsContent.querySelectorAll('[data-tab-panel]');
-                var bootstrapAvailable = typeof bootstrap !== 'undefined' && typeof bootstrap.Tab === 'function';
 
                 var obtenerValorTab = function (button) {
                     return button.getAttribute('data-tab-value') || '';
@@ -973,12 +972,8 @@ if (isset($conn) && $conn !== false) {
                     adminTabsContent.setAttribute('data-active-tab', tabValue);
                 };
 
-                var actualizarEstadoTab = function (button) {
-                    if (!button) {
-                        return;
-                    }
-
-                    var targetSelector = button.getAttribute('data-tab-target') || button.getAttribute('data-bs-target');
+                var activarTab = function (button) {
+                    var targetSelector = button.getAttribute('data-tab-target');
                     if (!targetSelector) {
                         return;
                     }
@@ -997,8 +992,6 @@ if (isset($conn) && $conn !== false) {
                     adminTabPanes.forEach(function (pane) {
                         var esObjetivo = pane === targetPane;
                         pane.classList.toggle('is-active', esObjetivo);
-                        pane.classList.toggle('show', esObjetivo);
-                        pane.classList.toggle('active', esObjetivo);
                         pane.hidden = !esObjetivo;
                         pane.setAttribute('aria-hidden', esObjetivo ? 'false' : 'true');
                     });
@@ -1006,30 +999,17 @@ if (isset($conn) && $conn !== false) {
                     establecerTabActivo(obtenerValorTab(button));
                 };
 
-                if (bootstrapAvailable) {
-                    adminTabButtons.forEach(function (button) {
-                        button.addEventListener('shown.bs.tab', function () {
-                            actualizarEstadoTab(button);
-                        });
-                    });
-                }
-
                 adminTabButtons.forEach(function (button) {
-                    button.addEventListener('click', function (event) {
-                        if (!bootstrapAvailable) {
-                            event.preventDefault();
-                            actualizarEstadoTab(button);
-                        } else {
-                            window.setTimeout(function () {
-                                actualizarEstadoTab(button);
-                            }, 0);
-                        }
+                    button.addEventListener('click', function () {
+                        activarTab(button);
                     });
                 });
 
                 var botonInicial = adminTabsContainer.querySelector('.admin-subsection-button.active[data-tab-value]');
-                if (!botonInicial && adminTabButtons.length) {
-                    botonInicial = adminTabButtons[0];
+                if (botonInicial) {
+                    activarTab(botonInicial);
+                } else {
+                    activarTab(adminTabButtons[0]);
                 }
 
                 actualizarEstadoTab(botonInicial);
