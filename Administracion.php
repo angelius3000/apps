@@ -521,7 +521,7 @@ if (isset($conn) && $conn !== false) {
                                 </ul>
 
                                 <div class="tab-content" id="adminSubsectionsContent">
-                                    <div class="tab-pane fade <?php echo $tabActivo === 'database' ? 'show active' : ''; ?>" id="databaseSection" role="tabpanel" aria-labelledby="database-tab">
+                                    <div class="tab-pane fade <?php echo $tabActivo === 'database' ? 'show active' : ''; ?>" id="databaseSection" role="tabpanel" aria-labelledby="database-tab" style="<?php echo $tabActivo === 'database' ? '' : 'display: none;'; ?>">
                                         <div class="card mb-4">
                                             <div class="card-body">
                                                 <h5 class="card-title">Respaldos de la base de datos</h5>
@@ -773,7 +773,7 @@ if (isset($conn) && $conn !== false) {
                                             <?php endif; ?>
                                         <?php endif; ?>
                                     </div>
-                                    <div class="tab-pane fade <?php echo $tabActivo === 'sections' ? 'show active' : ''; ?>" id="sectionsSection" role="tabpanel" aria-labelledby="sections-tab">
+                                    <div class="tab-pane fade <?php echo $tabActivo === 'sections' ? 'show active' : ''; ?>" id="sectionsSection" role="tabpanel" aria-labelledby="sections-tab" style="<?php echo $tabActivo === 'sections' ? '' : 'display: none;'; ?>">
                                         <div class="card">
                                             <div class="card-body">
                                                 <h5 class="card-title">Control de visibilidad del panel lateral</h5>
@@ -874,6 +874,41 @@ if (isset($conn) && $conn !== false) {
     <script src="App/js/AppCambiarContrasena.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            var adminTabsContainer = document.getElementById('adminSubsections');
+            var adminTabsContent = document.getElementById('adminSubsectionsContent');
+
+            if (adminTabsContainer && adminTabsContent) {
+                var adminTabButtons = adminTabsContainer.querySelectorAll('[data-bs-toggle="tab"][data-bs-target]');
+                var adminTabPanes = adminTabsContent.querySelectorAll('.tab-pane');
+
+                adminTabPanes.forEach(function (pane) {
+                    if (pane.classList.contains('show') && pane.classList.contains('active')) {
+                        pane.style.display = '';
+                    } else {
+                        pane.style.display = 'none';
+                    }
+                });
+
+                adminTabButtons.forEach(function (button) {
+                    button.addEventListener('shown.bs.tab', function (event) {
+                        var targetSelector = button.getAttribute('data-bs-target');
+                        var targetPane = targetSelector ? document.querySelector(targetSelector) : null;
+                        if (targetPane) {
+                            targetPane.style.display = '';
+                        }
+
+                        var previousButton = event.relatedTarget || null;
+                        if (previousButton) {
+                            var previousSelector = previousButton.getAttribute('data-bs-target');
+                            var previousPane = previousSelector ? document.querySelector(previousSelector) : null;
+                            if (previousPane) {
+                                previousPane.style.display = 'none';
+                            }
+                        }
+                    });
+                });
+            }
+
             var modalElement = document.getElementById('actionConfirmationModal');
             if (!modalElement || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
                 return;
