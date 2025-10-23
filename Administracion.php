@@ -880,31 +880,59 @@ if (isset($conn) && $conn !== false) {
             if (adminTabsContainer && adminTabsContent) {
                 var adminTabButtons = adminTabsContainer.querySelectorAll('[data-bs-toggle="tab"][data-bs-target]');
                 var adminTabPanes = adminTabsContent.querySelectorAll('.tab-pane');
+                var bootstrapAvailable = typeof bootstrap !== 'undefined' && typeof bootstrap.Tab === 'function';
 
-                adminTabPanes.forEach(function (pane) {
-                    if (pane.classList.contains('show') && pane.classList.contains('active')) {
-                        pane.style.display = '';
-                    } else {
-                        pane.style.display = 'none';
+                var actualizarVisibilidadPanes = function () {
+                    adminTabPanes.forEach(function (pane) {
+                        if (pane.classList.contains('show') && pane.classList.contains('active')) {
+                            pane.style.display = '';
+                        } else {
+                            pane.style.display = 'none';
+                        }
+                    });
+                };
+
+                var activarTabManual = function (button) {
+                    var targetSelector = button.getAttribute('data-bs-target');
+                    if (!targetSelector) {
+                        return;
                     }
-                });
+
+                    adminTabButtons.forEach(function (otroBoton) {
+                        if (otroBoton === button) {
+                            otroBoton.classList.add('active');
+                            otroBoton.setAttribute('aria-selected', 'true');
+                        } else {
+                            otroBoton.classList.remove('active');
+                            otroBoton.setAttribute('aria-selected', 'false');
+                        }
+                    });
+
+                    adminTabPanes.forEach(function (pane) {
+                        if ('#' + pane.id === targetSelector) {
+                            pane.classList.add('show', 'active');
+                        } else {
+                            pane.classList.remove('show', 'active');
+                        }
+                    });
+                };
+
+                actualizarVisibilidadPanes();
 
                 adminTabButtons.forEach(function (button) {
-                    button.addEventListener('shown.bs.tab', function (event) {
-                        var targetSelector = button.getAttribute('data-bs-target');
-                        var targetPane = targetSelector ? document.querySelector(targetSelector) : null;
-                        if (targetPane) {
-                            targetPane.style.display = '';
+                    if (bootstrapAvailable) {
+                        button.addEventListener('shown.bs.tab', function () {
+                            actualizarVisibilidadPanes();
+                        });
+                    }
+
+                    button.addEventListener('click', function (event) {
+                        if (!bootstrapAvailable) {
+                            event.preventDefault();
+                            activarTabManual(button);
                         }
 
-                        var previousButton = event.relatedTarget || null;
-                        if (previousButton) {
-                            var previousSelector = previousButton.getAttribute('data-bs-target');
-                            var previousPane = previousSelector ? document.querySelector(previousSelector) : null;
-                            if (previousPane) {
-                                previousPane.style.display = 'none';
-                            }
-                        }
+                        window.setTimeout(actualizarVisibilidadPanes, 0);
                     });
                 });
             }
