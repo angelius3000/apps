@@ -24,6 +24,38 @@ $respaldosTablaSeleccionada = [];
 $listaSecciones = [];
 $tabActivo = 'database';
 
+if (!function_exists('obtenerListadoSeccionesAdministracion')) {
+    function obtenerListadoSeccionesAdministracion($conn): array
+    {
+        $lista = [];
+
+        if (!class_exists('mysqli') || !$conn instanceof mysqli) {
+            return $lista;
+        }
+
+        $consultaListadoSecciones = @mysqli_query(
+            $conn,
+            'SELECT SECCIONID, Nombre, Slug, Ruta, Orden, MostrarEnMenu FROM secciones ORDER BY Orden, Nombre'
+        );
+
+        if ($consultaListadoSecciones instanceof mysqli_result) {
+            while ($filaSeccion = mysqli_fetch_assoc($consultaListadoSecciones)) {
+                $lista[] = [
+                    'SECCIONID' => (int) $filaSeccion['SECCIONID'],
+                    'Nombre' => (string) $filaSeccion['Nombre'],
+                    'Slug' => (string) $filaSeccion['Slug'],
+                    'Ruta' => (string) $filaSeccion['Ruta'],
+                    'Orden' => (int) $filaSeccion['Orden'],
+                    'MostrarEnMenu' => (int) $filaSeccion['MostrarEnMenu'],
+                ];
+            }
+            mysqli_free_result($consultaListadoSecciones);
+        }
+
+        return $lista;
+    }
+}
+
 $tabSolicitado = null;
 if (isset($_POST['active_tab'])) {
     $tabSolicitado = (string) $_POST['active_tab'];
@@ -442,23 +474,15 @@ if (!isset($conn) || $conn === false) {
 $respaldosDisponibles = dbBackupListFiles();
 
 if (isset($conn) && $conn !== false) {
-    $consultaListadoSecciones = @mysqli_query(
-        $conn,
-        'SELECT SECCIONID, Nombre, Slug, Ruta, Orden, MostrarEnMenu FROM secciones ORDER BY Orden, Nombre'
-    );
+    $listaSecciones = obtenerListadoSeccionesAdministracion($conn);
 
-    if ($consultaListadoSecciones instanceof mysqli_result) {
-        while ($filaSeccion = mysqli_fetch_assoc($consultaListadoSecciones)) {
-            $listaSecciones[] = [
-                'SECCIONID' => (int) $filaSeccion['SECCIONID'],
-                'Nombre' => (string) $filaSeccion['Nombre'],
-                'Slug' => (string) $filaSeccion['Slug'],
-                'Ruta' => (string) $filaSeccion['Ruta'],
-                'Orden' => (int) $filaSeccion['Orden'],
-                'MostrarEnMenu' => (int) $filaSeccion['MostrarEnMenu'],
-            ];
-        }
-        mysqli_free_result($consultaListadoSecciones);
+    if (empty($listaSecciones) && function_exists('sincronizarSeccionesBase')) {
+        sincronizarSeccionesBase($conn);
+        $listaSecciones = obtenerListadoSeccionesAdministracion($conn);
+    }
+
+    if (empty($listaSecciones)) {
+        $mensajesError[] = 'No fue posible cargar el catálogo de secciones. Verifica la conexión y que la tabla de secciones cuente con las columnas requeridas.';
     }
 }
 
