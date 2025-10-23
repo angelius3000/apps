@@ -506,6 +506,10 @@ if (isset($conn) && $conn !== false) {
                                         display: none !important;
                                     }
 
+                                    #adminSubsectionsContent .tab-pane.show.active {
+                                        display: block !important;
+                                    }
+
                                     #adminSubsectionsContent[data-active-tab="database"] .tab-pane[data-tab-panel="database"],
                                     #adminSubsectionsContent[data-active-tab="sections"] .tab-pane[data-tab-panel="sections"] {
                                         display: block !important;
