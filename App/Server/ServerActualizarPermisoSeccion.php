@@ -61,7 +61,8 @@ if (isset($_SESSION['USUARIOID']) && (int)$_SESSION['USUARIOID'] === $usuarioId)
         mysqli_stmt_execute($stmtSlug);
         mysqli_stmt_bind_result($stmtSlug, $slug);
         if (mysqli_stmt_fetch($stmtSlug)) {
-            $_SESSION['PermisosSecciones'][$slug] = $puedeVer;
+            $slugNormalizado = strtolower((string)$slug);
+            $_SESSION['PermisosSecciones'][$slugNormalizado] = $puedeVer;
         }
         mysqli_stmt_close($stmtSlug);
     }
