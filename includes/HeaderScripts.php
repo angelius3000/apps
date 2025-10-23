@@ -41,15 +41,16 @@ WHERE usuarios.email = '$colname_UsuarioDeLogIn'";
              ORDER BY s.Orden, s.Nombre'
         );
 
+        $configuracionSecciones = [];
         if ($stmtPermisos) {
             mysqli_stmt_bind_param($stmtPermisos, 'i', $_SESSION['USUARIOID']);
             mysqli_stmt_execute($stmtPermisos);
             mysqli_stmt_bind_result($stmtPermisos, $slugPermiso, $puedeVerPermiso, $mostrarEnMenu);
 
-            $configuracionSecciones = [];
             while (mysqli_stmt_fetch($stmtPermisos)) {
-                $permisos[$slugPermiso] = (int)$puedeVerPermiso;
-                $configuracionSecciones[$slugPermiso] = (int)$mostrarEnMenu;
+                $slugNormalizado = strtolower((string)$slugPermiso);
+                $permisos[$slugNormalizado] = (int)$puedeVerPermiso;
+                $configuracionSecciones[$slugNormalizado] = (int)$mostrarEnMenu;
             }
 
             mysqli_stmt_close($stmtPermisos);
@@ -66,6 +67,18 @@ WHERE usuarios.email = '$colname_UsuarioDeLogIn'";
 if (!function_exists('usuarioTieneAccesoSeccion')) {
     function usuarioTieneAccesoSeccion(string $slug): bool
     {
-        return !empty($_SESSION['PermisosSecciones'][$slug]);
+        $slugNormalizado = strtolower(trim($slug));
+        if ($slugNormalizado === '') {
+            return false;
+        }
+
+        $seccionesDisponibles = $_SESSION['SeccionesVisibles'] ?? [];
+        if (isset($seccionesDisponibles[$slugNormalizado]) && (int)$seccionesDisponibles[$slugNormalizado] !== 1) {
+            return false;
+        }
+
+        $permisos = $_SESSION['PermisosSecciones'] ?? [];
+
+        return !empty($permisos[$slugNormalizado]);
     }
 }
