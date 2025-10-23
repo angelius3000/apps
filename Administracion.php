@@ -24,11 +24,15 @@ $respaldosTablaSeleccionada = [];
 $listaSecciones = [];
 $tabActivo = 'database';
 
+$tabSolicitado = null;
 if (isset($_POST['active_tab'])) {
     $tabSolicitado = (string) $_POST['active_tab'];
-    if (in_array($tabSolicitado, ['database', 'sections'], true)) {
-        $tabActivo = $tabSolicitado;
-    }
+} elseif (isset($_GET['tab'])) {
+    $tabSolicitado = (string) $_GET['tab'];
+}
+
+if ($tabSolicitado !== null && in_array($tabSolicitado, ['database', 'sections'], true)) {
+    $tabActivo = $tabSolicitado;
 }
 
 if (!isset($conn) || $conn === false) {
@@ -499,29 +503,34 @@ if (isset($conn) && $conn !== false) {
 
                                 <style>
                                     #adminSubsectionsContent .tab-pane {
-                                        display: none;
+                                        display: none !important;
                                     }
 
-                                    #adminSubsectionsContent .tab-pane.active {
-                                        display: block;
+                                    #adminSubsectionsContent .tab-pane.show.active {
+                                        display: block !important;
+                                    }
+
+                                    #adminSubsectionsContent[data-active-tab="database"] .tab-pane[data-tab-panel="database"],
+                                    #adminSubsectionsContent[data-active-tab="sections"] .tab-pane[data-tab-panel="sections"] {
+                                        display: block !important;
                                     }
                                 </style>
 
                                 <ul class="nav nav-tabs mb-4" id="adminSubsections" role="tablist">
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link <?php echo $tabActivo === 'database' ? 'active' : ''; ?>" id="database-tab" data-bs-toggle="tab" data-bs-target="#databaseSection" type="button" role="tab" aria-controls="databaseSection" aria-selected="<?php echo $tabActivo === 'database' ? 'true' : 'false'; ?>">
+                                        <button class="nav-link <?php echo $tabActivo === 'database' ? 'active' : ''; ?>" id="database-tab" data-bs-toggle="tab" data-bs-target="#databaseSection" data-tab-value="database" type="button" role="tab" aria-controls="databaseSection" aria-selected="<?php echo $tabActivo === 'database' ? 'true' : 'false'; ?>">
                                             Bases de datos
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link <?php echo $tabActivo === 'sections' ? 'active' : ''; ?>" id="sections-tab" data-bs-toggle="tab" data-bs-target="#sectionsSection" type="button" role="tab" aria-controls="sectionsSection" aria-selected="<?php echo $tabActivo === 'sections' ? 'true' : 'false'; ?>">
+                                        <button class="nav-link <?php echo $tabActivo === 'sections' ? 'active' : ''; ?>" id="sections-tab" data-bs-toggle="tab" data-bs-target="#sectionsSection" data-tab-value="sections" type="button" role="tab" aria-controls="sectionsSection" aria-selected="<?php echo $tabActivo === 'sections' ? 'true' : 'false'; ?>">
                                             Secciones
                                         </button>
                                     </li>
                                 </ul>
 
-                                <div class="tab-content" id="adminSubsectionsContent">
-                                    <div class="tab-pane fade <?php echo $tabActivo === 'database' ? 'show active' : ''; ?>" id="databaseSection" role="tabpanel" aria-labelledby="database-tab" style="<?php echo $tabActivo === 'database' ? '' : 'display: none;'; ?>">
+                                <div class="tab-content" id="adminSubsectionsContent" data-active-tab="<?php echo htmlspecialchars($tabActivo, ENT_QUOTES, 'UTF-8'); ?>">
+                                    <div class="tab-pane fade <?php echo $tabActivo === 'database' ? 'show active' : ''; ?>" id="databaseSection" role="tabpanel" aria-labelledby="database-tab" data-tab-panel="database">
                                         <div class="card mb-4">
                                             <div class="card-body">
                                                 <h5 class="card-title">Respaldos de la base de datos</h5>
@@ -533,11 +542,13 @@ if (isset($conn) && $conn !== false) {
 
                                                 <div class="d-flex flex-column flex-lg-row align-items-start gap-3 mb-4">
                                                     <form method="post" class="d-inline">
+                                                        <input type="hidden" name="active_tab" value="database">
                                                         <button type="submit" name="action" value="create_backup" class="btn btn-primary btn-sm" data-requires-confirmation="true" data-confirmation-message="Se generará un nuevo archivo de respaldo de la base de datos. ¿Deseas continuar?">
                                                             Crear respaldo
                                                         </button>
                                                     </form>
                                                     <form method="post" enctype="multipart/form-data" class="d-flex flex-column flex-sm-row align-items-start gap-2">
+                                                        <input type="hidden" name="active_tab" value="database">
                                                         <div>
                                                             <label for="backup_upload" class="form-label mb-1">Cargar respaldo (.sql)</label>
                                                             <input class="form-control form-control-sm" type="file" id="backup_upload" name="backup_upload" accept=".sql" required>
@@ -582,12 +593,14 @@ if (isset($conn) && $conn !== false) {
                                                                             <div class="d-flex flex-wrap gap-1">
                                                                                 <a href="descargar_respaldo.php?file=<?php echo urlencode($respaldo['name']); ?>" class="btn btn-outline-primary btn-sm">Descargar</a>
                                                                                 <form method="post" class="d-inline">
+                                                                                    <input type="hidden" name="active_tab" value="database">
                                                                                     <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldo['name'], ENT_QUOTES, 'UTF-8'); ?>">
                                                                                     <button type="submit" name="action" value="restore_existing_backup" class="btn btn-outline-warning btn-sm" data-requires-confirmation="true" data-confirmation-message="Se restaurará la base de datos utilizando este respaldo. ¿Deseas continuar?">
                                                                                         Restaurar
                                                                                     </button>
                                                                                 </form>
                                                                                 <form method="post" class="d-inline">
+                                                                                    <input type="hidden" name="active_tab" value="database">
                                                                                     <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldo['name'], ENT_QUOTES, 'UTF-8'); ?>">
                                                                                     <button type="submit" name="action" value="delete_backup" class="btn btn-outline-danger btn-sm" data-requires-confirmation="true" data-confirmation-message="¿Deseas eliminar este respaldo? Esta acción no se puede deshacer.">
                                                                                         Eliminar
@@ -639,6 +652,7 @@ if (isset($conn) && $conn !== false) {
                                                     <h6 class="mb-0">Registros de "<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>"</h6>
                                                 <div class="d-flex flex-wrap ms-md-auto gap-2">
                                                     <form method="post">
+                                                        <input type="hidden" name="active_tab" value="database">
                                                         <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
                                                         <button type="submit" name="action" value="create_table_backup" class="btn btn-outline-primary btn-sm" data-requires-confirmation="true" data-confirmation-message="Se generará un respaldo que solo contiene la tabla seleccionada. ¿Deseas continuar?">
                                                             Respaldar tabla
@@ -646,6 +660,7 @@ if (isset($conn) && $conn !== false) {
                                                     </form>
                                                         <?php if ($columnaAutoIncremental !== null) : ?>
                                                             <form method="post">
+                                                                <input type="hidden" name="active_tab" value="database">
                                                                 <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
                                                                 <button type="submit" name="action" value="reset_auto_increment" class="btn btn-outline-secondary btn-sm" data-requires-confirmation="true" data-confirmation-message="¿Seguro que deseas restablecer el valor autoincremental?">
                                                                     Resetear autoincremental
@@ -653,6 +668,7 @@ if (isset($conn) && $conn !== false) {
                                                             </form>
                                                         <?php endif; ?>
                                                         <form method="post">
+                                                            <input type="hidden" name="active_tab" value="database">
                                                             <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
                                                             <button type="submit" name="action" value="truncate_table" class="btn btn-outline-danger btn-sm" data-requires-confirmation="true" data-confirmation-message="Esta acción eliminará todos los registros de la tabla seleccionada. ¿Deseas continuar?">
                                                                 Vaciar tabla
@@ -695,6 +711,7 @@ if (isset($conn) && $conn !== false) {
                                                                                 <div class="d-flex flex-wrap gap-1">
                                                                                     <a href="descargar_respaldo.php?scope=table&amp;table=<?php echo urlencode($tablaSeleccionada); ?>&amp;file=<?php echo urlencode($respaldoTabla['name']); ?>" class="btn btn-outline-primary btn-sm">Descargar</a>
                                                                                     <form method="post" class="d-inline">
+                                                                                        <input type="hidden" name="active_tab" value="database">
                                                                                         <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
                                                                                         <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldoTabla['name'], ENT_QUOTES, 'UTF-8'); ?>">
                                                                                         <button type="submit" name="action" value="restore_table_backup" class="btn btn-outline-warning btn-sm" data-requires-confirmation="true" data-confirmation-message="Se restaurará la tabla seleccionada utilizando este respaldo. ¿Deseas continuar?">
@@ -702,6 +719,7 @@ if (isset($conn) && $conn !== false) {
                                                                                         </button>
                                                                                     </form>
                                                                                     <form method="post" class="d-inline">
+                                                                                        <input type="hidden" name="active_tab" value="database">
                                                                                         <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
                                                                                         <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldoTabla['name'], ENT_QUOTES, 'UTF-8'); ?>">
                                                                                         <button type="submit" name="action" value="delete_table_backup" class="btn btn-outline-danger btn-sm" data-requires-confirmation="true" data-confirmation-message="¿Deseas eliminar este respaldo de la tabla? Esta acción no se puede deshacer.">
@@ -756,6 +774,7 @@ if (isset($conn) && $conn !== false) {
                                                                         <?php endforeach; ?>
                                                                         <td class="text-nowrap">
                                                                             <form id="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" method="post" class="d-inline">
+                                                                                <input type="hidden" name="active_tab" value="database">
                                                                                 <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
                                                                                 <input type="hidden" name="original_primary_key_value" value="<?php echo htmlspecialchars((string) ($columnaLlavePrimaria !== null ? ($registro[$columnaLlavePrimaria] ?? '') : ''), ENT_QUOTES, 'UTF-8'); ?>">
                                                                             </form>
@@ -773,7 +792,7 @@ if (isset($conn) && $conn !== false) {
                                             <?php endif; ?>
                                         <?php endif; ?>
                                     </div>
-                                    <div class="tab-pane fade <?php echo $tabActivo === 'sections' ? 'show active' : ''; ?>" id="sectionsSection" role="tabpanel" aria-labelledby="sections-tab" style="<?php echo $tabActivo === 'sections' ? '' : 'display: none;'; ?>">
+                                    <div class="tab-pane fade <?php echo $tabActivo === 'sections' ? 'show active' : ''; ?>" id="sectionsSection" role="tabpanel" aria-labelledby="sections-tab" data-tab-panel="sections">
                                         <div class="card">
                                             <div class="card-body">
                                                 <h5 class="card-title">Control de visibilidad del panel lateral</h5>
@@ -882,14 +901,15 @@ if (isset($conn) && $conn !== false) {
                 var adminTabPanes = adminTabsContent.querySelectorAll('.tab-pane');
                 var bootstrapAvailable = typeof bootstrap !== 'undefined' && typeof bootstrap.Tab === 'function';
 
-                var actualizarVisibilidadPanes = function () {
-                    adminTabPanes.forEach(function (pane) {
-                        if (pane.classList.contains('show') && pane.classList.contains('active')) {
-                            pane.style.display = '';
-                        } else {
-                            pane.style.display = 'none';
-                        }
-                    });
+                var obtenerValorTab = function (button) {
+                    return button.getAttribute('data-tab-value') || '';
+                };
+
+                var establecerTabActivo = function (tabValue) {
+                    if (!tabValue) {
+                        return;
+                    }
+                    adminTabsContent.setAttribute('data-active-tab', tabValue);
                 };
 
                 var activarTabManual = function (button) {
@@ -898,43 +918,52 @@ if (isset($conn) && $conn !== false) {
                         return;
                     }
 
+                    var targetPane = adminTabsContent.querySelector(targetSelector);
+                    if (!targetPane) {
+                        return;
+                    }
+
                     adminTabButtons.forEach(function (otroBoton) {
-                        if (otroBoton === button) {
-                            otroBoton.classList.add('active');
-                            otroBoton.setAttribute('aria-selected', 'true');
-                        } else {
-                            otroBoton.classList.remove('active');
-                            otroBoton.setAttribute('aria-selected', 'false');
-                        }
+                        var esActual = otroBoton === button;
+                        otroBoton.classList.toggle('active', esActual);
+                        otroBoton.setAttribute('aria-selected', esActual ? 'true' : 'false');
                     });
 
                     adminTabPanes.forEach(function (pane) {
-                        if ('#' + pane.id === targetSelector) {
-                            pane.classList.add('show', 'active');
-                        } else {
-                            pane.classList.remove('show', 'active');
-                        }
+                        var esObjetivo = pane === targetPane;
+                        pane.classList.toggle('show', esObjetivo);
+                        pane.classList.toggle('active', esObjetivo);
                     });
+
+                    establecerTabActivo(obtenerValorTab(button));
                 };
 
-                actualizarVisibilidadPanes();
+                if (bootstrapAvailable) {
+                    adminTabButtons.forEach(function (button) {
+                        button.addEventListener('shown.bs.tab', function () {
+                            establecerTabActivo(obtenerValorTab(button));
+                        });
+                    });
+                }
 
                 adminTabButtons.forEach(function (button) {
-                    if (bootstrapAvailable) {
-                        button.addEventListener('shown.bs.tab', function () {
-                            actualizarVisibilidadPanes();
-                        });
-                    }
-
                     button.addEventListener('click', function (event) {
                         if (!bootstrapAvailable) {
                             event.preventDefault();
                             activarTabManual(button);
+                            return;
                         }
 
-                        window.setTimeout(actualizarVisibilidadPanes, 0);
+                        window.setTimeout(function () {
+                            establecerTabActivo(obtenerValorTab(button));
+                        }, 0);
                     });
                 });
+
+                var botonInicial = adminTabsContainer.querySelector('.nav-link.active[data-tab-value]');
+                if (botonInicial) {
+                    establecerTabActivo(obtenerValorTab(botonInicial));
+                }
             }
 
             var modalElement = document.getElementById('actionConfirmationModal');
