@@ -502,35 +502,89 @@ if (isset($conn) && $conn !== false) {
                                 <?php endif; ?>
 
                                 <style>
-                                    #adminSubsectionsContent .tab-pane {
+                                    .admin-subsections-nav {
+                                        display: flex;
+                                        flex-wrap: wrap;
+                                        gap: 1rem;
+                                        margin-bottom: 1.5rem;
+                                    }
+
+                                    .admin-subsection-button {
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 0.75rem;
+                                        padding: 0.75rem 1.25rem;
+                                        border-radius: 0.75rem;
+                                        border: 1px solid rgba(0, 0, 0, 0.08);
+                                        background-color: #ffffff;
+                                        color: #495057;
+                                        font-weight: 600;
+                                        transition: all 0.2s ease-in-out;
+                                        box-shadow: 0 1px 2px rgba(15, 34, 58, 0.08);
+                                    }
+
+                                    .admin-subsection-button:focus {
+                                        outline: none;
+                                        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+                                    }
+
+                                    .admin-subsection-button .material-icons-two-tone {
+                                        font-size: 1.75rem;
+                                    }
+
+                                    .admin-subsection-button:hover {
+                                        border-color: rgba(13, 110, 253, 0.35);
+                                        color: #0d6efd;
+                                    }
+
+                                    .admin-subsection-button.active {
+                                        background: linear-gradient(135deg, #0d6efd, #5a8dee);
+                                        border-color: transparent;
+                                        color: #ffffff;
+                                        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+                                    }
+
+                                    .admin-subsection-button.active .material-icons-two-tone {
+                                        color: #ffffff;
+                                    }
+
+                                    .admin-subsections-content {
+                                        position: relative;
+                                    }
+
+                                    .admin-subsection-panel[hidden] {
                                         display: none !important;
                                     }
 
-                                    #adminSubsectionsContent .tab-pane.show.active {
-                                        display: block !important;
+                                    .admin-subsection-panel.is-active {
+                                        display: block;
                                     }
 
-                                    #adminSubsectionsContent[data-active-tab="database"] .tab-pane[data-tab-panel="database"],
-                                    #adminSubsectionsContent[data-active-tab="sections"] .tab-pane[data-tab-panel="sections"] {
-                                        display: block !important;
+                                    #adminSubsectionsContent {
+                                        transition: opacity 0.2s ease-in-out;
+                                    }
+
+                                    @media (prefers-reduced-motion: reduce) {
+                                        .admin-subsection-button,
+                                        #adminSubsectionsContent {
+                                            transition: none;
+                                        }
                                     }
                                 </style>
 
-                                <ul class="nav nav-tabs mb-4" id="adminSubsections" role="tablist">
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link <?php echo $tabActivo === 'database' ? 'active' : ''; ?>" id="database-tab" data-bs-toggle="tab" data-bs-target="#databaseSection" data-tab-value="database" type="button" role="tab" aria-controls="databaseSection" aria-selected="<?php echo $tabActivo === 'database' ? 'true' : 'false'; ?>">
-                                            Bases de datos
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link <?php echo $tabActivo === 'sections' ? 'active' : ''; ?>" id="sections-tab" data-bs-toggle="tab" data-bs-target="#sectionsSection" data-tab-value="sections" type="button" role="tab" aria-controls="sectionsSection" aria-selected="<?php echo $tabActivo === 'sections' ? 'true' : 'false'; ?>">
-                                            Secciones
-                                        </button>
-                                    </li>
-                                </ul>
+                                <div class="admin-subsections-nav" id="adminSubsections" role="tablist">
+                                    <button class="admin-subsection-button <?php echo $tabActivo === 'database' ? 'active' : ''; ?>" id="database-tab" data-tab-target="#databaseSection" data-tab-value="database" type="button" role="tab" aria-controls="databaseSection" aria-selected="<?php echo $tabActivo === 'database' ? 'true' : 'false'; ?>">
+                                        <span class="material-icons-two-tone" aria-hidden="true">storage</span>
+                                        <span>Bases de datos</span>
+                                    </button>
+                                    <button class="admin-subsection-button <?php echo $tabActivo === 'sections' ? 'active' : ''; ?>" id="sections-tab" data-tab-target="#sectionsSection" data-tab-value="sections" type="button" role="tab" aria-controls="sectionsSection" aria-selected="<?php echo $tabActivo === 'sections' ? 'true' : 'false'; ?>">
+                                        <span class="material-icons-two-tone" aria-hidden="true">view_day</span>
+                                        <span>Secciones</span>
+                                    </button>
+                                </div>
 
-                                <div class="tab-content" id="adminSubsectionsContent" data-active-tab="<?php echo htmlspecialchars($tabActivo, ENT_QUOTES, 'UTF-8'); ?>">
-                                    <div class="tab-pane fade <?php echo $tabActivo === 'database' ? 'show active' : ''; ?>" id="databaseSection" role="tabpanel" aria-labelledby="database-tab" data-tab-panel="database">
+                                <div class="admin-subsections-content" id="adminSubsectionsContent" data-active-tab="<?php echo htmlspecialchars($tabActivo, ENT_QUOTES, 'UTF-8'); ?>">
+                                    <div class="admin-subsection-panel <?php echo $tabActivo === 'database' ? 'is-active' : ''; ?>" id="databaseSection" role="tabpanel" aria-labelledby="database-tab" data-tab-panel="database" <?php echo $tabActivo === 'database' ? '' : 'hidden'; ?> aria-hidden="<?php echo $tabActivo === 'database' ? 'false' : 'true'; ?>">
                                         <div class="card mb-4">
                                             <div class="card-body">
                                                 <h5 class="card-title">Respaldos de la base de datos</h5>
@@ -792,10 +846,10 @@ if (isset($conn) && $conn !== false) {
                                             <?php endif; ?>
                                         <?php endif; ?>
                                     </div>
-                                    <div class="tab-pane fade <?php echo $tabActivo === 'sections' ? 'show active' : ''; ?>" id="sectionsSection" role="tabpanel" aria-labelledby="sections-tab" data-tab-panel="sections">
+                                    <div class="admin-subsection-panel <?php echo $tabActivo === 'sections' ? 'is-active' : ''; ?>" id="sectionsSection" role="tabpanel" aria-labelledby="sections-tab" data-tab-panel="sections" <?php echo $tabActivo === 'sections' ? '' : 'hidden'; ?> aria-hidden="<?php echo $tabActivo === 'sections' ? 'false' : 'true'; ?>">
                                         <div class="card">
                                             <div class="card-body">
-                                                <h5 class="card-title">Control de visibilidad del panel lateral</h5>
+                                                <h5 class="card-title">Control de visualización del panel</h5>
                                                 <p class="card-text">Selecciona las secciones que deben mostrarse en el menú lateral. Los cambios se aplican para todos los usuarios que tengan permiso de acceder a cada sección.</p>
 
                                                 <?php if (empty($listaSecciones)) : ?>
@@ -897,9 +951,13 @@ if (isset($conn) && $conn !== false) {
             var adminTabsContent = document.getElementById('adminSubsectionsContent');
 
             if (adminTabsContainer && adminTabsContent) {
-                var adminTabButtons = adminTabsContainer.querySelectorAll('[data-bs-toggle="tab"][data-bs-target]');
-                var adminTabPanes = adminTabsContent.querySelectorAll('.tab-pane');
-                var bootstrapAvailable = typeof bootstrap !== 'undefined' && typeof bootstrap.Tab === 'function';
+                var adminTabButtons = adminTabsContainer.querySelectorAll('[data-tab-target]');
+
+                if (!adminTabButtons.length) {
+                    return;
+                }
+
+                var adminTabPanes = adminTabsContent.querySelectorAll('[data-tab-panel]');
 
                 var obtenerValorTab = function (button) {
                     return button.getAttribute('data-tab-value') || '';
@@ -907,13 +965,15 @@ if (isset($conn) && $conn !== false) {
 
                 var establecerTabActivo = function (tabValue) {
                     if (!tabValue) {
+                        adminTabsContent.removeAttribute('data-active-tab');
                         return;
                     }
+
                     adminTabsContent.setAttribute('data-active-tab', tabValue);
                 };
 
-                var activarTabManual = function (button) {
-                    var targetSelector = button.getAttribute('data-bs-target');
+                var activarTab = function (button) {
+                    var targetSelector = button.getAttribute('data-tab-target');
                     if (!targetSelector) {
                         return;
                     }
@@ -931,38 +991,25 @@ if (isset($conn) && $conn !== false) {
 
                     adminTabPanes.forEach(function (pane) {
                         var esObjetivo = pane === targetPane;
-                        pane.classList.toggle('show', esObjetivo);
-                        pane.classList.toggle('active', esObjetivo);
+                        pane.classList.toggle('is-active', esObjetivo);
+                        pane.hidden = !esObjetivo;
+                        pane.setAttribute('aria-hidden', esObjetivo ? 'false' : 'true');
                     });
 
                     establecerTabActivo(obtenerValorTab(button));
                 };
 
-                if (bootstrapAvailable) {
-                    adminTabButtons.forEach(function (button) {
-                        button.addEventListener('shown.bs.tab', function () {
-                            establecerTabActivo(obtenerValorTab(button));
-                        });
-                    });
-                }
-
                 adminTabButtons.forEach(function (button) {
-                    button.addEventListener('click', function (event) {
-                        if (!bootstrapAvailable) {
-                            event.preventDefault();
-                            activarTabManual(button);
-                            return;
-                        }
-
-                        window.setTimeout(function () {
-                            establecerTabActivo(obtenerValorTab(button));
-                        }, 0);
+                    button.addEventListener('click', function () {
+                        activarTab(button);
                     });
                 });
 
-                var botonInicial = adminTabsContainer.querySelector('.nav-link.active[data-tab-value]');
+                var botonInicial = adminTabsContainer.querySelector('.admin-subsection-button.active[data-tab-value]');
                 if (botonInicial) {
-                    establecerTabActivo(obtenerValorTab(botonInicial));
+                    activarTab(botonInicial);
+                } else {
+                    activarTab(adminTabButtons[0]);
                 }
             }
 
