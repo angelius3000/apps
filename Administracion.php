@@ -533,11 +533,13 @@ if (isset($conn) && $conn !== false) {
 
                                                 <div class="d-flex flex-column flex-lg-row align-items-start gap-3 mb-4">
                                                     <form method="post" class="d-inline">
+                                                        <input type="hidden" name="active_tab" value="database">
                                                         <button type="submit" name="action" value="create_backup" class="btn btn-primary btn-sm" data-requires-confirmation="true" data-confirmation-message="Se generará un nuevo archivo de respaldo de la base de datos. ¿Deseas continuar?">
                                                             Crear respaldo
                                                         </button>
                                                     </form>
                                                     <form method="post" enctype="multipart/form-data" class="d-flex flex-column flex-sm-row align-items-start gap-2">
+                                                        <input type="hidden" name="active_tab" value="database">
                                                         <div>
                                                             <label for="backup_upload" class="form-label mb-1">Cargar respaldo (.sql)</label>
                                                             <input class="form-control form-control-sm" type="file" id="backup_upload" name="backup_upload" accept=".sql" required>
@@ -582,12 +584,14 @@ if (isset($conn) && $conn !== false) {
                                                                             <div class="d-flex flex-wrap gap-1">
                                                                                 <a href="descargar_respaldo.php?file=<?php echo urlencode($respaldo['name']); ?>" class="btn btn-outline-primary btn-sm">Descargar</a>
                                                                                 <form method="post" class="d-inline">
+                                                                                    <input type="hidden" name="active_tab" value="database">
                                                                                     <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldo['name'], ENT_QUOTES, 'UTF-8'); ?>">
                                                                                     <button type="submit" name="action" value="restore_existing_backup" class="btn btn-outline-warning btn-sm" data-requires-confirmation="true" data-confirmation-message="Se restaurará la base de datos utilizando este respaldo. ¿Deseas continuar?">
                                                                                         Restaurar
                                                                                     </button>
                                                                                 </form>
                                                                                 <form method="post" class="d-inline">
+                                                                                    <input type="hidden" name="active_tab" value="database">
                                                                                     <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldo['name'], ENT_QUOTES, 'UTF-8'); ?>">
                                                                                     <button type="submit" name="action" value="delete_backup" class="btn btn-outline-danger btn-sm" data-requires-confirmation="true" data-confirmation-message="¿Deseas eliminar este respaldo? Esta acción no se puede deshacer.">
                                                                                         Eliminar
@@ -639,6 +643,7 @@ if (isset($conn) && $conn !== false) {
                                                     <h6 class="mb-0">Registros de "<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>"</h6>
                                                 <div class="d-flex flex-wrap ms-md-auto gap-2">
                                                     <form method="post">
+                                                        <input type="hidden" name="active_tab" value="database">
                                                         <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
                                                         <button type="submit" name="action" value="create_table_backup" class="btn btn-outline-primary btn-sm" data-requires-confirmation="true" data-confirmation-message="Se generará un respaldo que solo contiene la tabla seleccionada. ¿Deseas continuar?">
                                                             Respaldar tabla
@@ -646,6 +651,7 @@ if (isset($conn) && $conn !== false) {
                                                     </form>
                                                         <?php if ($columnaAutoIncremental !== null) : ?>
                                                             <form method="post">
+                                                                <input type="hidden" name="active_tab" value="database">
                                                                 <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
                                                                 <button type="submit" name="action" value="reset_auto_increment" class="btn btn-outline-secondary btn-sm" data-requires-confirmation="true" data-confirmation-message="¿Seguro que deseas restablecer el valor autoincremental?">
                                                                     Resetear autoincremental
@@ -653,6 +659,7 @@ if (isset($conn) && $conn !== false) {
                                                             </form>
                                                         <?php endif; ?>
                                                         <form method="post">
+                                                            <input type="hidden" name="active_tab" value="database">
                                                             <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
                                                             <button type="submit" name="action" value="truncate_table" class="btn btn-outline-danger btn-sm" data-requires-confirmation="true" data-confirmation-message="Esta acción eliminará todos los registros de la tabla seleccionada. ¿Deseas continuar?">
                                                                 Vaciar tabla
@@ -695,6 +702,7 @@ if (isset($conn) && $conn !== false) {
                                                                                 <div class="d-flex flex-wrap gap-1">
                                                                                     <a href="descargar_respaldo.php?scope=table&amp;table=<?php echo urlencode($tablaSeleccionada); ?>&amp;file=<?php echo urlencode($respaldoTabla['name']); ?>" class="btn btn-outline-primary btn-sm">Descargar</a>
                                                                                     <form method="post" class="d-inline">
+                                                                                        <input type="hidden" name="active_tab" value="database">
                                                                                         <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
                                                                                         <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldoTabla['name'], ENT_QUOTES, 'UTF-8'); ?>">
                                                                                         <button type="submit" name="action" value="restore_table_backup" class="btn btn-outline-warning btn-sm" data-requires-confirmation="true" data-confirmation-message="Se restaurará la tabla seleccionada utilizando este respaldo. ¿Deseas continuar?">
@@ -702,6 +710,7 @@ if (isset($conn) && $conn !== false) {
                                                                                         </button>
                                                                                     </form>
                                                                                     <form method="post" class="d-inline">
+                                                                                        <input type="hidden" name="active_tab" value="database">
                                                                                         <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
                                                                                         <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldoTabla['name'], ENT_QUOTES, 'UTF-8'); ?>">
                                                                                         <button type="submit" name="action" value="delete_table_backup" class="btn btn-outline-danger btn-sm" data-requires-confirmation="true" data-confirmation-message="¿Deseas eliminar este respaldo de la tabla? Esta acción no se puede deshacer.">
@@ -756,6 +765,7 @@ if (isset($conn) && $conn !== false) {
                                                                         <?php endforeach; ?>
                                                                         <td class="text-nowrap">
                                                                             <form id="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" method="post" class="d-inline">
+                                                                                <input type="hidden" name="active_tab" value="database">
                                                                                 <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
                                                                                 <input type="hidden" name="original_primary_key_value" value="<?php echo htmlspecialchars((string) ($columnaLlavePrimaria !== null ? ($registro[$columnaLlavePrimaria] ?? '') : ''), ENT_QUOTES, 'UTF-8'); ?>">
                                                                             </form>
