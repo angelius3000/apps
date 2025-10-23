@@ -497,6 +497,16 @@ if (isset($conn) && $conn !== false) {
                                     </div>
                                 <?php endif; ?>
 
+                                <style>
+                                    #adminSubsectionsContent .tab-pane {
+                                        display: none;
+                                    }
+
+                                    #adminSubsectionsContent .tab-pane.active {
+                                        display: block;
+                                    }
+                                </style>
+
                                 <ul class="nav nav-tabs mb-4" id="adminSubsections" role="tablist">
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link <?php echo $tabActivo === 'database' ? 'active' : ''; ?>" id="database-tab" data-bs-toggle="tab" data-bs-target="#databaseSection" type="button" role="tab" aria-controls="databaseSection" aria-selected="<?php echo $tabActivo === 'database' ? 'true' : 'false'; ?>">
