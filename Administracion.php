@@ -972,6 +972,17 @@ if (isset($conn) && $conn !== false) {
                     adminTabsContent.setAttribute('data-active-tab', tabValue);
                 };
 
+                var actualizarEstadoTab = function (tabValue) {
+                    if (!tabValue) {
+                        return;
+                    }
+
+                    var inputsTab = document.querySelectorAll('input[name="active_tab"]');
+                    inputsTab.forEach(function (input) {
+                        input.value = tabValue;
+                    });
+                };
+
                 var activarTab = function (button) {
                     var targetSelector = button.getAttribute('data-tab-target');
                     if (!targetSelector) {
@@ -996,7 +1007,9 @@ if (isset($conn) && $conn !== false) {
                         pane.setAttribute('aria-hidden', esObjetivo ? 'false' : 'true');
                     });
 
-                    establecerTabActivo(obtenerValorTab(button));
+                    var tabValue = obtenerValorTab(button);
+                    establecerTabActivo(tabValue);
+                    actualizarEstadoTab(tabValue);
                 };
 
                 adminTabButtons.forEach(function (button) {
@@ -1011,8 +1024,6 @@ if (isset($conn) && $conn !== false) {
                 } else {
                     activarTab(adminTabButtons[0]);
                 }
-
-                actualizarEstadoTab(botonInicial);
             }
 
             var modalElement = document.getElementById('actionConfirmationModal');
