@@ -21,6 +21,15 @@ $mensajesError = [];
 $registrosTabla = [];
 $respaldosDisponibles = [];
 $respaldosTablaSeleccionada = [];
+$listaSecciones = [];
+$tabActivo = 'database';
+
+if (isset($_POST['active_tab'])) {
+    $tabSolicitado = (string) $_POST['active_tab'];
+    if (in_array($tabSolicitado, ['database', 'sections'], true)) {
+        $tabActivo = $tabSolicitado;
+    }
+}
 
 if (!isset($conn) || $conn === false) {
     $mensajesError[] = 'No se pudo establecer conexión con la base de datos. Por favor revisa la configuración.';
@@ -28,7 +37,83 @@ if (!isset($conn) || $conn === false) {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $accionGeneral = $_POST['action'] ?? '';
 
-        if ($accionGeneral === 'create_backup') {
+        if ($accionGeneral === 'update_sections_visibility') {
+            $tabActivo = 'sections';
+
+            $slugsSeleccionados = [];
+            if (isset($_POST['sections_visibility']) && is_array($_POST['sections_visibility'])) {
+                foreach (array_keys($_POST['sections_visibility']) as $slugSeleccionado) {
+                    $slugFiltrado = strtolower(trim((string) $slugSeleccionado));
+                    if ($slugFiltrado !== '') {
+                        $slugsSeleccionados[] = $slugFiltrado;
+                    }
+                }
+            }
+
+            $slugsSeleccionadosMap = [];
+            if (!empty($slugsSeleccionados)) {
+                $slugsSeleccionadosMap = array_fill_keys($slugsSeleccionados, true);
+            }
+
+            $consultaSeccionesAccion = @mysqli_query(
+                $conn,
+                'SELECT SECCIONID, Slug FROM secciones'
+            );
+
+            if (!$consultaSeccionesAccion instanceof mysqli_result) {
+                $mensajesError[] = 'No se pudieron obtener las secciones registradas para actualizar su visibilidad.';
+            } else {
+                $stmtActualizarSeccion = @mysqli_prepare(
+                    $conn,
+                    'UPDATE secciones SET MostrarEnMenu = ? WHERE SECCIONID = ?'
+                );
+
+                if (!$stmtActualizarSeccion) {
+                    $mensajesError[] = 'No fue posible preparar la consulta para actualizar la visibilidad de las secciones.';
+                } else {
+                    mysqli_stmt_bind_param($stmtActualizarSeccion, 'ii', $mostrarEnMenuParam, $seccionIdParam);
+
+                    $actualizacionExitosa = true;
+
+                    while ($filaSeccionAccion = mysqli_fetch_assoc($consultaSeccionesAccion)) {
+                        $seccionIdParam = (int) $filaSeccionAccion['SECCIONID'];
+                        $slugSeccion = strtolower((string) $filaSeccionAccion['Slug']);
+                        $mostrarEnMenuParam = isset($slugsSeleccionadosMap[$slugSeccion]) ? 1 : 0;
+
+                        if (!@mysqli_stmt_execute($stmtActualizarSeccion)) {
+                            $actualizacionExitosa = false;
+                            $mensajesError[] = 'Ocurrió un error al guardar la visibilidad de la sección con slug '
+                                . htmlspecialchars($slugSeccion, ENT_QUOTES, 'UTF-8') . ': '
+                                . mysqli_stmt_error($stmtActualizarSeccion);
+                            break;
+                        }
+                    }
+
+                    mysqli_stmt_close($stmtActualizarSeccion);
+
+                    if ($actualizacionExitosa) {
+                        $mensajesExito[] = 'La visibilidad de las secciones se actualizó correctamente.';
+                    }
+                }
+
+                mysqli_free_result($consultaSeccionesAccion);
+            }
+
+            $configuracionSecciones = [];
+            $resultadoVisibilidad = @mysqli_query(
+                $conn,
+                'SELECT Slug, MostrarEnMenu FROM secciones'
+            );
+
+            if ($resultadoVisibilidad instanceof mysqli_result) {
+                while ($filaVisibilidad = mysqli_fetch_assoc($resultadoVisibilidad)) {
+                    $configuracionSecciones[strtolower((string) $filaVisibilidad['Slug'])] = (int) $filaVisibilidad['MostrarEnMenu'];
+                }
+                mysqli_free_result($resultadoVisibilidad);
+            }
+
+            $_SESSION['SeccionesVisibles'] = $configuracionSecciones;
+        } elseif ($accionGeneral === 'create_backup') {
             [$exitoRespaldo, $mensajeRespaldo, $archivoGenerado] = dbBackupCreate($conn);
             if ($exitoRespaldo) {
                 $mensajeFinal = $mensajeRespaldo;
@@ -348,6 +433,27 @@ if (!isset($conn) || $conn === false) {
 
 $respaldosDisponibles = dbBackupListFiles();
 
+if (isset($conn) && $conn !== false) {
+    $consultaListadoSecciones = @mysqli_query(
+        $conn,
+        'SELECT SECCIONID, Nombre, Slug, Ruta, Orden, MostrarEnMenu FROM secciones ORDER BY Orden, Nombre'
+    );
+
+    if ($consultaListadoSecciones instanceof mysqli_result) {
+        while ($filaSeccion = mysqli_fetch_assoc($consultaListadoSecciones)) {
+            $listaSecciones[] = [
+                'SECCIONID' => (int) $filaSeccion['SECCIONID'],
+                'Nombre' => (string) $filaSeccion['Nombre'],
+                'Slug' => (string) $filaSeccion['Slug'],
+                'Ruta' => (string) $filaSeccion['Ruta'],
+                'Orden' => (int) $filaSeccion['Orden'],
+                'MostrarEnMenu' => (int) $filaSeccion['MostrarEnMenu'],
+            ];
+        }
+        mysqli_free_result($consultaListadoSecciones);
+    }
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -393,14 +499,19 @@ $respaldosDisponibles = dbBackupListFiles();
 
                                 <ul class="nav nav-tabs mb-4" id="adminSubsections" role="tablist">
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link active" id="database-tab" data-bs-toggle="tab" data-bs-target="#databaseSection" type="button" role="tab" aria-controls="databaseSection" aria-selected="true">
+                                        <button class="nav-link <?php echo $tabActivo === 'database' ? 'active' : ''; ?>" id="database-tab" data-bs-toggle="tab" data-bs-target="#databaseSection" type="button" role="tab" aria-controls="databaseSection" aria-selected="<?php echo $tabActivo === 'database' ? 'true' : 'false'; ?>">
                                             Bases de datos
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link <?php echo $tabActivo === 'sections' ? 'active' : ''; ?>" id="sections-tab" data-bs-toggle="tab" data-bs-target="#sectionsSection" type="button" role="tab" aria-controls="sectionsSection" aria-selected="<?php echo $tabActivo === 'sections' ? 'true' : 'false'; ?>">
+                                            Secciones
                                         </button>
                                     </li>
                                 </ul>
 
                                 <div class="tab-content" id="adminSubsectionsContent">
-                                    <div class="tab-pane fade show active" id="databaseSection" role="tabpanel" aria-labelledby="database-tab">
+                                    <div class="tab-pane fade <?php echo $tabActivo === 'database' ? 'show active' : ''; ?>" id="databaseSection" role="tabpanel" aria-labelledby="database-tab" style="<?php echo $tabActivo === 'database' ? '' : 'display: none;'; ?>">
                                         <div class="card mb-4">
                                             <div class="card-body">
                                                 <h5 class="card-title">Respaldos de la base de datos</h5>
@@ -652,6 +763,68 @@ $respaldosDisponibles = dbBackupListFiles();
                                             <?php endif; ?>
                                         <?php endif; ?>
                                     </div>
+                                    <div class="tab-pane fade <?php echo $tabActivo === 'sections' ? 'show active' : ''; ?>" id="sectionsSection" role="tabpanel" aria-labelledby="sections-tab" style="<?php echo $tabActivo === 'sections' ? '' : 'display: none;'; ?>">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Control de visibilidad del panel lateral</h5>
+                                                <p class="card-text">Selecciona las secciones que deben mostrarse en el menú lateral. Los cambios se aplican para todos los usuarios que tengan permiso de acceder a cada sección.</p>
+
+                                                <?php if (empty($listaSecciones)) : ?>
+                                                    <div class="alert alert-warning mb-0" role="alert">
+                                                        Aún no se han registrado secciones en el sistema.
+                                                    </div>
+                                                <?php else : ?>
+                                                    <form method="post">
+                                                        <input type="hidden" name="action" value="update_sections_visibility">
+                                                        <input type="hidden" name="active_tab" value="sections">
+                                                        <div class="table-responsive">
+                                                            <table class="table table-sm align-middle mb-0">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th class="text-center" style="width: 120px;">Mostrar</th>
+                                                                        <th>Sección</th>
+                                                                        <th>Slug</th>
+                                                                        <th>Ruta</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <?php foreach ($listaSecciones as $seccion) : ?>
+                                                                        <?php
+                                                                        $idElemento = 'sectionVisibility_' . (int) $seccion['SECCIONID'];
+                                                                        $estaVisible = (int) $seccion['MostrarEnMenu'] === 1;
+                                                                        ?>
+                                                                        <tr>
+                                                                            <td class="text-center">
+                                                                                <div class="form-check form-switch d-inline-flex align-items-center justify-content-center">
+                                                                                    <input class="form-check-input" type="checkbox" role="switch" id="<?php echo htmlspecialchars($idElemento, ENT_QUOTES, 'UTF-8'); ?>" name="sections_visibility[<?php echo htmlspecialchars($seccion['Slug'], ENT_QUOTES, 'UTF-8'); ?>]" value="1" <?php echo $estaVisible ? 'checked' : ''; ?>>
+                                                                                    <label class="visually-hidden" for="<?php echo htmlspecialchars($idElemento, ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                        <?php echo htmlspecialchars($seccion['Nombre'], ENT_QUOTES, 'UTF-8'); ?>
+                                                                                    </label>
+                                                                                </div>
+                                                                            </td>
+                                                                            <td>
+                                                                                <strong><?php echo htmlspecialchars($seccion['Nombre'], ENT_QUOTES, 'UTF-8'); ?></strong>
+                                                                                <div class="text-muted small mb-0">Orden: <?php echo (int) $seccion['Orden']; ?></div>
+                                                                            </td>
+                                                                            <td class="text-muted">
+                                                                                <?php echo htmlspecialchars($seccion['Slug'], ENT_QUOTES, 'UTF-8'); ?>
+                                                                            </td>
+                                                                            <td class="text-muted">
+                                                                                <?php echo htmlspecialchars($seccion['Ruta'], ENT_QUOTES, 'UTF-8'); ?>
+                                                                            </td>
+                                                                        </tr>
+                                                                    <?php endforeach; ?>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                        <div class="d-flex justify-content-end mt-3">
+                                                            <button type="submit" class="btn btn-primary" data-requires-confirmation="true" data-confirmation-message="Se actualizará la visibilidad del menú lateral. ¿Deseas guardar los cambios?">Guardar cambios</button>
+                                                        </div>
+                                                    </form>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -691,6 +864,41 @@ $respaldosDisponibles = dbBackupListFiles();
     <script src="App/js/AppCambiarContrasena.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            var adminTabsContainer = document.getElementById('adminSubsections');
+            var adminTabsContent = document.getElementById('adminSubsectionsContent');
+
+            if (adminTabsContainer && adminTabsContent) {
+                var adminTabButtons = adminTabsContainer.querySelectorAll('[data-bs-toggle="tab"][data-bs-target]');
+                var adminTabPanes = adminTabsContent.querySelectorAll('.tab-pane');
+
+                adminTabPanes.forEach(function (pane) {
+                    if (pane.classList.contains('show') && pane.classList.contains('active')) {
+                        pane.style.display = '';
+                    } else {
+                        pane.style.display = 'none';
+                    }
+                });
+
+                adminTabButtons.forEach(function (button) {
+                    button.addEventListener('shown.bs.tab', function (event) {
+                        var targetSelector = button.getAttribute('data-bs-target');
+                        var targetPane = targetSelector ? document.querySelector(targetSelector) : null;
+                        if (targetPane) {
+                            targetPane.style.display = '';
+                        }
+
+                        var previousButton = event.relatedTarget || null;
+                        if (previousButton) {
+                            var previousSelector = previousButton.getAttribute('data-bs-target');
+                            var previousPane = previousSelector ? document.querySelector(previousSelector) : null;
+                            if (previousPane) {
+                                previousPane.style.display = 'none';
+                            }
+                        }
+                    });
+                });
+            }
+
             var modalElement = document.getElementById('actionConfirmationModal');
             if (!modalElement || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
                 return;
