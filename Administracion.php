@@ -24,6 +24,38 @@ $respaldosTablaSeleccionada = [];
 $listaSecciones = [];
 $tabActivo = 'database';
 
+if (!function_exists('obtenerListadoSeccionesAdministracion')) {
+    function obtenerListadoSeccionesAdministracion($conn): array
+    {
+        $lista = [];
+
+        if (!class_exists('mysqli') || !$conn instanceof mysqli) {
+            return $lista;
+        }
+
+        $consultaListadoSecciones = @mysqli_query(
+            $conn,
+            'SELECT SECCIONID, Nombre, Slug, Ruta, Orden, MostrarEnMenu FROM secciones ORDER BY Orden, Nombre'
+        );
+
+        if ($consultaListadoSecciones instanceof mysqli_result) {
+            while ($filaSeccion = mysqli_fetch_assoc($consultaListadoSecciones)) {
+                $lista[] = [
+                    'SECCIONID' => (int) $filaSeccion['SECCIONID'],
+                    'Nombre' => (string) $filaSeccion['Nombre'],
+                    'Slug' => (string) $filaSeccion['Slug'],
+                    'Ruta' => (string) $filaSeccion['Ruta'],
+                    'Orden' => (int) $filaSeccion['Orden'],
+                    'MostrarEnMenu' => (int) $filaSeccion['MostrarEnMenu'],
+                ];
+            }
+            mysqli_free_result($consultaListadoSecciones);
+        }
+
+        return $lista;
+    }
+}
+
 $tabSolicitado = null;
 if (isset($_POST['active_tab'])) {
     $tabSolicitado = (string) $_POST['active_tab'];
@@ -38,6 +70,10 @@ if ($tabSolicitado !== null && in_array($tabSolicitado, ['database', 'sections']
 if (!isset($conn) || $conn === false) {
     $mensajesError[] = 'No se pudo establecer conexión con la base de datos. Por favor revisa la configuración.';
 } else {
+    if (function_exists('sincronizarSeccionesBase')) {
+        sincronizarSeccionesBase($conn);
+    }
+
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $accionGeneral = $_POST['action'] ?? '';
 
@@ -65,7 +101,7 @@ if (!isset($conn) || $conn === false) {
             );
 
             if (!$consultaSeccionesAccion instanceof mysqli_result) {
-                $mensajesError[] = 'No se pudieron obtener las secciones registradas para actualizar su visibilidad.';
+                $mensajesError[] = 'No se pudieron obtener las secciones registradas para actualizar su disponibilidad.';
             } else {
                 $stmtActualizarSeccion = @mysqli_prepare(
                     $conn,
@@ -73,20 +109,20 @@ if (!isset($conn) || $conn === false) {
                 );
 
                 if (!$stmtActualizarSeccion) {
-                    $mensajesError[] = 'No fue posible preparar la consulta para actualizar la visibilidad de las secciones.';
+                    $mensajesError[] = 'No fue posible preparar la consulta para actualizar la disponibilidad de las secciones.';
                 } else {
-                    mysqli_stmt_bind_param($stmtActualizarSeccion, 'ii', $mostrarEnMenuParam, $seccionIdParam);
+                    mysqli_stmt_bind_param($stmtActualizarSeccion, 'ii', $seccionDisponibleParam, $seccionIdParam);
 
                     $actualizacionExitosa = true;
 
                     while ($filaSeccionAccion = mysqli_fetch_assoc($consultaSeccionesAccion)) {
                         $seccionIdParam = (int) $filaSeccionAccion['SECCIONID'];
                         $slugSeccion = strtolower((string) $filaSeccionAccion['Slug']);
-                        $mostrarEnMenuParam = isset($slugsSeleccionadosMap[$slugSeccion]) ? 1 : 0;
+                        $seccionDisponibleParam = isset($slugsSeleccionadosMap[$slugSeccion]) ? 1 : 0;
 
                         if (!@mysqli_stmt_execute($stmtActualizarSeccion)) {
                             $actualizacionExitosa = false;
-                            $mensajesError[] = 'Ocurrió un error al guardar la visibilidad de la sección con slug '
+                            $mensajesError[] = 'Ocurrió un error al guardar la disponibilidad de la sección con slug '
                                 . htmlspecialchars($slugSeccion, ENT_QUOTES, 'UTF-8') . ': '
                                 . mysqli_stmt_error($stmtActualizarSeccion);
                             break;
@@ -96,7 +132,7 @@ if (!isset($conn) || $conn === false) {
                     mysqli_stmt_close($stmtActualizarSeccion);
 
                     if ($actualizacionExitosa) {
-                        $mensajesExito[] = 'La visibilidad de las secciones se actualizó correctamente.';
+                        $mensajesExito[] = 'La configuración de disponibilidad de las secciones se actualizó correctamente.';
                     }
                 }
 
@@ -438,23 +474,15 @@ if (!isset($conn) || $conn === false) {
 $respaldosDisponibles = dbBackupListFiles();
 
 if (isset($conn) && $conn !== false) {
-    $consultaListadoSecciones = @mysqli_query(
-        $conn,
-        'SELECT SECCIONID, Nombre, Slug, Ruta, Orden, MostrarEnMenu FROM secciones ORDER BY Orden, Nombre'
-    );
+    $listaSecciones = obtenerListadoSeccionesAdministracion($conn);
 
-    if ($consultaListadoSecciones instanceof mysqli_result) {
-        while ($filaSeccion = mysqli_fetch_assoc($consultaListadoSecciones)) {
-            $listaSecciones[] = [
-                'SECCIONID' => (int) $filaSeccion['SECCIONID'],
-                'Nombre' => (string) $filaSeccion['Nombre'],
-                'Slug' => (string) $filaSeccion['Slug'],
-                'Ruta' => (string) $filaSeccion['Ruta'],
-                'Orden' => (int) $filaSeccion['Orden'],
-                'MostrarEnMenu' => (int) $filaSeccion['MostrarEnMenu'],
-            ];
-        }
-        mysqli_free_result($consultaListadoSecciones);
+    if (empty($listaSecciones) && function_exists('sincronizarSeccionesBase')) {
+        sincronizarSeccionesBase($conn);
+        $listaSecciones = obtenerListadoSeccionesAdministracion($conn);
+    }
+
+    if (empty($listaSecciones)) {
+        $mensajesError[] = 'No fue posible cargar el catálogo de secciones. Verifica la conexión y que la tabla de secciones cuente con las columnas requeridas.';
     }
 }
 
@@ -849,8 +877,8 @@ if (isset($conn) && $conn !== false) {
                                     <div class="admin-subsection-panel <?php echo $tabActivo === 'sections' ? 'is-active' : ''; ?>" id="sectionsSection" role="tabpanel" aria-labelledby="sections-tab" data-tab-panel="sections" <?php echo $tabActivo === 'sections' ? '' : 'hidden'; ?> aria-hidden="<?php echo $tabActivo === 'sections' ? 'false' : 'true'; ?>">
                                         <div class="card">
                                             <div class="card-body">
-                                                <h5 class="card-title">Control de visualización del panel</h5>
-                                                <p class="card-text">Selecciona las secciones que deben mostrarse en el menú lateral. Los cambios se aplican para todos los usuarios que tengan permiso de acceder a cada sección.</p>
+                                                <h5 class="card-title">Control de secciones</h5>
+                                                <p class="card-text">Selecciona las secciones que deben permanecer habilitadas en el sistema. Las secciones deshabilitadas no aparecerán en el menú lateral ni permitirán el acceso directo, sin importar los permisos individuales.</p>
 
                                                 <?php if (empty($listaSecciones)) : ?>
                                                     <div class="alert alert-warning mb-0" role="alert">
@@ -864,7 +892,7 @@ if (isset($conn) && $conn !== false) {
                                                             <table class="table table-sm align-middle mb-0">
                                                                 <thead>
                                                                     <tr>
-                                                                        <th class="text-center" style="width: 120px;">Mostrar</th>
+                                                                        <th class="text-center" style="width: 120px;">Disponible</th>
                                                                         <th>Sección</th>
                                                                         <th>Slug</th>
                                                                         <th>Ruta</th>
@@ -901,7 +929,7 @@ if (isset($conn) && $conn !== false) {
                                                             </table>
                                                         </div>
                                                         <div class="d-flex justify-content-end mt-3">
-                                                            <button type="submit" class="btn btn-primary" data-requires-confirmation="true" data-confirmation-message="Se actualizará la visibilidad del menú lateral. ¿Deseas guardar los cambios?">Guardar cambios</button>
+                                                            <button type="submit" class="btn btn-primary" data-requires-confirmation="true" data-confirmation-message="Se actualizará la disponibilidad general de las secciones. ¿Deseas guardar los cambios?">Guardar cambios</button>
                                                         </div>
                                                     </form>
                                                 <?php endif; ?>
