@@ -1011,6 +1011,8 @@ if (isset($conn) && $conn !== false) {
                 } else {
                     activarTab(adminTabButtons[0]);
                 }
+
+                actualizarEstadoTab(botonInicial);
             }
 
             var modalElement = document.getElementById('actionConfirmationModal');
