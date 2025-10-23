@@ -35,7 +35,7 @@ WHERE usuarios.email = '$colname_UsuarioDeLogIn'";
         $permisos = [];
         $stmtPermisos = @mysqli_prepare(
             $conn,
-            'SELECT s.Slug, COALESCE(us.PuedeVer, 0) as PuedeVer
+            'SELECT s.Slug, COALESCE(us.PuedeVer, 0) as PuedeVer, s.MostrarEnMenu
              FROM secciones s
              LEFT JOIN usuario_secciones us ON us.SECCIONID = s.SECCIONID AND us.USUARIOID = ?
              ORDER BY s.Orden, s.Nombre'
@@ -44,16 +44,19 @@ WHERE usuarios.email = '$colname_UsuarioDeLogIn'";
         if ($stmtPermisos) {
             mysqli_stmt_bind_param($stmtPermisos, 'i', $_SESSION['USUARIOID']);
             mysqli_stmt_execute($stmtPermisos);
-            mysqli_stmt_bind_result($stmtPermisos, $slugPermiso, $puedeVerPermiso);
+            mysqli_stmt_bind_result($stmtPermisos, $slugPermiso, $puedeVerPermiso, $mostrarEnMenu);
 
+            $configuracionSecciones = [];
             while (mysqli_stmt_fetch($stmtPermisos)) {
                 $permisos[$slugPermiso] = (int)$puedeVerPermiso;
+                $configuracionSecciones[$slugPermiso] = (int)$mostrarEnMenu;
             }
 
             mysqli_stmt_close($stmtPermisos);
         }
 
         $_SESSION['PermisosSecciones'] = $permisos;
+        $_SESSION['SeccionesVisibles'] = $configuracionSecciones;
     }
 } else {
     $row_UsuarioDeLogIn = null;
