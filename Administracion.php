@@ -38,6 +38,10 @@ if ($tabSolicitado !== null && in_array($tabSolicitado, ['database', 'sections']
 if (!isset($conn) || $conn === false) {
     $mensajesError[] = 'No se pudo establecer conexión con la base de datos. Por favor revisa la configuración.';
 } else {
+    if (function_exists('sincronizarSeccionesBase')) {
+        sincronizarSeccionesBase($conn);
+    }
+
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $accionGeneral = $_POST['action'] ?? '';
 

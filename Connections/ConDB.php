@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../includes/sections_config.php';
 /* Database connection start */
 if ($_SERVER['HTTP_HOST'] == "localhost") {
 
@@ -148,71 +149,8 @@ if ($conn === false) {
         mysqli_free_result($columnaMostrarEnMenu);
     }
 
-    $seccionesBase = [
-        [
-            'Nombre' => 'Aplicaciones',
-            'Slug' => 'aplicaciones',
-            'Ruta' => 'main.php',
-            'Orden' => 1,
-            'MostrarEnMenu' => 1,
-        ],
-        [
-            'Nombre' => 'Charolas',
-            'Slug' => 'charolas',
-            'Ruta' => 'charolas.php',
-            'Orden' => 2,
-            'MostrarEnMenu' => 1,
-        ],
-        [
-            'Nombre' => 'Reparto',
-            'Slug' => 'reparto',
-            'Ruta' => 'Repartos.php',
-            'Orden' => 3,
-            'MostrarEnMenu' => 1,
-        ],
-        [
-            'Nombre' => 'Clientes',
-            'Slug' => 'clientes',
-            'Ruta' => 'Clientes.php',
-            'Orden' => 4,
-            'MostrarEnMenu' => 1,
-        ],
-        [
-            'Nombre' => 'Usuarios',
-            'Slug' => 'usuarios',
-            'Ruta' => 'Usuarios.php',
-            'Orden' => 5,
-            'MostrarEnMenu' => 1,
-        ],
-        [
-            'Nombre' => 'Administración',
-            'Slug' => 'administracion',
-            'Ruta' => 'Administracion.php',
-            'Orden' => 6,
-            'MostrarEnMenu' => 1,
-        ],
-    ];
-
-    $stmtInsertSeccion = @mysqli_prepare(
-        $conn,
-        'INSERT INTO secciones (Nombre, Slug, Ruta, Orden, MostrarEnMenu) VALUES (?, ?, ?, ?, ?)'
-        . ' ON DUPLICATE KEY UPDATE Nombre = VALUES(Nombre), Ruta = VALUES(Ruta), Orden = VALUES(Orden)'
-    );
-
-    if ($stmtInsertSeccion) {
-        foreach ($seccionesBase as $seccion) {
-            mysqli_stmt_bind_param(
-                $stmtInsertSeccion,
-                'sssii',
-                $seccion['Nombre'],
-                $seccion['Slug'],
-                $seccion['Ruta'],
-                $seccion['Orden'],
-                $seccion['MostrarEnMenu']
-            );
-            mysqli_stmt_execute($stmtInsertSeccion);
-        }
-        mysqli_stmt_close($stmtInsertSeccion);
+    if (function_exists('sincronizarSeccionesBase')) {
+        sincronizarSeccionesBase($conn);
     }
 
     $columnaSeccionInicio = @mysqli_query(
