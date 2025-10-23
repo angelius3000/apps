@@ -509,80 +509,18 @@ if (isset($conn) && $conn !== false) {
 
                                 <ul class="nav nav-tabs mb-4" id="adminSubsections" role="tablist">
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link <?php echo $tabActivo === 'sections' ? 'active' : ''; ?>" id="sections-tab" data-bs-toggle="tab" data-bs-target="#sectionsSection" type="button" role="tab" aria-controls="sectionsSection" aria-selected="<?php echo $tabActivo === 'sections' ? 'true' : 'false'; ?>">
-                                            Secciones
+                                        <button class="nav-link <?php echo $tabActivo === 'database' ? 'active' : ''; ?>" id="database-tab" data-bs-toggle="tab" data-bs-target="#databaseSection" type="button" role="tab" aria-controls="databaseSection" aria-selected="<?php echo $tabActivo === 'database' ? 'true' : 'false'; ?>">
+                                            Bases de datos
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link <?php echo $tabActivo === 'database' ? 'active' : ''; ?>" id="database-tab" data-bs-toggle="tab" data-bs-target="#databaseSection" type="button" role="tab" aria-controls="databaseSection" aria-selected="<?php echo $tabActivo === 'database' ? 'true' : 'false'; ?>">
-                                            Bases de datos
+                                        <button class="nav-link <?php echo $tabActivo === 'sections' ? 'active' : ''; ?>" id="sections-tab" data-bs-toggle="tab" data-bs-target="#sectionsSection" type="button" role="tab" aria-controls="sectionsSection" aria-selected="<?php echo $tabActivo === 'sections' ? 'true' : 'false'; ?>">
+                                            Secciones
                                         </button>
                                     </li>
                                 </ul>
 
                                 <div class="tab-content" id="adminSubsectionsContent">
-                                    <div class="tab-pane fade <?php echo $tabActivo === 'sections' ? 'show active' : ''; ?>" id="sectionsSection" role="tabpanel" aria-labelledby="sections-tab">
-                                        <div class="card">
-                                            <div class="card-body">
-                                                <h5 class="card-title">Control de visibilidad del panel lateral</h5>
-                                                <p class="card-text">Selecciona las secciones que deben mostrarse en el menú lateral. Los cambios se aplican para todos los usuarios que tengan permiso de acceder a cada sección.</p>
-
-                                                <?php if (empty($listaSecciones)) : ?>
-                                                    <div class="alert alert-warning mb-0" role="alert">
-                                                        Aún no se han registrado secciones en el sistema.
-                                                    </div>
-                                                <?php else : ?>
-                                                    <form method="post">
-                                                        <input type="hidden" name="action" value="update_sections_visibility">
-                                                        <input type="hidden" name="active_tab" value="sections">
-                                                        <div class="table-responsive">
-                                                            <table class="table table-sm align-middle mb-0">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th class="text-center" style="width: 120px;">Mostrar</th>
-                                                                        <th>Sección</th>
-                                                                        <th>Slug</th>
-                                                                        <th>Ruta</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    <?php foreach ($listaSecciones as $seccion) : ?>
-                                                                        <?php
-                                                                        $idElemento = 'sectionVisibility_' . (int) $seccion['SECCIONID'];
-                                                                        $estaVisible = (int) $seccion['MostrarEnMenu'] === 1;
-                                                                        ?>
-                                                                        <tr>
-                                                                            <td class="text-center">
-                                                                                <div class="form-check form-switch d-inline-flex align-items-center justify-content-center">
-                                                                                    <input class="form-check-input" type="checkbox" role="switch" id="<?php echo htmlspecialchars($idElemento, ENT_QUOTES, 'UTF-8'); ?>" name="sections_visibility[<?php echo htmlspecialchars($seccion['Slug'], ENT_QUOTES, 'UTF-8'); ?>]" value="1" <?php echo $estaVisible ? 'checked' : ''; ?>>
-                                                                                    <label class="visually-hidden" for="<?php echo htmlspecialchars($idElemento, ENT_QUOTES, 'UTF-8'); ?>">
-                                                                                        <?php echo htmlspecialchars($seccion['Nombre'], ENT_QUOTES, 'UTF-8'); ?>
-                                                                                    </label>
-                                                                                </div>
-                                                                            </td>
-                                                                            <td>
-                                                                                <strong><?php echo htmlspecialchars($seccion['Nombre'], ENT_QUOTES, 'UTF-8'); ?></strong>
-                                                                                <div class="text-muted small mb-0">Orden: <?php echo (int) $seccion['Orden']; ?></div>
-                                                                            </td>
-                                                                            <td class="text-muted">
-                                                                                <?php echo htmlspecialchars($seccion['Slug'], ENT_QUOTES, 'UTF-8'); ?>
-                                                                            </td>
-                                                                            <td class="text-muted">
-                                                                                <?php echo htmlspecialchars($seccion['Ruta'], ENT_QUOTES, 'UTF-8'); ?>
-                                                                            </td>
-                                                                        </tr>
-                                                                    <?php endforeach; ?>
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                        <div class="d-flex justify-content-end mt-3">
-                                                            <button type="submit" class="btn btn-primary" data-requires-confirmation="true" data-confirmation-message="Se actualizará la visibilidad del menú lateral. ¿Deseas guardar los cambios?">Guardar cambios</button>
-                                                        </div>
-                                                    </form>
-                                                <?php endif; ?>
-                                            </div>
-                                        </div>
-                                    </div>
                                     <div class="tab-pane fade <?php echo $tabActivo === 'database' ? 'show active' : ''; ?>" id="databaseSection" role="tabpanel" aria-labelledby="database-tab">
                                         <div class="card mb-4">
                                             <div class="card-body">
@@ -834,6 +772,68 @@ if (isset($conn) && $conn !== false) {
                                                 <?php endif; ?>
                                             <?php endif; ?>
                                         <?php endif; ?>
+                                    </div>
+                                    <div class="tab-pane fade <?php echo $tabActivo === 'sections' ? 'show active' : ''; ?>" id="sectionsSection" role="tabpanel" aria-labelledby="sections-tab">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Control de visibilidad del panel lateral</h5>
+                                                <p class="card-text">Selecciona las secciones que deben mostrarse en el menú lateral. Los cambios se aplican para todos los usuarios que tengan permiso de acceder a cada sección.</p>
+
+                                                <?php if (empty($listaSecciones)) : ?>
+                                                    <div class="alert alert-warning mb-0" role="alert">
+                                                        Aún no se han registrado secciones en el sistema.
+                                                    </div>
+                                                <?php else : ?>
+                                                    <form method="post">
+                                                        <input type="hidden" name="action" value="update_sections_visibility">
+                                                        <input type="hidden" name="active_tab" value="sections">
+                                                        <div class="table-responsive">
+                                                            <table class="table table-sm align-middle mb-0">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th class="text-center" style="width: 120px;">Mostrar</th>
+                                                                        <th>Sección</th>
+                                                                        <th>Slug</th>
+                                                                        <th>Ruta</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <?php foreach ($listaSecciones as $seccion) : ?>
+                                                                        <?php
+                                                                        $idElemento = 'sectionVisibility_' . (int) $seccion['SECCIONID'];
+                                                                        $estaVisible = (int) $seccion['MostrarEnMenu'] === 1;
+                                                                        ?>
+                                                                        <tr>
+                                                                            <td class="text-center">
+                                                                                <div class="form-check form-switch d-inline-flex align-items-center justify-content-center">
+                                                                                    <input class="form-check-input" type="checkbox" role="switch" id="<?php echo htmlspecialchars($idElemento, ENT_QUOTES, 'UTF-8'); ?>" name="sections_visibility[<?php echo htmlspecialchars($seccion['Slug'], ENT_QUOTES, 'UTF-8'); ?>]" value="1" <?php echo $estaVisible ? 'checked' : ''; ?>>
+                                                                                    <label class="visually-hidden" for="<?php echo htmlspecialchars($idElemento, ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                        <?php echo htmlspecialchars($seccion['Nombre'], ENT_QUOTES, 'UTF-8'); ?>
+                                                                                    </label>
+                                                                                </div>
+                                                                            </td>
+                                                                            <td>
+                                                                                <strong><?php echo htmlspecialchars($seccion['Nombre'], ENT_QUOTES, 'UTF-8'); ?></strong>
+                                                                                <div class="text-muted small mb-0">Orden: <?php echo (int) $seccion['Orden']; ?></div>
+                                                                            </td>
+                                                                            <td class="text-muted">
+                                                                                <?php echo htmlspecialchars($seccion['Slug'], ENT_QUOTES, 'UTF-8'); ?>
+                                                                            </td>
+                                                                            <td class="text-muted">
+                                                                                <?php echo htmlspecialchars($seccion['Ruta'], ENT_QUOTES, 'UTF-8'); ?>
+                                                                            </td>
+                                                                        </tr>
+                                                                    <?php endforeach; ?>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                        <div class="d-flex justify-content-end mt-3">
+                                                            <button type="submit" class="btn btn-primary" data-requires-confirmation="true" data-confirmation-message="Se actualizará la visibilidad del menú lateral. ¿Deseas guardar los cambios?">Guardar cambios</button>
+                                                        </div>
+                                                    </form>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

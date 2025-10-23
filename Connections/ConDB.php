@@ -195,8 +195,8 @@ if ($conn === false) {
 
     $stmtInsertSeccion = @mysqli_prepare(
         $conn,
-        'INSERT INTO secciones (Nombre, Slug, Ruta, Orden, MostrarEnMenu) VALUES (?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE Nombre = VALUES(Nombre), Ruta = VALUES(Ruta), Orden = VALUES(Orden), MostrarEnMenu = VALUES(MostrarEnMenu)'
+        'INSERT INTO secciones (Nombre, Slug, Ruta, Orden, MostrarEnMenu) VALUES (?, ?, ?, ?, ?)'
+        . ' ON DUPLICATE KEY UPDATE Nombre = VALUES(Nombre), Ruta = VALUES(Ruta), Orden = VALUES(Orden)'
     );
 
     if ($stmtInsertSeccion) {
