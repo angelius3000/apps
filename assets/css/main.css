@@ -13,6 +13,8 @@
 
 ------------------------------------------------------------*/
 
+@import url('login-background-data.css');
+
 /*------------------------------------------------------------
 [1. Global Styles]
 ------------------------------------------------------------*/
@@ -6407,8 +6409,12 @@ span.flatpickr-weekday {
 }
 
 .app-auth-sign-in .app-auth-background {
-    /* Use a cover background to avoid distortion of the login image */
-    background: url('../../App/Graficos/Background/BackIndex.jpg') center/cover no-repeat;
+    /* Use the embedded Edison artwork without shipping binary assets */
+    background-image: var(--login-background-image);
+    background-color: #ffffff;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
 }
 
 
