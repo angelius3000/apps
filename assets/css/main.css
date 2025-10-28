@@ -6411,9 +6411,10 @@ span.flatpickr-weekday {
 .app-auth-sign-in .app-auth-background {
     /* Use the embedded Edison artwork without shipping binary assets */
     background-image: var(--login-background-image);
+    background-color: #ffffff;
     background-position: center;
     background-repeat: no-repeat;
-    background-size: cover;
+    background-size: contain;
 }
 
 
