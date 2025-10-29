@@ -42,7 +42,7 @@ if (!usuarioTieneAccesoSeccion('materialpendiente')) {
                             <div class="col">
                                 <div class="page-description">
                                     <h2>Material Pendiente</h2>
-                                    <p class="text-muted mb-0">Genera y gestiona los registros de material vendido pendiente de entrega.</p>
+                                    <p class="text-muted mb-0">Genera y gestiona los registros de material vendido que aún están pendientes de entrega.</p>
                                 </div>
                             </div>
                         </div>
@@ -53,7 +53,7 @@ if (!usuarioTieneAccesoSeccion('materialpendiente')) {
                                     <div class="d-flex align-items-center">
                                         <i class="material-icons-two-tone me-2">pending_actions</i>
                                         <div>
-                                            Próximamente podrás registrar y dar seguimiento al material que aún está pendiente de entregar.
+                                            Próximamente podrás registrar y dar seguimiento al material pendiente de entregar para tus clientes.
                                         </div>
                                     </div>
                                 </div>
