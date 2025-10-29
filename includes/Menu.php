@@ -27,6 +27,12 @@
                 'nombre' => 'Reparto',
             ],
             [
+                'slug' => 'materialpendiente',
+                'ruta' => 'MaterialPendiente.php',
+                'icono' => 'pending_actions',
+                'nombre' => 'Material Pendiente',
+            ],
+            [
                 'slug' => 'clientes',
                 'ruta' => 'Clientes.php',
                 'icono' => 'people',
