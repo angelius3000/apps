@@ -27,7 +27,8 @@ $(document).ready(function() {
       dropdownParent: $modal,
       placeholder: $elemento.data('placeholder') || 'Selecciona producto',
       allowClear: true,
-      width: '100%'
+      width: '100%',
+      minimumResultsForSearch: 0
     });
   }
 
@@ -44,7 +45,8 @@ $(document).ready(function() {
       dropdownParent: $modal,
       placeholder: $selectCliente.data('placeholder') || 'Selecciona cliente',
       allowClear: true,
-      width: '100%'
+      width: '100%',
+      minimumResultsForSearch: 0
     });
   }
 
