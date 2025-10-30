@@ -1110,6 +1110,14 @@ if (isset($conn) && $conn !== false) {
 
                 var adminTabPanes = adminTabsContent.querySelectorAll('[data-tab-panel]');
 
+                var forEachNode = function (nodes, callback) {
+                    if (!nodes || typeof callback !== 'function') {
+                        return;
+                    }
+
+                    Array.prototype.forEach.call(nodes, callback);
+                };
+
                 var obtenerValorTab = function (button) {
                     return button.getAttribute('data-tab-value') || '';
                 };
@@ -1129,7 +1137,7 @@ if (isset($conn) && $conn !== false) {
                     }
 
                     var inputsTab = document.querySelectorAll('input[name="active_tab"]');
-                    inputsTab.forEach(function (input) {
+                    forEachNode(inputsTab, function (input) {
                         input.value = tabValue;
                     });
                 };
@@ -1149,23 +1157,27 @@ if (isset($conn) && $conn !== false) {
                 };
 
                 var activarTab = function (button) {
+                    if (!button) {
+                        return false;
+                    }
+
                     var targetSelector = button.getAttribute('data-tab-target');
                     if (!targetSelector) {
-                        return;
+                        return false;
                     }
 
                     var targetPane = adminTabsContent.querySelector(targetSelector);
                     if (!targetPane) {
-                        return;
+                        return false;
                     }
 
-                    adminTabButtons.forEach(function (otroBoton) {
+                    forEachNode(adminTabButtons, function (otroBoton) {
                         var esActual = otroBoton === button;
                         otroBoton.classList.toggle('active', esActual);
                         otroBoton.setAttribute('aria-selected', esActual ? 'true' : 'false');
                     });
 
-                    adminTabPanes.forEach(function (pane) {
+                    forEachNode(adminTabPanes, function (pane) {
                         var esObjetivo = pane === targetPane;
                         pane.classList.toggle('is-active', esObjetivo);
                         pane.hidden = !esObjetivo;
@@ -1176,14 +1188,32 @@ if (isset($conn) && $conn !== false) {
                     establecerTabActivo(tabValue);
                     actualizarEstadoTab(tabValue);
                     actualizarUrlTab(tabValue);
+
+                    return true;
                 };
 
-                adminTabButtons.forEach(function (button) {
+                var esClickPrimarioSinModificadores = function (event) {
+                    if (!event) {
+                        return false;
+                    }
+
+                    var boton = typeof event.button === 'number' ? event.button : 0;
+                    return boton === 0 && !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey;
+                };
+
+                forEachNode(adminTabButtons, function (button) {
                     button.addEventListener('click', function (event) {
-                        if (event && typeof event.preventDefault === 'function') {
+                        var activado = false;
+
+                        try {
+                            activado = activarTab(button);
+                        } catch (error) {
+                            activado = false;
+                        }
+
+                        if (activado && esClickPrimarioSinModificadores(event) && event && typeof event.preventDefault === 'function') {
                             event.preventDefault();
                         }
-                        activarTab(button);
                     });
                 });
 
@@ -1211,7 +1241,7 @@ if (isset($conn) && $conn !== false) {
             var pendingButton = null;
 
             var buttons = document.querySelectorAll('[data-requires-confirmation="true"]');
-            buttons.forEach(function (button) {
+            Array.prototype.forEach.call(buttons, function (button) {
                 button.addEventListener('click', function (event) {
                     if (button.disabled) {
                         return;
