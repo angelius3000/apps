@@ -18,6 +18,17 @@ if ($resultadoProductosPendientes instanceof mysqli_result) {
     mysqli_free_result($resultadoProductosPendientes);
 }
 
+$queryClientesPendientes = "SELECT CLIENTEID, CLIENTESIAN, CLCSIAN, NombreCliente FROM clientes ORDER BY CLIENTESIAN ASC, NombreCliente ASC";
+$resultadoClientesPendientes = mysqli_query($conn, $queryClientesPendientes);
+
+$listaClientesPendientes = [];
+if ($resultadoClientesPendientes instanceof mysqli_result) {
+    while ($rowClientePendiente = mysqli_fetch_assoc($resultadoClientesPendientes)) {
+        $listaClientesPendientes[] = $rowClientePendiente;
+    }
+    mysqli_free_result($resultadoClientesPendientes);
+}
+
 $opcionesProductosPendientes = '<option value="">Selecciona producto</option>';
 foreach ($listaProductosPendientes as $productoPendiente) {
     $productoId = isset($productoPendiente['PRODUCTOSID']) ? (int) $productoPendiente['PRODUCTOSID'] : 0;
@@ -36,7 +47,34 @@ foreach ($listaProductosPendientes as $productoPendiente) {
     $opcionesProductosPendientes .= '<option value="' . $productoId . '">' . $textoOpcion . '</option>';
 }
 
+$opcionesClientesPendientes = '<option value="">Selecciona cliente</option>';
+foreach ($listaClientesPendientes as $clientePendiente) {
+    $clienteId = isset($clientePendiente['CLIENTEID']) ? (int) $clientePendiente['CLIENTEID'] : 0;
+    $clienteSian = isset($clientePendiente['CLIENTESIAN']) ? trim((string) $clientePendiente['CLIENTESIAN']) : '';
+    $clienteCredito = isset($clientePendiente['CLCSIAN']) ? trim((string) $clientePendiente['CLCSIAN']) : '';
+    $nombreCliente = isset($clientePendiente['NombreCliente']) ? trim((string) $clientePendiente['NombreCliente']) : '';
+
+    $clienteSianEscapado = htmlspecialchars($clienteSian, ENT_QUOTES, 'UTF-8');
+    $clienteCreditoEscapado = htmlspecialchars($clienteCredito, ENT_QUOTES, 'UTF-8');
+    $nombreClienteEscapado = htmlspecialchars($nombreCliente, ENT_QUOTES, 'UTF-8');
+
+    $textoCliente = $clienteSianEscapado;
+    if ($clienteCreditoEscapado !== '') {
+        $textoCliente .= ' - ' . $clienteCreditoEscapado;
+    }
+    if ($nombreClienteEscapado !== '') {
+        $textoCliente .= ($textoCliente !== '' ? ' - ' : '') . $nombreClienteEscapado;
+    }
+
+    if ($textoCliente === '') {
+        $textoCliente = 'Cliente #' . $clienteId;
+    }
+
+    $opcionesClientesPendientes .= '<option value="' . $clienteId . '">' . $textoCliente . '</option>';
+}
+
 $hayProductosPendientes = count($listaProductosPendientes) > 0;
+$hayClientesPendientes = count($listaClientesPendientes) > 0;
 
 $claseBody = '';
 $claseLogo = '';

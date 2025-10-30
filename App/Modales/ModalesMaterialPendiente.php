@@ -18,7 +18,12 @@
                                         </div>
                                         <div class="col-lg-6 col-sm-12 mb-4">
                                             <label for="RazonSocialPendiente" class="form-label">Razón Social</label>
-                                            <input type="text" class="form-control" id="RazonSocialPendiente" name="RazonSocialPendiente" autocomplete="off" required>
+                                            <select class="form-select select2-selection__rendered" id="RazonSocialPendiente" name="RazonSocialPendiente" data-placeholder="Selecciona cliente" <?php echo $hayClientesPendientes ? '' : 'disabled'; ?> required>
+                                                <?php echo $opcionesClientesPendientes; ?>
+                                            </select>
+                                            <?php if (!$hayClientesPendientes) : ?>
+                                                <small class="form-text text-muted">No hay clientes disponibles para seleccionar.</small>
+                                            <?php endif; ?>
                                         </div>
                                         <div class="col-lg-6 col-sm-12 mb-4">
                                             <label for="SurtidorPendiente" class="form-label">Surtidor</label>
