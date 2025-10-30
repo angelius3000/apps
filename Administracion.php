@@ -618,6 +618,7 @@ if (isset($conn) && $conn !== false) {
                                         background-color: #ffffff;
                                         color: #495057;
                                         font-weight: 600;
+                                        text-decoration: none;
                                         transition: all 0.2s ease-in-out;
                                         box-shadow: 0 1px 2px rgba(15, 34, 58, 0.08);
                                     }
@@ -672,18 +673,18 @@ if (isset($conn) && $conn !== false) {
                                 </style>
 
                                 <div class="admin-subsections-nav" id="adminSubsections" role="tablist">
-                                    <button class="admin-subsection-button <?php echo $tabActivo === 'database' ? 'active' : ''; ?>" id="database-tab" data-tab-target="#databaseSection" data-tab-value="database" type="button" role="tab" aria-controls="databaseSection" aria-selected="<?php echo $tabActivo === 'database' ? 'true' : 'false'; ?>">
+                                    <a class="admin-subsection-button <?php echo $tabActivo === 'database' ? 'active' : ''; ?>" id="database-tab" data-tab-target="#databaseSection" data-tab-value="database" role="tab" aria-controls="databaseSection" aria-selected="<?php echo $tabActivo === 'database' ? 'true' : 'false'; ?>" href="?tab=database">
                                         <span class="material-icons-two-tone" aria-hidden="true">storage</span>
                                         <span>Bases de datos</span>
-                                    </button>
-                                    <button class="admin-subsection-button <?php echo $tabActivo === 'sections' ? 'active' : ''; ?>" id="sections-tab" data-tab-target="#sectionsSection" data-tab-value="sections" type="button" role="tab" aria-controls="sectionsSection" aria-selected="<?php echo $tabActivo === 'sections' ? 'true' : 'false'; ?>">
+                                    </a>
+                                    <a class="admin-subsection-button <?php echo $tabActivo === 'sections' ? 'active' : ''; ?>" id="sections-tab" data-tab-target="#sectionsSection" data-tab-value="sections" role="tab" aria-controls="sectionsSection" aria-selected="<?php echo $tabActivo === 'sections' ? 'true' : 'false'; ?>" href="?tab=sections">
                                         <span class="material-icons-two-tone" aria-hidden="true">view_day</span>
                                         <span>Secciones</span>
-                                    </button>
-                                    <button class="admin-subsection-button <?php echo $tabActivo === 'profiles' ? 'active' : ''; ?>" id="profiles-tab" data-tab-target="#profilesSection" data-tab-value="profiles" type="button" role="tab" aria-controls="profilesSection" aria-selected="<?php echo $tabActivo === 'profiles' ? 'true' : 'false'; ?>">
+                                    </a>
+                                    <a class="admin-subsection-button <?php echo $tabActivo === 'profiles' ? 'active' : ''; ?>" id="profiles-tab" data-tab-target="#profilesSection" data-tab-value="profiles" role="tab" aria-controls="profilesSection" aria-selected="<?php echo $tabActivo === 'profiles' ? 'true' : 'false'; ?>" href="?tab=profiles">
                                         <span class="material-icons-two-tone" aria-hidden="true">manage_accounts</span>
                                         <span>Perfiles de usuario</span>
-                                    </button>
+                                    </a>
                                 </div>
 
                                 <div class="admin-subsections-content" id="adminSubsectionsContent" data-active-tab="<?php echo htmlspecialchars($tabActivo, ENT_QUOTES, 'UTF-8'); ?>">
@@ -1133,6 +1134,20 @@ if (isset($conn) && $conn !== false) {
                     });
                 };
 
+                var actualizarUrlTab = function (tabValue) {
+                    if (!tabValue || !window.history || typeof window.history.replaceState !== 'function') {
+                        return;
+                    }
+
+                    try {
+                        var url = new URL(window.location.href);
+                        url.searchParams.set('tab', tabValue);
+                        window.history.replaceState(null, '', url.toString());
+                    } catch (error) {
+                        // Ignorar errores al manipular el historial en navegadores que no soporten esta API.
+                    }
+                };
+
                 var activarTab = function (button) {
                     var targetSelector = button.getAttribute('data-tab-target');
                     if (!targetSelector) {
@@ -1160,10 +1175,14 @@ if (isset($conn) && $conn !== false) {
                     var tabValue = obtenerValorTab(button);
                     establecerTabActivo(tabValue);
                     actualizarEstadoTab(tabValue);
+                    actualizarUrlTab(tabValue);
                 };
 
                 adminTabButtons.forEach(function (button) {
-                    button.addEventListener('click', function () {
+                    button.addEventListener('click', function (event) {
+                        if (event && typeof event.preventDefault === 'function') {
+                            event.preventDefault();
+                        }
                         activarTab(button);
                     });
                 });
