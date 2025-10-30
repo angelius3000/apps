@@ -18,7 +18,7 @@
                                         </div>
                                         <div class="col-lg-6 col-sm-12 mb-4">
                                             <label for="RazonSocialPendiente" class="form-label">Razón Social</label>
-                                            <select class="form-select select2-cliente" id="RazonSocialPendiente" name="RazonSocialPendiente" data-placeholder="Selecciona cliente" <?php echo $hayClientesPendientes ? '' : 'disabled'; ?> required>
+                                            <select class="form-select select2-selection__rendered" id="RazonSocialPendiente" name="RazonSocialPendiente" data-placeholder="Selecciona cliente" <?php echo $hayClientesPendientes ? '' : 'disabled'; ?> required>
                                                 <?php echo $opcionesClientesPendientes; ?>
                                             </select>
                                             <?php if (!$hayClientesPendientes) : ?>
