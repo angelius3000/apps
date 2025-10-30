@@ -652,290 +652,343 @@ if (isset($conn) && $conn !== false) {
                                     </div>
                                 <?php endif; ?>
 
-                                <style>
-                                    .admin-subsections-nav {
-                                        display: flex;
-                                        flex-wrap: wrap;
-                                        gap: 1rem;
-                                        margin-bottom: 1.5rem;
-                                    }
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Secciones</h5>
+                                        <p class="card-text">Selecciona las secciones que deben permanecer habilitadas en el sistema. Las secciones deshabilitadas no aparecerán en el menú lateral ni permitirán el acceso directo, sin importar los permisos individuales.</p>
 
-                                    .admin-subsection-button {
-                                        display: flex;
-                                        align-items: center;
-                                        gap: 0.75rem;
-                                        padding: 0.75rem 1.25rem;
-                                        border-radius: 0.75rem;
-                                        border: 1px solid rgba(0, 0, 0, 0.08);
-                                        background-color: #ffffff;
-                                        color: #495057;
-                                        font-weight: 600;
-                                        text-decoration: none;
-                                        transition: all 0.2s ease-in-out;
-                                        box-shadow: 0 1px 2px rgba(15, 34, 58, 0.08);
-                                    }
-
-                                    .admin-subsection-button:focus {
-                                        outline: none;
-                                        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-                                    }
-
-                                    .admin-subsection-button .material-icons-two-tone {
-                                        font-size: 1.75rem;
-                                    }
-
-                                    .admin-subsection-button:hover {
-                                        border-color: rgba(13, 110, 253, 0.35);
-                                        color: #0d6efd;
-                                    }
-
-                                    .admin-subsection-button.active {
-                                        background: linear-gradient(135deg, #0d6efd, #5a8dee);
-                                        border-color: transparent;
-                                        color: #ffffff;
-                                        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
-                                    }
-
-                                    .admin-subsection-button.active .material-icons-two-tone {
-                                        color: #ffffff;
-                                    }
-
-                                    .admin-subsections-content {
-                                        position: relative;
-                                    }
-
-                                    .admin-subsection-panel[hidden] {
-                                        display: none !important;
-                                    }
-
-                                    .admin-subsection-panel.is-active {
-                                        display: block;
-                                    }
-
-                                    #adminSubsectionsContent {
-                                        transition: opacity 0.2s ease-in-out;
-                                    }
-
-                                    @media (prefers-reduced-motion: reduce) {
-                                        .admin-subsection-button,
-                                        #adminSubsectionsContent {
-                                            transition: none;
-                                        }
-                                    }
-                                </style>
-
-                                <div class="admin-subsections-nav" id="adminSubsections" role="tablist">
-                                    <a class="admin-subsection-button <?php echo $tabActivo === 'database' ? 'active' : ''; ?>" id="database-tab" data-tab-target="#databaseSection" data-tab-value="database" role="tab" aria-controls="databaseSection" aria-selected="<?php echo $tabActivo === 'database' ? 'true' : 'false'; ?>" href="?tab=database">
-                                        <span class="material-icons-two-tone" aria-hidden="true">storage</span>
-                                        <span>Bases de datos</span>
-                                    </a>
-                                    <a class="admin-subsection-button <?php echo $tabActivo === 'sections' ? 'active' : ''; ?>" id="sections-tab" data-tab-target="#sectionsSection" data-tab-value="sections" role="tab" aria-controls="sectionsSection" aria-selected="<?php echo $tabActivo === 'sections' ? 'true' : 'false'; ?>" href="?tab=sections">
-                                        <span class="material-icons-two-tone" aria-hidden="true">view_day</span>
-                                        <span>Secciones</span>
-                                    </a>
-                                    <a class="admin-subsection-button <?php echo $tabActivo === 'profiles' ? 'active' : ''; ?>" id="profiles-tab" data-tab-target="#profilesSection" data-tab-value="profiles" role="tab" aria-controls="profilesSection" aria-selected="<?php echo $tabActivo === 'profiles' ? 'true' : 'false'; ?>" href="?tab=profiles">
-                                        <span class="material-icons-two-tone" aria-hidden="true">manage_accounts</span>
-                                        <span>Perfiles de usuario</span>
-                                    </a>
-                                </div>
-
-                                <div class="admin-subsections-content" id="adminSubsectionsContent" data-active-tab="<?php echo htmlspecialchars($tabActivo, ENT_QUOTES, 'UTF-8'); ?>">
-                                    <div class="admin-subsection-panel <?php echo $tabActivo === 'database' ? 'is-active' : ''; ?>" id="databaseSection" role="tabpanel" aria-labelledby="database-tab" data-tab-panel="database" <?php echo $tabActivo === 'database' ? '' : 'hidden'; ?> aria-hidden="<?php echo $tabActivo === 'database' ? 'false' : 'true'; ?>">
-                                        <div class="card mb-4">
-                                            <div class="card-body">
-                                                <h5 class="card-title">Respaldos de la base de datos</h5>
-                                                <p class="card-text">Genera, descarga y restaura respaldos de la base de datos del sistema directamente desde esta sección.</p>
-
-                                                <div class="alert alert-warning" role="alert">
-                                                    <strong>Importante:</strong> Restaurar un respaldo reemplazará la información actual por la contenida en el archivo seleccionado.
-                                                </div>
-
-                                                <div class="d-flex flex-column flex-lg-row align-items-start gap-3 mb-4">
-                                                    <form method="post" class="d-inline">
-                                                        <input type="hidden" name="active_tab" value="database">
-                                                        <button type="submit" name="action" value="create_backup" class="btn btn-primary btn-sm" data-requires-confirmation="true" data-confirmation-message="Se generará un nuevo archivo de respaldo de la base de datos. ¿Deseas continuar?">
-                                                            Crear respaldo
-                                                        </button>
-                                                    </form>
-                                                    <form method="post" enctype="multipart/form-data" class="d-flex flex-column flex-sm-row align-items-start gap-2">
-                                                        <input type="hidden" name="active_tab" value="database">
-                                                        <div>
-                                                            <label for="backup_upload" class="form-label mb-1">Cargar respaldo (.sql)</label>
-                                                            <input class="form-control form-control-sm" type="file" id="backup_upload" name="backup_upload" accept=".sql" required>
-                                                        </div>
-                                                        <div class="pt-sm-4">
-                                                            <button type="submit" name="action" value="restore_backup_upload" class="btn btn-outline-primary btn-sm" data-requires-confirmation="true" data-confirmation-message="El contenido del archivo cargado reemplazará los datos actuales. ¿Deseas continuar?">
-                                                                Restaurar respaldo cargado
-                                                            </button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-
-                                                <?php if (empty($respaldosDisponibles)) : ?>
-                                                    <p class="text-muted mb-0">Aún no se han generado respaldos en el servidor.</p>
-                                                <?php else : ?>
-                                                    <div class="table-responsive">
-                                                        <table class="table table-sm align-middle mb-0">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th>Archivo</th>
-                                                                    <th>Fecha de creación</th>
-                                                                    <th>Tamaño</th>
-                                                                    <th class="text-nowrap">Acciones</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <?php foreach ($respaldosDisponibles as $respaldo) : ?>
-                                                                    <?php
-                                                                    $tamanoKb = 0;
-                                                                    if (isset($respaldo['size']) && is_numeric($respaldo['size'])) {
-                                                                        $tamanoKb = max((float) $respaldo['size'], 0) / 1024;
-                                                                    }
-                                                                    $marcaTiempo = isset($respaldo['mtime']) && is_numeric($respaldo['mtime'])
-                                                                        ? (int) $respaldo['mtime']
-                                                                        : time();
-                                                                    ?>
-                                                                    <tr>
-                                                                        <td class="text-break"><?php echo htmlspecialchars($respaldo['name'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                                                        <td><?php echo date('d/m/Y H:i:s', $marcaTiempo); ?></td>
-                                                                        <td><?php echo number_format($tamanoKb, 2); ?> KB</td>
-                                                                        <td class="text-nowrap">
-                                                                            <div class="d-flex flex-wrap gap-1">
-                                                                                <a href="descargar_respaldo.php?file=<?php echo urlencode($respaldo['name']); ?>" class="btn btn-outline-primary btn-sm">Descargar</a>
-                                                                                <form method="post" class="d-inline">
-                                                                                    <input type="hidden" name="active_tab" value="database">
-                                                                                    <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldo['name'], ENT_QUOTES, 'UTF-8'); ?>">
-                                                                                    <button type="submit" name="action" value="restore_existing_backup" class="btn btn-outline-warning btn-sm" data-requires-confirmation="true" data-confirmation-message="Se restaurará la base de datos utilizando este respaldo. ¿Deseas continuar?">
-                                                                                        Restaurar
-                                                                                    </button>
-                                                                                </form>
-                                                                                <form method="post" class="d-inline">
-                                                                                    <input type="hidden" name="active_tab" value="database">
-                                                                                    <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldo['name'], ENT_QUOTES, 'UTF-8'); ?>">
-                                                                                    <button type="submit" name="action" value="delete_backup" class="btn btn-outline-danger btn-sm" data-requires-confirmation="true" data-confirmation-message="¿Deseas eliminar este respaldo? Esta acción no se puede deshacer.">
-                                                                                        Eliminar
-                                                                                    </button>
-                                                                                </form>
-                                                                            </div>
-                                                                        </td>
-                                                                    </tr>
-                                                                <?php endforeach; ?>
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                <?php endif; ?>
+                                        <?php if (empty($listaSecciones)) : ?>
+                                            <div class="alert alert-warning mb-0" role="alert">
+                                                Aún no se han registrado secciones en el sistema.
                                             </div>
-                                        </div>
-
-                                        <div class="card">
-                                            <div class="card-body">
-                                                <h5 class="card-title">Administración de bases de datos</h5>
-                                                <p class="card-text">Gestiona las tablas disponibles en la base de datos. Puedes editar registros existentes, eliminarlos y restablecer el valor autoincremental cuando sea necesario.</p>
-
-                                                <div class="alert alert-warning" role="alert">
-                                                    <strong>Advertencia:</strong> Las acciones de esta sección pueden modificar o eliminar información de forma permanente. Revisa cuidadosamente los datos antes de confirmar cualquier cambio.
+                                        <?php else : ?>
+                                            <form method="post">
+                                                <input type="hidden" name="action" value="update_sections_visibility">
+                                                <input type="hidden" name="active_tab" value="sections">
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm align-middle mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th class="text-center" style="width: 120px;">Disponible</th>
+                                                                <th>Sección</th>
+                                                                <th>Slug</th>
+                                                                <th>Ruta</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <?php foreach ($listaSecciones as $seccion) : ?>
+                                                                <?php
+                                                                $idElemento = 'sectionVisibility_' . (int) $seccion['SECCIONID'];
+                                                                $estaVisible = (int) $seccion['MostrarEnMenu'] === 1;
+                                                                ?>
+                                                                <tr>
+                                                                    <td class="text-center">
+                                                                        <div class="form-check form-switch d-inline-flex align-items-center justify-content-center">
+                                                                            <input class="form-check-input" type="checkbox" role="switch" id="<?php echo htmlspecialchars($idElemento, ENT_QUOTES, 'UTF-8'); ?>" name="sections_visibility[<?php echo htmlspecialchars($seccion['Slug'], ENT_QUOTES, 'UTF-8'); ?>]" value="1" <?php echo $estaVisible ? 'checked' : ''; ?>>
+                                                                            <label class="visually-hidden" for="<?php echo htmlspecialchars($idElemento, ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                <?php echo htmlspecialchars($seccion['Nombre'], ENT_QUOTES, 'UTF-8'); ?>
+                                                                            </label>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <strong><?php echo htmlspecialchars($seccion['Nombre'], ENT_QUOTES, 'UTF-8'); ?></strong>
+                                                                        <div class="text-muted small mb-0">Orden: <?php echo (int) $seccion['Orden']; ?></div>
+                                                                    </td>
+                                                                    <td class="text-muted">
+                                                                        <?php echo htmlspecialchars($seccion['Slug'], ENT_QUOTES, 'UTF-8'); ?>
+                                                                    </td>
+                                                                    <td class="text-muted">
+                                                                        <?php echo htmlspecialchars($seccion['Ruta'], ENT_QUOTES, 'UTF-8'); ?>
+                                                                    </td>
+                                                                </tr>
+                                                            <?php endforeach; ?>
+                                                        </tbody>
+                                                    </table>
                                                 </div>
-
-                                                <?php if (empty($tablasDisponibles)) : ?>
-                                                    <div class="alert alert-warning mb-0" role="alert">
-                                                        No se encontraron tablas disponibles en la base de datos seleccionada.
-                                                    </div>
-                                                <?php else : ?>
-                                                    <form method="get" class="row g-3 align-items-end mb-4">
-                                                        <div class="col-md-6 col-lg-4">
-                                                            <label for="selected_table" class="form-label">Tabla</label>
-                                                            <select class="form-select" id="selected_table" name="selected_table" onchange="this.form.submit()">
-                                                                <?php foreach ($tablasDisponibles as $tabla) : ?>
-                                                                    <option value="<?php echo htmlspecialchars($tabla, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $tabla === $tablaSeleccionada ? 'selected' : ''; ?>>
-                                                                        <?php echo htmlspecialchars($tabla, ENT_QUOTES, 'UTF-8'); ?>
-                                                                    </option>
-                                                                <?php endforeach; ?>
-                                                            </select>
-                                                        </div>
-                                                        <div class="col-auto d-none d-md-block">
-                                                    <button type="submit" class="btn btn-primary">Ver tabla</button>
+                                                <div class="d-flex justify-content-end mt-3">
+                                                    <button type="submit" class="btn btn-primary" data-requires-confirmation="true" data-confirmation-message="Se actualizará la disponibilidad general de las secciones. ¿Deseas guardar los cambios?">Guardar cambios</button>
                                                 </div>
                                             </form>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
 
-                                            <?php if (!empty($tablaSeleccionada)) : ?>
-                                                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-                                                    <h6 class="mb-0">Registros de "<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>"</h6>
-                                                <div class="d-flex flex-wrap ms-md-auto gap-2">
-                                                    <form method="post">
-                                                        <input type="hidden" name="active_tab" value="database">
-                                                        <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
-                                                        <button type="submit" name="action" value="create_table_backup" class="btn btn-outline-primary btn-sm" data-requires-confirmation="true" data-confirmation-message="Se generará un respaldo que solo contiene la tabla seleccionada. ¿Deseas continuar?">
-                                                            Respaldar tabla
-                                                        </button>
-                                                    </form>
-                                                        <?php if ($columnaAutoIncremental !== null) : ?>
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Perfiles de usuario</h5>
+                                        <p class="card-text">Registra nuevos perfiles para asignarlos posteriormente a los usuarios. Estos perfiles se mostrarán en todo el sistema al gestionar cuentas.</p>
+
+                                        <form method="post" class="row g-3 align-items-end mb-4">
+                                            <div class="col-md-6 col-lg-4">
+                                                <label for="profile_name" class="form-label">Nombre del perfil</label>
+                                                <input type="text" class="form-control" id="profile_name" name="profile_name" maxlength="100" value="<?php echo htmlspecialchars($nombrePerfilPropuesto, ENT_QUOTES, 'UTF-8'); ?>" required>
+                                            </div>
+                                            <div class="col-auto">
+                                                <input type="hidden" name="action" value="create_user_profile">
+                                                <input type="hidden" name="active_tab" value="profiles">
+                                                <button type="submit" class="btn btn-primary" data-requires-confirmation="true" data-confirmation-message="Se agregará un nuevo perfil de usuario. ¿Deseas continuar?">Agregar perfil</button>
+                                            </div>
+                                        </form>
+
+                                        <?php if (empty($listaPerfilesUsuario)) : ?>
+                                            <div class="alert alert-warning mb-0" role="alert">
+                                                Aún no se han registrado perfiles adicionales en el sistema.
+                                            </div>
+                                        <?php else : ?>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm align-middle mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th style="width: 120px;">ID</th>
+                                                            <th>Perfil</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <?php foreach ($listaPerfilesUsuario as $perfil) : ?>
+                                                            <tr>
+                                                                <td class="text-muted">#<?php echo (int) $perfil['TIPODEUSUARIOID']; ?></td>
+                                                                <td>
+                                                                    <strong><?php echo htmlspecialchars($perfil['TipoDeUsuario'], ENT_QUOTES, 'UTF-8'); ?></strong>
+                                                                </td>
+                                                            </tr>
+                                                        <?php endforeach; ?>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Bases de datos</h5>
+                                        <p class="card-text">Administra los respaldos y las tablas de la base de datos del sistema desde un solo lugar.</p>
+
+                                        <div class="mb-5">
+                                            <h6 class="fw-semibold mb-3">Respaldos</h6>
+                                            <div class="alert alert-warning" role="alert">
+                                                <strong>Importante:</strong> Restaurar un respaldo reemplazará la información actual por la contenida en el archivo seleccionado.
+                                            </div>
+
+                                            <div class="d-flex flex-column flex-lg-row align-items-start gap-3 mb-4">
+                                                <form method="post" class="d-inline">
+                                                    <input type="hidden" name="active_tab" value="database">
+                                                    <button type="submit" name="action" value="create_backup" class="btn btn-primary btn-sm" data-requires-confirmation="true" data-confirmation-message="Se generará un nuevo archivo de respaldo de la base de datos. ¿Deseas continuar?">Crear respaldo</button>
+                                                </form>
+                                                <form method="post" enctype="multipart/form-data" class="d-flex flex-column flex-sm-row align-items-start gap-2">
+                                                    <input type="hidden" name="active_tab" value="database">
+                                                    <div>
+                                                        <label for="backup_upload" class="form-label mb-1">Cargar respaldo (.sql)</label>
+                                                        <input class="form-control form-control-sm" type="file" id="backup_upload" name="backup_upload" accept=".sql" required>
+                                                    </div>
+                                                    <div class="pt-sm-4">
+                                                        <button type="submit" name="action" value="restore_backup_upload" class="btn btn-outline-primary btn-sm" data-requires-confirmation="true" data-confirmation-message="El contenido del archivo cargado reemplazará los datos actuales. ¿Deseas continuar?">Restaurar respaldo cargado</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+
+                                            <?php if (empty($respaldosDisponibles)) : ?>
+                                                <p class="text-muted mb-0">Aún no se han generado respaldos en el servidor.</p>
+                                            <?php else : ?>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm align-middle mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Archivo</th>
+                                                                <th>Fecha de creación</th>
+                                                                <th>Tamaño</th>
+                                                                <th class="text-nowrap">Acciones</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <?php foreach ($respaldosDisponibles as $respaldo) : ?>
+                                                                <?php
+                                                                $tamanoKb = 0;
+                                                                if (isset($respaldo['size']) && is_numeric($respaldo['size'])) {
+                                                                    $tamanoKb = max((float) $respaldo['size'], 0) / 1024;
+                                                                }
+                                                                $marcaTiempo = isset($respaldo['mtime']) && is_numeric($respaldo['mtime'])
+                                                                    ? (int) $respaldo['mtime']
+                                                                    : time();
+                                                                ?>
+                                                                <tr>
+                                                                    <td class="text-break"><?php echo htmlspecialchars($respaldo['name'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                                                    <td><?php echo date('d/m/Y H:i:s', $marcaTiempo); ?></td>
+                                                                    <td><?php echo number_format($tamanoKb, 2); ?> KB</td>
+                                                                    <td class="text-nowrap">
+                                                                        <div class="d-flex flex-wrap gap-1">
+                                                                            <a href="descargar_respaldo.php?file=<?php echo urlencode($respaldo['name']); ?>" class="btn btn-outline-primary btn-sm">Descargar</a>
+                                                                            <form method="post" class="d-inline">
+                                                                                <input type="hidden" name="active_tab" value="database">
+                                                                                <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldo['name'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                <button type="submit" name="action" value="restore_existing_backup" class="btn btn-outline-warning btn-sm" data-requires-confirmation="true" data-confirmation-message="Se restaurará la base de datos utilizando este respaldo. ¿Deseas continuar?">Restaurar</button>
+                                                                            </form>
+                                                                            <form method="post" class="d-inline">
+                                                                                <input type="hidden" name="active_tab" value="database">
+                                                                                <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldo['name'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                <button type="submit" name="action" value="delete_backup" class="btn btn-outline-danger btn-sm" data-requires-confirmation="true" data-confirmation-message="¿Deseas eliminar este respaldo? Esta acción no se puede deshacer.">Eliminar</button>
+                                                                            </form>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            <?php endforeach; ?>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <div>
+                                            <h6 class="fw-semibold mb-3">Administración de tablas</h6>
+                                            <div class="alert alert-warning" role="alert">
+                                                <strong>Advertencia:</strong> Las acciones de esta sección pueden modificar o eliminar información de forma permanente. Revisa cuidadosamente los datos antes de confirmar cualquier cambio.
+                                            </div>
+
+                                            <?php if (empty($tablasDisponibles)) : ?>
+                                                <div class="alert alert-warning mb-0" role="alert">
+                                                    No se encontraron tablas disponibles en la base de datos seleccionada.
+                                                </div>
+                                            <?php else : ?>
+                                                <form method="get" class="row g-3 align-items-end mb-4">
+                                                    <div class="col-md-6 col-lg-4">
+                                                        <label for="selected_table" class="form-label">Tabla</label>
+                                                        <select class="form-select" id="selected_table" name="selected_table" onchange="this.form.submit()">
+                                                            <?php foreach ($tablasDisponibles as $tabla) : ?>
+                                                                <option value="<?php echo htmlspecialchars($tabla, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $tabla === $tablaSeleccionada ? 'selected' : ''; ?>>
+                                                                    <?php echo htmlspecialchars($tabla, ENT_QUOTES, 'UTF-8'); ?>
+                                                                </option>
+                                                            <?php endforeach; ?>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-auto d-none d-md-block">
+                                                        <button type="submit" class="btn btn-primary">Ver tabla</button>
+                                                    </div>
+                                                </form>
+
+                                                <?php if (!empty($tablaSeleccionada)) : ?>
+                                                    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                                                        <h6 class="mb-0">Registros de "<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>"</h6>
+                                                        <div class="d-flex flex-wrap ms-md-auto gap-2">
                                                             <form method="post">
                                                                 <input type="hidden" name="active_tab" value="database">
                                                                 <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
-                                                                <button type="submit" name="action" value="reset_auto_increment" class="btn btn-outline-secondary btn-sm" data-requires-confirmation="true" data-confirmation-message="¿Seguro que deseas restablecer el valor autoincremental?">
-                                                                    Resetear autoincremental
-                                                                </button>
+                                                                <button type="submit" name="action" value="create_table_backup" class="btn btn-outline-primary btn-sm" data-requires-confirmation="true" data-confirmation-message="Se generará un respaldo que solo contiene la tabla seleccionada. ¿Deseas continuar?">Respaldar tabla</button>
                                                             </form>
-                                                        <?php endif; ?>
-                                                        <form method="post">
-                                                            <input type="hidden" name="active_tab" value="database">
-                                                            <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
-                                                            <button type="submit" name="action" value="truncate_table" class="btn btn-outline-danger btn-sm" data-requires-confirmation="true" data-confirmation-message="Esta acción eliminará todos los registros de la tabla seleccionada. ¿Deseas continuar?">
-                                                                Vaciar tabla
-                                                            </button>
-                                                        </form>
+                                                            <?php if ($columnaAutoIncremental !== null) : ?>
+                                                                <form method="post">
+                                                                    <input type="hidden" name="active_tab" value="database">
+                                                                    <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
+                                                                    <button type="submit" name="action" value="reset_auto_increment" class="btn btn-outline-secondary btn-sm" data-requires-confirmation="true" data-confirmation-message="¿Seguro que deseas restablecer el valor autoincremental?">Resetear autoincremental</button>
+                                                                </form>
+                                                            <?php endif; ?>
+                                                            <form method="post">
+                                                                <input type="hidden" name="active_tab" value="database">
+                                                                <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
+                                                                <button type="submit" name="action" value="truncate_table" class="btn btn-outline-danger btn-sm" data-requires-confirmation="true" data-confirmation-message="Esta acción eliminará todos los registros de la tabla seleccionada. ¿Deseas continuar?">Vaciar tabla</button>
+                                                            </form>
+                                                        </div>
                                                     </div>
-                                                </div>
 
-                                                <div class="mb-4 w-100">
-                                                    <h6 class="mb-2">Respaldos de "<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>"</h6>
-                                                    <?php if (empty($respaldosTablaSeleccionada)) : ?>
-                                                        <p class="text-muted mb-0">Aún no se han generado respaldos para esta tabla.</p>
+                                                    <div class="mb-4 w-100">
+                                                        <h6 class="mb-2">Respaldos de "<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>"</h6>
+                                                        <?php if (empty($respaldosTablaSeleccionada)) : ?>
+                                                            <p class="text-muted mb-0">Aún no se han generado respaldos para esta tabla.</p>
+                                                        <?php else : ?>
+                                                            <div class="table-responsive">
+                                                                <table class="table table-sm align-middle mb-0">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Archivo</th>
+                                                                            <th>Fecha de creación</th>
+                                                                            <th>Tamaño</th>
+                                                                            <th class="text-nowrap">Acciones</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        <?php foreach ($respaldosTablaSeleccionada as $respaldoTabla) : ?>
+                                                                            <?php
+                                                                            $tamanoTablaKb = 0;
+                                                                            if (isset($respaldoTabla['size']) && is_numeric($respaldoTabla['size'])) {
+                                                                                $tamanoTablaKb = max((float) $respaldoTabla['size'], 0) / 1024;
+                                                                            }
+                                                                            $marcaTablaTiempo = isset($respaldoTabla['mtime']) && is_numeric($respaldoTabla['mtime'])
+                                                                                ? (int) $respaldoTabla['mtime']
+                                                                                : time();
+                                                                            ?>
+                                                                            <tr>
+                                                                                <td class="text-break"><?php echo htmlspecialchars($respaldoTabla['name'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                                                                <td><?php echo date('d/m/Y H:i:s', $marcaTablaTiempo); ?></td>
+                                                                                <td><?php echo number_format($tamanoTablaKb, 2); ?> KB</td>
+                                                                                <td class="text-nowrap">
+                                                                                    <div class="d-flex flex-wrap gap-1">
+                                                                                        <a href="descargar_respaldo.php?scope=table&amp;table=<?php echo urlencode($tablaSeleccionada); ?>&amp;file=<?php echo urlencode($respaldoTabla['name']); ?>" class="btn btn-outline-primary btn-sm">Descargar</a>
+                                                                                        <form method="post" class="d-inline">
+                                                                                            <input type="hidden" name="active_tab" value="database">
+                                                                                            <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                            <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldoTabla['name'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                            <button type="submit" name="action" value="restore_table_backup" class="btn btn-outline-warning btn-sm" data-requires-confirmation="true" data-confirmation-message="Se restaurará la tabla seleccionada utilizando este respaldo. ¿Deseas continuar?">Restaurar</button>
+                                                                                        </form>
+                                                                                        <form method="post" class="d-inline">
+                                                                                            <input type="hidden" name="active_tab" value="database">
+                                                                                            <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                            <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldoTabla['name'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                            <button type="submit" name="action" value="delete_table_backup" class="btn btn-outline-danger btn-sm" data-requires-confirmation="true" data-confirmation-message="¿Deseas eliminar este respaldo de la tabla? Esta acción no se puede deshacer.">Eliminar</button>
+                                                                                        </form>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                        <?php endforeach; ?>
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                    </div>
+
+                                                    <?php if (empty($registrosTabla)) : ?>
+                                                        <p class="text-muted mb-0">No se encontraron registros para la tabla seleccionada.</p>
                                                     <?php else : ?>
+                                                        <?php $accionesDeshabilitadas = $columnaLlavePrimaria === null; ?>
+                                                        <?php if ($accionesDeshabilitadas) : ?>
+                                                            <div class="alert alert-info">Esta tabla no tiene una llave primaria definida. Solo es posible visualizar los registros.</div>
+                                                        <?php endif; ?>
+                                                        <p class="text-muted">Mostrando hasta 50 registros. Utiliza el botón "Guardar" para aplicar los cambios en cada fila.</p>
                                                         <div class="table-responsive">
-                                                            <table class="table table-sm align-middle mb-0">
+                                                            <table class="table table-sm table-striped align-middle">
                                                                 <thead>
                                                                     <tr>
-                                                                        <th>Archivo</th>
-                                                                        <th>Fecha de creación</th>
-                                                                        <th>Tamaño</th>
+                                                                        <?php foreach (array_keys($metadataColumnas) as $nombreColumna) : ?>
+                                                                            <th><?php echo htmlspecialchars($nombreColumna, ENT_QUOTES, 'UTF-8'); ?></th>
+                                                                        <?php endforeach; ?>
                                                                         <th class="text-nowrap">Acciones</th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
-                                                                    <?php foreach ($respaldosTablaSeleccionada as $respaldoTabla) : ?>
-                                                                        <?php
-                                                                        $tamanoTablaKb = 0;
-                                                                        if (isset($respaldoTabla['size']) && is_numeric($respaldoTabla['size'])) {
-                                                                            $tamanoTablaKb = max((float) $respaldoTabla['size'], 0) / 1024;
-                                                                        }
-                                                                        $marcaTablaTiempo = isset($respaldoTabla['mtime']) && is_numeric($respaldoTabla['mtime'])
-                                                                            ? (int) $respaldoTabla['mtime']
-                                                                            : time();
-                                                                        ?>
+                                                                    <?php foreach ($registrosTabla as $indiceRegistro => $registro) : ?>
+                                                                        <?php $formId = 'form-row-' . $indiceRegistro; ?>
                                                                         <tr>
-                                                                            <td class="text-break"><?php echo htmlspecialchars($respaldoTabla['name'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                                                            <td><?php echo date('d/m/Y H:i:s', $marcaTablaTiempo); ?></td>
-                                                                            <td><?php echo number_format($tamanoTablaKb, 2); ?> KB</td>
+                                                                            <?php foreach ($metadataColumnas as $nombreColumna => $infoColumna) : ?>
+                                                                                <?php
+                                                                                $valorCelda = $registro[$nombreColumna] ?? '';
+                                                                                $tipoColumna = strtolower((string) ($infoColumna['Type'] ?? ''));
+                                                                                $esTextoLargo = strpos($tipoColumna, 'text') !== false || strpos($tipoColumna, 'blob') !== false;
+                                                                                ?>
+                                                                                <td style="min-width: 160px;">
+                                                                                    <?php if ($esTextoLargo) : ?>
+                                                                                        <textarea form="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" name="row_data[<?php echo htmlspecialchars($nombreColumna, ENT_QUOTES, 'UTF-8'); ?>]" class="form-control form-control-sm" rows="2"><?php echo htmlspecialchars((string) $valorCelda, ENT_QUOTES, 'UTF-8'); ?></textarea>
+                                                                                    <?php else : ?>
+                                                                                        <input form="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" type="text" name="row_data[<?php echo htmlspecialchars($nombreColumna, ENT_QUOTES, 'UTF-8'); ?>]" class="form-control form-control-sm" value="<?php echo htmlspecialchars((string) $valorCelda, ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                    <?php endif; ?>
+                                                                                </td>
+                                                                            <?php endforeach; ?>
                                                                             <td class="text-nowrap">
-                                                                                <div class="d-flex flex-wrap gap-1">
-                                                                                    <a href="descargar_respaldo.php?scope=table&amp;table=<?php echo urlencode($tablaSeleccionada); ?>&amp;file=<?php echo urlencode($respaldoTabla['name']); ?>" class="btn btn-outline-primary btn-sm">Descargar</a>
-                                                                                    <form method="post" class="d-inline">
-                                                                                        <input type="hidden" name="active_tab" value="database">
-                                                                                        <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
-                                                                                        <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldoTabla['name'], ENT_QUOTES, 'UTF-8'); ?>">
-                                                                                        <button type="submit" name="action" value="restore_table_backup" class="btn btn-outline-warning btn-sm" data-requires-confirmation="true" data-confirmation-message="Se restaurará la tabla seleccionada utilizando este respaldo. ¿Deseas continuar?">
-                                                                                            Restaurar
-                                                                                        </button>
-                                                                                    </form>
-                                                                                    <form method="post" class="d-inline">
-                                                                                        <input type="hidden" name="active_tab" value="database">
-                                                                                        <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
-                                                                                        <input type="hidden" name="backup_file" value="<?php echo htmlspecialchars($respaldoTabla['name'], ENT_QUOTES, 'UTF-8'); ?>">
-                                                                                        <button type="submit" name="action" value="delete_table_backup" class="btn btn-outline-danger btn-sm" data-requires-confirmation="true" data-confirmation-message="¿Deseas eliminar este respaldo de la tabla? Esta acción no se puede deshacer.">
-                                                                                            Eliminar
-                                                                                        </button>
-                                                                                    </form>
+                                                                                <form id="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" method="post" class="d-inline">
+                                                                                    <input type="hidden" name="active_tab" value="database">
+                                                                                    <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                    <input type="hidden" name="original_primary_key_value" value="<?php echo htmlspecialchars((string) ($columnaLlavePrimaria !== null ? ($registro[$columnaLlavePrimaria] ?? '') : ''), ENT_QUOTES, 'UTF-8'); ?>">
+                                                                                </form>
+                                                                                <div class="btn-group btn-group-sm" role="group">
+                                                                                    <button form="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" type="submit" name="action" value="update" class="btn btn-primary" data-requires-confirmation="true" data-confirmation-message="¿Deseas guardar los cambios realizados en este registro?" <?php echo $accionesDeshabilitadas ? 'disabled' : ''; ?>>Guardar</button>
+                                                                                    <button form="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" type="submit" name="action" value="delete" class="btn btn-outline-danger" data-requires-confirmation="true" data-confirmation-message="¿Seguro que deseas eliminar este registro? Esta acción no se puede deshacer." <?php echo $accionesDeshabilitadas ? 'disabled' : ''; ?>>Eliminar</button>
                                                                                 </div>
                                                                             </td>
                                                                         </tr>
@@ -944,171 +997,8 @@ if (isset($conn) && $conn !== false) {
                                                             </table>
                                                         </div>
                                                     <?php endif; ?>
-                                                </div>
-
-                                                <?php if (empty($registrosTabla)) : ?>
-                                                    <p class="text-muted mb-0">No se encontraron registros para la tabla seleccionada.</p>
-                                                <?php else : ?>
-                                                    <?php $accionesDeshabilitadas = $columnaLlavePrimaria === null; ?>
-                                                    <?php if ($accionesDeshabilitadas) : ?>
-                                                        <div class="alert alert-info">Esta tabla no tiene una llave primaria definida. Solo es posible visualizar los registros.</div>
-                                                    <?php endif; ?>
-                                                    <p class="text-muted">Mostrando hasta 50 registros. Utiliza el botón "Guardar" para aplicar los cambios en cada fila.</p>
-                                                    <div class="table-responsive">
-                                                        <table class="table table-sm table-striped align-middle">
-                                                            <thead>
-                                                                <tr>
-                                                                    <?php foreach (array_keys($metadataColumnas) as $nombreColumna) : ?>
-                                                                        <th><?php echo htmlspecialchars($nombreColumna, ENT_QUOTES, 'UTF-8'); ?></th>
-                                                                    <?php endforeach; ?>
-                                                                    <th class="text-nowrap">Acciones</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <?php foreach ($registrosTabla as $indiceRegistro => $registro) : ?>
-                                                                    <?php $formId = 'form-row-' . $indiceRegistro; ?>
-                                                                    <tr>
-                                                                        <?php foreach ($metadataColumnas as $nombreColumna => $infoColumna) : ?>
-                                                                            <?php
-                                                                            $valorCelda = $registro[$nombreColumna] ?? '';
-                                                                            $tipoColumna = strtolower((string) ($infoColumna['Type'] ?? ''));
-                                                                            $esTextoLargo = strpos($tipoColumna, 'text') !== false || strpos($tipoColumna, 'blob') !== false;
-                                                                            ?>
-                                                                            <td style="min-width: 160px;">
-                                                                                <?php if ($esTextoLargo) : ?>
-                                                                                    <textarea form="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" name="row_data[<?php echo htmlspecialchars($nombreColumna, ENT_QUOTES, 'UTF-8'); ?>]" class="form-control form-control-sm" rows="2"><?php echo htmlspecialchars((string) $valorCelda, ENT_QUOTES, 'UTF-8'); ?></textarea>
-                                                                                <?php else : ?>
-                                                                                    <input form="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" type="text" name="row_data[<?php echo htmlspecialchars($nombreColumna, ENT_QUOTES, 'UTF-8'); ?>]" class="form-control form-control-sm" value="<?php echo htmlspecialchars((string) $valorCelda, ENT_QUOTES, 'UTF-8'); ?>">
-                                                                                <?php endif; ?>
-                                                                            </td>
-                                                                        <?php endforeach; ?>
-                                                                        <td class="text-nowrap">
-                                                                            <form id="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" method="post" class="d-inline">
-                                                                                <input type="hidden" name="active_tab" value="database">
-                                                                                <input type="hidden" name="selected_table" value="<?php echo htmlspecialchars($tablaSeleccionada, ENT_QUOTES, 'UTF-8'); ?>">
-                                                                                <input type="hidden" name="original_primary_key_value" value="<?php echo htmlspecialchars((string) ($columnaLlavePrimaria !== null ? ($registro[$columnaLlavePrimaria] ?? '') : ''), ENT_QUOTES, 'UTF-8'); ?>">
-                                                                            </form>
-                                                                            <div class="btn-group btn-group-sm" role="group">
-                                                                                <button form="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" type="submit" name="action" value="update" class="btn btn-primary" data-requires-confirmation="true" data-confirmation-message="¿Deseas guardar los cambios realizados en este registro?" <?php echo $accionesDeshabilitadas ? 'disabled' : ''; ?>>Guardar</button>
-                                                                                <button form="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>" type="submit" name="action" value="delete" class="btn btn-outline-danger" data-requires-confirmation="true" data-confirmation-message="¿Seguro que deseas eliminar este registro? Esta acción no se puede deshacer." <?php echo $accionesDeshabilitadas ? 'disabled' : ''; ?>>Eliminar</button>
-                                                                            </div>
-                                                                        </td>
-                                                                    </tr>
-                                                                <?php endforeach; ?>
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
                                                 <?php endif; ?>
                                             <?php endif; ?>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="admin-subsection-panel <?php echo $tabActivo === 'sections' ? 'is-active' : ''; ?>" id="sectionsSection" role="tabpanel" aria-labelledby="sections-tab" data-tab-panel="sections" <?php echo $tabActivo === 'sections' ? '' : 'hidden'; ?> aria-hidden="<?php echo $tabActivo === 'sections' ? 'false' : 'true'; ?>">
-                                        <div class="card">
-                                            <div class="card-body">
-                                                <h5 class="card-title">Control de secciones</h5>
-                                                <p class="card-text">Selecciona las secciones que deben permanecer habilitadas en el sistema. Las secciones deshabilitadas no aparecerán en el menú lateral ni permitirán el acceso directo, sin importar los permisos individuales.</p>
-
-                                                <?php if (empty($listaSecciones)) : ?>
-                                                    <div class="alert alert-warning mb-0" role="alert">
-                                                        Aún no se han registrado secciones en el sistema.
-                                                    </div>
-                                                <?php else : ?>
-                                                    <form method="post">
-                                                        <input type="hidden" name="action" value="update_sections_visibility">
-                                                        <input type="hidden" name="active_tab" value="sections">
-                                                        <div class="table-responsive">
-                                                            <table class="table table-sm align-middle mb-0">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th class="text-center" style="width: 120px;">Disponible</th>
-                                                                        <th>Sección</th>
-                                                                        <th>Slug</th>
-                                                                        <th>Ruta</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    <?php foreach ($listaSecciones as $seccion) : ?>
-                                                                        <?php
-                                                                        $idElemento = 'sectionVisibility_' . (int) $seccion['SECCIONID'];
-                                                                        $estaVisible = (int) $seccion['MostrarEnMenu'] === 1;
-                                                                        ?>
-                                                                        <tr>
-                                                                            <td class="text-center">
-                                                                                <div class="form-check form-switch d-inline-flex align-items-center justify-content-center">
-                                                                                    <input class="form-check-input" type="checkbox" role="switch" id="<?php echo htmlspecialchars($idElemento, ENT_QUOTES, 'UTF-8'); ?>" name="sections_visibility[<?php echo htmlspecialchars($seccion['Slug'], ENT_QUOTES, 'UTF-8'); ?>]" value="1" <?php echo $estaVisible ? 'checked' : ''; ?>>
-                                                                                    <label class="visually-hidden" for="<?php echo htmlspecialchars($idElemento, ENT_QUOTES, 'UTF-8'); ?>">
-                                                                                        <?php echo htmlspecialchars($seccion['Nombre'], ENT_QUOTES, 'UTF-8'); ?>
-                                                                                    </label>
-                                                                                </div>
-                                                                            </td>
-                                                                            <td>
-                                                                                <strong><?php echo htmlspecialchars($seccion['Nombre'], ENT_QUOTES, 'UTF-8'); ?></strong>
-                                                                                <div class="text-muted small mb-0">Orden: <?php echo (int) $seccion['Orden']; ?></div>
-                                                                            </td>
-                                                                            <td class="text-muted">
-                                                                                <?php echo htmlspecialchars($seccion['Slug'], ENT_QUOTES, 'UTF-8'); ?>
-                                                                            </td>
-                                                                            <td class="text-muted">
-                                                                                <?php echo htmlspecialchars($seccion['Ruta'], ENT_QUOTES, 'UTF-8'); ?>
-                                                                            </td>
-                                                                        </tr>
-                                                                    <?php endforeach; ?>
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                        <div class="d-flex justify-content-end mt-3">
-                                                            <button type="submit" class="btn btn-primary" data-requires-confirmation="true" data-confirmation-message="Se actualizará la disponibilidad general de las secciones. ¿Deseas guardar los cambios?">Guardar cambios</button>
-                                                        </div>
-                                                    </form>
-                                                <?php endif; ?>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="admin-subsection-panel <?php echo $tabActivo === 'profiles' ? 'is-active' : ''; ?>" id="profilesSection" role="tabpanel" aria-labelledby="profiles-tab" data-tab-panel="profiles" <?php echo $tabActivo === 'profiles' ? '' : 'hidden'; ?> aria-hidden="<?php echo $tabActivo === 'profiles' ? 'false' : 'true'; ?>">
-                                        <div class="card">
-                                            <div class="card-body">
-                                                <h5 class="card-title">Perfiles de usuario</h5>
-                                                <p class="card-text">Registra nuevos perfiles para asignarlos posteriormente a los usuarios. Estos perfiles se mostrarán en todo el sistema al gestionar cuentas.</p>
-
-                                                <form method="post" class="row g-3 align-items-end mb-4">
-                                                    <div class="col-md-6 col-lg-4">
-                                                        <label for="profile_name" class="form-label">Nombre del perfil</label>
-                                                        <input type="text" class="form-control" id="profile_name" name="profile_name" maxlength="100" value="<?php echo htmlspecialchars($nombrePerfilPropuesto, ENT_QUOTES, 'UTF-8'); ?>" required>
-                                                    </div>
-                                                    <div class="col-auto">
-                                                        <input type="hidden" name="action" value="create_user_profile">
-                                                        <input type="hidden" name="active_tab" value="profiles">
-                                                        <button type="submit" class="btn btn-primary" data-requires-confirmation="true" data-confirmation-message="Se agregará un nuevo perfil de usuario. ¿Deseas continuar?">Agregar perfil</button>
-                                                    </div>
-                                                </form>
-
-                                                <?php if (empty($listaPerfilesUsuario)) : ?>
-                                                    <div class="alert alert-warning mb-0" role="alert">
-                                                        Aún no se han registrado perfiles adicionales en el sistema.
-                                                    </div>
-                                                <?php else : ?>
-                                                    <div class="table-responsive">
-                                                        <table class="table table-sm align-middle mb-0">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th style="width: 120px;">ID</th>
-                                                                    <th>Perfil</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <?php foreach ($listaPerfilesUsuario as $perfil) : ?>
-                                                                    <tr>
-                                                                        <td class="text-muted">#<?php echo (int) $perfil['TIPODEUSUARIOID']; ?></td>
-                                                                        <td>
-                                                                            <strong><?php echo htmlspecialchars($perfil['TipoDeUsuario'], ENT_QUOTES, 'UTF-8'); ?></strong>
-                                                                        </td>
-                                                                    </tr>
-                                                                <?php endforeach; ?>
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1150,133 +1040,6 @@ if (isset($conn) && $conn !== false) {
     <script src="App/js/AppCambiarContrasena.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            var adminTabsContainer = document.getElementById('adminSubsections');
-            var adminTabsContent = document.getElementById('adminSubsectionsContent');
-
-            if (adminTabsContainer && adminTabsContent) {
-                var adminTabButtons = adminTabsContainer.querySelectorAll('[data-tab-target]');
-
-                if (!adminTabButtons.length) {
-                    return;
-                }
-
-                var adminTabPanes = adminTabsContent.querySelectorAll('[data-tab-panel]');
-
-                var forEachNode = function (nodes, callback) {
-                    if (!nodes || typeof callback !== 'function') {
-                        return;
-                    }
-
-                    Array.prototype.forEach.call(nodes, callback);
-                };
-
-                var obtenerValorTab = function (button) {
-                    return button.getAttribute('data-tab-value') || '';
-                };
-
-                var establecerTabActivo = function (tabValue) {
-                    if (!tabValue) {
-                        adminTabsContent.removeAttribute('data-active-tab');
-                        return;
-                    }
-
-                    adminTabsContent.setAttribute('data-active-tab', tabValue);
-                };
-
-                var actualizarEstadoTab = function (tabValue) {
-                    if (!tabValue) {
-                        return;
-                    }
-
-                    var inputsTab = document.querySelectorAll('input[name="active_tab"]');
-                    forEachNode(inputsTab, function (input) {
-                        input.value = tabValue;
-                    });
-                };
-
-                var actualizarUrlTab = function (tabValue) {
-                    if (!tabValue || !window.history || typeof window.history.replaceState !== 'function') {
-                        return;
-                    }
-
-                    try {
-                        var url = new URL(window.location.href);
-                        url.searchParams.set('tab', tabValue);
-                        window.history.replaceState(null, '', url.toString());
-                    } catch (error) {
-                        // Ignorar errores al manipular el historial en navegadores que no soporten esta API.
-                    }
-                };
-
-                var activarTab = function (button) {
-                    if (!button) {
-                        return false;
-                    }
-
-                    var targetSelector = button.getAttribute('data-tab-target');
-                    if (!targetSelector) {
-                        return false;
-                    }
-
-                    var targetPane = adminTabsContent.querySelector(targetSelector);
-                    if (!targetPane) {
-                        return false;
-                    }
-
-                    forEachNode(adminTabButtons, function (otroBoton) {
-                        var esActual = otroBoton === button;
-                        otroBoton.classList.toggle('active', esActual);
-                        otroBoton.setAttribute('aria-selected', esActual ? 'true' : 'false');
-                    });
-
-                    forEachNode(adminTabPanes, function (pane) {
-                        var esObjetivo = pane === targetPane;
-                        pane.classList.toggle('is-active', esObjetivo);
-                        pane.hidden = !esObjetivo;
-                        pane.setAttribute('aria-hidden', esObjetivo ? 'false' : 'true');
-                    });
-
-                    var tabValue = obtenerValorTab(button);
-                    establecerTabActivo(tabValue);
-                    actualizarEstadoTab(tabValue);
-                    actualizarUrlTab(tabValue);
-
-                    return true;
-                };
-
-                var esClickPrimarioSinModificadores = function (event) {
-                    if (!event) {
-                        return false;
-                    }
-
-                    var boton = typeof event.button === 'number' ? event.button : 0;
-                    return boton === 0 && !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey;
-                };
-
-                forEachNode(adminTabButtons, function (button) {
-                    button.addEventListener('click', function (event) {
-                        var activado = false;
-
-                        try {
-                            activado = activarTab(button);
-                        } catch (error) {
-                            activado = false;
-                        }
-
-                        if (activado && esClickPrimarioSinModificadores(event) && event && typeof event.preventDefault === 'function') {
-                            event.preventDefault();
-                        }
-                    });
-                });
-
-                var botonInicial = adminTabsContainer.querySelector('.admin-subsection-button.active[data-tab-value]');
-                if (botonInicial) {
-                    activarTab(botonInicial);
-                } else {
-                    activarTab(adminTabButtons[0]);
-                }
-            }
-
             var modalElement = document.getElementById('actionConfirmationModal');
             if (!modalElement || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
                 return;
