@@ -35,23 +35,71 @@ if (!function_exists('obtenerListadoSeccionesAdministracion')) {
             return $lista;
         }
 
-        $consultaListadoSecciones = @mysqli_query(
-            $conn,
-            'SELECT SECCIONID, Nombre, Slug, Ruta, Orden, MostrarEnMenu FROM secciones ORDER BY Orden, Nombre'
-        );
+        if (function_exists('asegurarEstructuraTablaSecciones')) {
+            asegurarEstructuraTablaSecciones($conn);
+        }
 
-        if ($consultaListadoSecciones instanceof mysqli_result) {
-            while ($filaSeccion = mysqli_fetch_assoc($consultaListadoSecciones)) {
+        $columnasDisponibles = [];
+        $resultadoColumnas = @mysqli_query($conn, 'SHOW COLUMNS FROM secciones');
+        if ($resultadoColumnas instanceof mysqli_result) {
+            while ($columna = mysqli_fetch_assoc($resultadoColumnas)) {
+                $nombreColumna = isset($columna['Field']) ? (string) $columna['Field'] : '';
+                if ($nombreColumna !== '') {
+                    $columnasDisponibles[strtolower($nombreColumna)] = $nombreColumna;
+                }
+            }
+            mysqli_free_result($resultadoColumnas);
+        }
+
+        $columnasRequeridas = [
+            'seccionid' => ['alias' => 'SECCIONID', 'default' => '0'],
+            'nombre' => ['alias' => 'Nombre', 'default' => "''"],
+            'slug' => ['alias' => 'Slug', 'default' => "''"],
+            'ruta' => ['alias' => 'Ruta', 'default' => "''"],
+            'orden' => ['alias' => 'Orden', 'default' => '0'],
+            'mostrarenmenu' => ['alias' => 'MostrarEnMenu', 'default' => '1'],
+        ];
+
+        $selectPartes = [];
+        foreach ($columnasRequeridas as $columnaInferior => $configuracion) {
+            $alias = $configuracion['alias'];
+            if (isset($columnasDisponibles[$columnaInferior])) {
+                $nombreReal = $columnasDisponibles[$columnaInferior];
+                $selectPartes[] = '`' . $nombreReal . '` AS ' . $alias;
+            } else {
+                $selectPartes[] = $configuracion['default'] . ' AS ' . $alias;
+            }
+        }
+
+        if (empty($selectPartes)) {
+            return $lista;
+        }
+
+        $consultaListadoSecciones = 'SELECT ' . implode(', ', $selectPartes) . ' FROM secciones';
+        if (isset($columnasDisponibles['orden'])) {
+            $consultaListadoSecciones .= ' ORDER BY Orden, Nombre';
+        } elseif (isset($columnasDisponibles['nombre'])) {
+            $consultaListadoSecciones .= ' ORDER BY Nombre';
+        }
+
+        $resultadoSecciones = @mysqli_query($conn, $consultaListadoSecciones);
+
+        if ($resultadoSecciones instanceof mysqli_result) {
+            while ($filaSeccion = mysqli_fetch_assoc($resultadoSecciones)) {
+                $nombre = isset($filaSeccion['Nombre']) ? (string) $filaSeccion['Nombre'] : '';
+                $slug = isset($filaSeccion['Slug']) ? trim((string) $filaSeccion['Slug']) : '';
+                $ruta = isset($filaSeccion['Ruta']) ? (string) $filaSeccion['Ruta'] : '';
+
                 $lista[] = [
-                    'SECCIONID' => (int) $filaSeccion['SECCIONID'],
-                    'Nombre' => (string) $filaSeccion['Nombre'],
-                    'Slug' => (string) $filaSeccion['Slug'],
-                    'Ruta' => (string) $filaSeccion['Ruta'],
-                    'Orden' => (int) $filaSeccion['Orden'],
-                    'MostrarEnMenu' => (int) $filaSeccion['MostrarEnMenu'],
+                    'SECCIONID' => isset($filaSeccion['SECCIONID']) ? (int) $filaSeccion['SECCIONID'] : 0,
+                    'Nombre' => $nombre,
+                    'Slug' => $slug,
+                    'Ruta' => $ruta,
+                    'Orden' => isset($filaSeccion['Orden']) ? (int) $filaSeccion['Orden'] : 0,
+                    'MostrarEnMenu' => isset($filaSeccion['MostrarEnMenu']) ? (int) $filaSeccion['MostrarEnMenu'] : 1,
                 ];
             }
-            mysqli_free_result($consultaListadoSecciones);
+            mysqli_free_result($resultadoSecciones);
         }
 
         return $lista;
@@ -81,6 +129,10 @@ if (!isset($conn) || $conn === false) {
 
         if ($accionGeneral === 'update_sections_visibility') {
             $tabActivo = 'sections';
+
+            if (function_exists('asegurarEstructuraTablaSecciones')) {
+                asegurarEstructuraTablaSecciones($conn);
+            }
 
             $slugsSeleccionados = [];
             if (isset($_POST['sections_visibility']) && is_array($_POST['sections_visibility'])) {
@@ -618,6 +670,7 @@ if (isset($conn) && $conn !== false) {
                                         background-color: #ffffff;
                                         color: #495057;
                                         font-weight: 600;
+                                        text-decoration: none;
                                         transition: all 0.2s ease-in-out;
                                         box-shadow: 0 1px 2px rgba(15, 34, 58, 0.08);
                                     }
@@ -672,18 +725,18 @@ if (isset($conn) && $conn !== false) {
                                 </style>
 
                                 <div class="admin-subsections-nav" id="adminSubsections" role="tablist">
-                                    <button class="admin-subsection-button <?php echo $tabActivo === 'database' ? 'active' : ''; ?>" id="database-tab" data-tab-target="#databaseSection" data-tab-value="database" type="button" role="tab" aria-controls="databaseSection" aria-selected="<?php echo $tabActivo === 'database' ? 'true' : 'false'; ?>">
+                                    <a class="admin-subsection-button <?php echo $tabActivo === 'database' ? 'active' : ''; ?>" id="database-tab" data-tab-target="#databaseSection" data-tab-value="database" role="tab" aria-controls="databaseSection" aria-selected="<?php echo $tabActivo === 'database' ? 'true' : 'false'; ?>" href="?tab=database">
                                         <span class="material-icons-two-tone" aria-hidden="true">storage</span>
                                         <span>Bases de datos</span>
-                                    </button>
-                                    <button class="admin-subsection-button <?php echo $tabActivo === 'sections' ? 'active' : ''; ?>" id="sections-tab" data-tab-target="#sectionsSection" data-tab-value="sections" type="button" role="tab" aria-controls="sectionsSection" aria-selected="<?php echo $tabActivo === 'sections' ? 'true' : 'false'; ?>">
+                                    </a>
+                                    <a class="admin-subsection-button <?php echo $tabActivo === 'sections' ? 'active' : ''; ?>" id="sections-tab" data-tab-target="#sectionsSection" data-tab-value="sections" role="tab" aria-controls="sectionsSection" aria-selected="<?php echo $tabActivo === 'sections' ? 'true' : 'false'; ?>" href="?tab=sections">
                                         <span class="material-icons-two-tone" aria-hidden="true">view_day</span>
                                         <span>Secciones</span>
-                                    </button>
-                                    <button class="admin-subsection-button <?php echo $tabActivo === 'profiles' ? 'active' : ''; ?>" id="profiles-tab" data-tab-target="#profilesSection" data-tab-value="profiles" type="button" role="tab" aria-controls="profilesSection" aria-selected="<?php echo $tabActivo === 'profiles' ? 'true' : 'false'; ?>">
+                                    </a>
+                                    <a class="admin-subsection-button <?php echo $tabActivo === 'profiles' ? 'active' : ''; ?>" id="profiles-tab" data-tab-target="#profilesSection" data-tab-value="profiles" role="tab" aria-controls="profilesSection" aria-selected="<?php echo $tabActivo === 'profiles' ? 'true' : 'false'; ?>" href="?tab=profiles">
                                         <span class="material-icons-two-tone" aria-hidden="true">manage_accounts</span>
                                         <span>Perfiles de usuario</span>
-                                    </button>
+                                    </a>
                                 </div>
 
                                 <div class="admin-subsections-content" id="adminSubsectionsContent" data-active-tab="<?php echo htmlspecialchars($tabActivo, ENT_QUOTES, 'UTF-8'); ?>">
@@ -1109,6 +1162,14 @@ if (isset($conn) && $conn !== false) {
 
                 var adminTabPanes = adminTabsContent.querySelectorAll('[data-tab-panel]');
 
+                var forEachNode = function (nodes, callback) {
+                    if (!nodes || typeof callback !== 'function') {
+                        return;
+                    }
+
+                    Array.prototype.forEach.call(nodes, callback);
+                };
+
                 var obtenerValorTab = function (button) {
                     return button.getAttribute('data-tab-value') || '';
                 };
@@ -1128,29 +1189,47 @@ if (isset($conn) && $conn !== false) {
                     }
 
                     var inputsTab = document.querySelectorAll('input[name="active_tab"]');
-                    inputsTab.forEach(function (input) {
+                    forEachNode(inputsTab, function (input) {
                         input.value = tabValue;
                     });
                 };
 
+                var actualizarUrlTab = function (tabValue) {
+                    if (!tabValue || !window.history || typeof window.history.replaceState !== 'function') {
+                        return;
+                    }
+
+                    try {
+                        var url = new URL(window.location.href);
+                        url.searchParams.set('tab', tabValue);
+                        window.history.replaceState(null, '', url.toString());
+                    } catch (error) {
+                        // Ignorar errores al manipular el historial en navegadores que no soporten esta API.
+                    }
+                };
+
                 var activarTab = function (button) {
+                    if (!button) {
+                        return false;
+                    }
+
                     var targetSelector = button.getAttribute('data-tab-target');
                     if (!targetSelector) {
-                        return;
+                        return false;
                     }
 
                     var targetPane = adminTabsContent.querySelector(targetSelector);
                     if (!targetPane) {
-                        return;
+                        return false;
                     }
 
-                    adminTabButtons.forEach(function (otroBoton) {
+                    forEachNode(adminTabButtons, function (otroBoton) {
                         var esActual = otroBoton === button;
                         otroBoton.classList.toggle('active', esActual);
                         otroBoton.setAttribute('aria-selected', esActual ? 'true' : 'false');
                     });
 
-                    adminTabPanes.forEach(function (pane) {
+                    forEachNode(adminTabPanes, function (pane) {
                         var esObjetivo = pane === targetPane;
                         pane.classList.toggle('is-active', esObjetivo);
                         pane.hidden = !esObjetivo;
@@ -1160,11 +1239,33 @@ if (isset($conn) && $conn !== false) {
                     var tabValue = obtenerValorTab(button);
                     establecerTabActivo(tabValue);
                     actualizarEstadoTab(tabValue);
+                    actualizarUrlTab(tabValue);
+
+                    return true;
                 };
 
-                adminTabButtons.forEach(function (button) {
-                    button.addEventListener('click', function () {
-                        activarTab(button);
+                var esClickPrimarioSinModificadores = function (event) {
+                    if (!event) {
+                        return false;
+                    }
+
+                    var boton = typeof event.button === 'number' ? event.button : 0;
+                    return boton === 0 && !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey;
+                };
+
+                forEachNode(adminTabButtons, function (button) {
+                    button.addEventListener('click', function (event) {
+                        var activado = false;
+
+                        try {
+                            activado = activarTab(button);
+                        } catch (error) {
+                            activado = false;
+                        }
+
+                        if (activado && esClickPrimarioSinModificadores(event) && event && typeof event.preventDefault === 'function') {
+                            event.preventDefault();
+                        }
                     });
                 });
 
@@ -1192,7 +1293,7 @@ if (isset($conn) && $conn !== false) {
             var pendingButton = null;
 
             var buttons = document.querySelectorAll('[data-requires-confirmation="true"]');
-            buttons.forEach(function (button) {
+            Array.prototype.forEach.call(buttons, function (button) {
                 button.addEventListener('click', function (event) {
                     if (button.disabled) {
                         return;
