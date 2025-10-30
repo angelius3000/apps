@@ -35,23 +35,71 @@ if (!function_exists('obtenerListadoSeccionesAdministracion')) {
             return $lista;
         }
 
-        $consultaListadoSecciones = @mysqli_query(
-            $conn,
-            'SELECT SECCIONID, Nombre, Slug, Ruta, Orden, MostrarEnMenu FROM secciones ORDER BY Orden, Nombre'
-        );
+        if (function_exists('asegurarEstructuraTablaSecciones')) {
+            asegurarEstructuraTablaSecciones($conn);
+        }
 
-        if ($consultaListadoSecciones instanceof mysqli_result) {
-            while ($filaSeccion = mysqli_fetch_assoc($consultaListadoSecciones)) {
+        $columnasDisponibles = [];
+        $resultadoColumnas = @mysqli_query($conn, 'SHOW COLUMNS FROM secciones');
+        if ($resultadoColumnas instanceof mysqli_result) {
+            while ($columna = mysqli_fetch_assoc($resultadoColumnas)) {
+                $nombreColumna = isset($columna['Field']) ? (string) $columna['Field'] : '';
+                if ($nombreColumna !== '') {
+                    $columnasDisponibles[strtolower($nombreColumna)] = $nombreColumna;
+                }
+            }
+            mysqli_free_result($resultadoColumnas);
+        }
+
+        $columnasRequeridas = [
+            'seccionid' => ['alias' => 'SECCIONID', 'default' => '0'],
+            'nombre' => ['alias' => 'Nombre', 'default' => "''"],
+            'slug' => ['alias' => 'Slug', 'default' => "''"],
+            'ruta' => ['alias' => 'Ruta', 'default' => "''"],
+            'orden' => ['alias' => 'Orden', 'default' => '0'],
+            'mostrarenmenu' => ['alias' => 'MostrarEnMenu', 'default' => '1'],
+        ];
+
+        $selectPartes = [];
+        foreach ($columnasRequeridas as $columnaInferior => $configuracion) {
+            $alias = $configuracion['alias'];
+            if (isset($columnasDisponibles[$columnaInferior])) {
+                $nombreReal = $columnasDisponibles[$columnaInferior];
+                $selectPartes[] = '`' . $nombreReal . '` AS ' . $alias;
+            } else {
+                $selectPartes[] = $configuracion['default'] . ' AS ' . $alias;
+            }
+        }
+
+        if (empty($selectPartes)) {
+            return $lista;
+        }
+
+        $consultaListadoSecciones = 'SELECT ' . implode(', ', $selectPartes) . ' FROM secciones';
+        if (isset($columnasDisponibles['orden'])) {
+            $consultaListadoSecciones .= ' ORDER BY Orden, Nombre';
+        } elseif (isset($columnasDisponibles['nombre'])) {
+            $consultaListadoSecciones .= ' ORDER BY Nombre';
+        }
+
+        $resultadoSecciones = @mysqli_query($conn, $consultaListadoSecciones);
+
+        if ($resultadoSecciones instanceof mysqli_result) {
+            while ($filaSeccion = mysqli_fetch_assoc($resultadoSecciones)) {
+                $nombre = isset($filaSeccion['Nombre']) ? (string) $filaSeccion['Nombre'] : '';
+                $slug = isset($filaSeccion['Slug']) ? trim((string) $filaSeccion['Slug']) : '';
+                $ruta = isset($filaSeccion['Ruta']) ? (string) $filaSeccion['Ruta'] : '';
+
                 $lista[] = [
-                    'SECCIONID' => (int) $filaSeccion['SECCIONID'],
-                    'Nombre' => (string) $filaSeccion['Nombre'],
-                    'Slug' => (string) $filaSeccion['Slug'],
-                    'Ruta' => (string) $filaSeccion['Ruta'],
-                    'Orden' => (int) $filaSeccion['Orden'],
-                    'MostrarEnMenu' => (int) $filaSeccion['MostrarEnMenu'],
+                    'SECCIONID' => isset($filaSeccion['SECCIONID']) ? (int) $filaSeccion['SECCIONID'] : 0,
+                    'Nombre' => $nombre,
+                    'Slug' => $slug,
+                    'Ruta' => $ruta,
+                    'Orden' => isset($filaSeccion['Orden']) ? (int) $filaSeccion['Orden'] : 0,
+                    'MostrarEnMenu' => isset($filaSeccion['MostrarEnMenu']) ? (int) $filaSeccion['MostrarEnMenu'] : 1,
                 ];
             }
-            mysqli_free_result($consultaListadoSecciones);
+            mysqli_free_result($resultadoSecciones);
         }
 
         return $lista;
@@ -81,6 +129,10 @@ if (!isset($conn) || $conn === false) {
 
         if ($accionGeneral === 'update_sections_visibility') {
             $tabActivo = 'sections';
+
+            if (function_exists('asegurarEstructuraTablaSecciones')) {
+                asegurarEstructuraTablaSecciones($conn);
+            }
 
             $slugsSeleccionados = [];
             if (isset($_POST['sections_visibility']) && is_array($_POST['sections_visibility'])) {
