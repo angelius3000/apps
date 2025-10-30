@@ -22,6 +22,8 @@ $registrosTabla = [];
 $respaldosDisponibles = [];
 $respaldosTablaSeleccionada = [];
 $listaSecciones = [];
+$listaPerfilesUsuario = [];
+$nombrePerfilPropuesto = '';
 $tabActivo = 'database';
 
 if (!function_exists('obtenerListadoSeccionesAdministracion')) {
@@ -63,7 +65,7 @@ if (isset($_POST['active_tab'])) {
     $tabSolicitado = (string) $_GET['tab'];
 }
 
-if ($tabSolicitado !== null && in_array($tabSolicitado, ['database', 'sections'], true)) {
+if ($tabSolicitado !== null && in_array($tabSolicitado, ['database', 'sections', 'profiles'], true)) {
     $tabActivo = $tabSolicitado;
 }
 
@@ -256,6 +258,58 @@ if (!isset($conn) || $conn === false) {
                 $mensajesExito[] = $mensajeFinal;
             } else {
                 $mensajesError[] = $mensajeEliminarTabla;
+            }
+        } elseif ($accionGeneral === 'create_user_profile') {
+            $tabActivo = 'profiles';
+
+            $nombrePerfil = isset($_POST['profile_name']) ? trim((string) $_POST['profile_name']) : '';
+            $nombrePerfilPropuesto = $nombrePerfil;
+
+            if ($nombrePerfil === '') {
+                $mensajesError[] = 'Proporciona un nombre para el nuevo perfil de usuario.';
+            } elseif (mb_strlen($nombrePerfil) > 100) {
+                $mensajesError[] = 'El nombre del perfil no puede exceder los 100 caracteres.';
+            } else {
+                $consultaPerfil = @mysqli_prepare(
+                    $conn,
+                    'SELECT TIPODEUSUARIOID FROM tipodeusuarios WHERE TipoDeUsuario = ? LIMIT 1'
+                );
+
+                if (!$consultaPerfil) {
+                    $mensajesError[] = 'No fue posible validar la existencia del perfil de usuario proporcionado.';
+                } else {
+                    mysqli_stmt_bind_param($consultaPerfil, 's', $nombrePerfil);
+                    mysqli_stmt_execute($consultaPerfil);
+                    mysqli_stmt_store_result($consultaPerfil);
+
+                    if (mysqli_stmt_num_rows($consultaPerfil) > 0) {
+                        $mensajesError[] = 'El perfil de usuario indicado ya se encuentra registrado.';
+                        mysqli_stmt_close($consultaPerfil);
+                    } else {
+                        mysqli_stmt_close($consultaPerfil);
+
+                        $stmtInsertarPerfil = @mysqli_prepare(
+                            $conn,
+                            'INSERT INTO tipodeusuarios (TipoDeUsuario) VALUES (?)'
+                        );
+
+                        if (!$stmtInsertarPerfil) {
+                            $mensajesError[] = 'Ocurrió un error al preparar el registro del nuevo perfil de usuario.';
+                        } else {
+                            mysqli_stmt_bind_param($stmtInsertarPerfil, 's', $nombrePerfil);
+
+                            if (@mysqli_stmt_execute($stmtInsertarPerfil)) {
+                                $mensajesExito[] = 'El perfil de usuario se registró correctamente.';
+                                $nombrePerfilPropuesto = '';
+                            } else {
+                                $mensajesError[] = 'Ocurrió un error al guardar el nuevo perfil de usuario: '
+                                    . mysqli_stmt_error($stmtInsertarPerfil);
+                            }
+
+                            mysqli_stmt_close($stmtInsertarPerfil);
+                        }
+                    }
+                }
             }
         }
     }
@@ -469,6 +523,23 @@ if (!isset($conn) || $conn === false) {
             mysqli_free_result($resultadoRegistros);
         }
     }
+
+    $consultaPerfiles = @mysqli_query(
+        $conn,
+        'SELECT TIPODEUSUARIOID, TipoDeUsuario FROM tipodeusuarios ORDER BY TipoDeUsuario'
+    );
+
+    if ($consultaPerfiles instanceof mysqli_result) {
+        while ($filaPerfil = mysqli_fetch_assoc($consultaPerfiles)) {
+            $listaPerfilesUsuario[] = [
+                'TIPODEUSUARIOID' => (int) $filaPerfil['TIPODEUSUARIOID'],
+                'TipoDeUsuario' => (string) $filaPerfil['TipoDeUsuario'],
+            ];
+        }
+        mysqli_free_result($consultaPerfiles);
+    } else {
+        $mensajesError[] = 'No se pudieron obtener los perfiles de usuario registrados.';
+    }
 }
 
 $respaldosDisponibles = dbBackupListFiles();
@@ -608,6 +679,10 @@ if (isset($conn) && $conn !== false) {
                                     <button class="admin-subsection-button <?php echo $tabActivo === 'sections' ? 'active' : ''; ?>" id="sections-tab" data-tab-target="#sectionsSection" data-tab-value="sections" type="button" role="tab" aria-controls="sectionsSection" aria-selected="<?php echo $tabActivo === 'sections' ? 'true' : 'false'; ?>">
                                         <span class="material-icons-two-tone" aria-hidden="true">view_day</span>
                                         <span>Secciones</span>
+                                    </button>
+                                    <button class="admin-subsection-button <?php echo $tabActivo === 'profiles' ? 'active' : ''; ?>" id="profiles-tab" data-tab-target="#profilesSection" data-tab-value="profiles" type="button" role="tab" aria-controls="profilesSection" aria-selected="<?php echo $tabActivo === 'profiles' ? 'true' : 'false'; ?>">
+                                        <span class="material-icons-two-tone" aria-hidden="true">manage_accounts</span>
+                                        <span>Perfiles de usuario</span>
                                     </button>
                                 </div>
 
@@ -932,6 +1007,53 @@ if (isset($conn) && $conn !== false) {
                                                             <button type="submit" class="btn btn-primary" data-requires-confirmation="true" data-confirmation-message="Se actualizará la disponibilidad general de las secciones. ¿Deseas guardar los cambios?">Guardar cambios</button>
                                                         </div>
                                                     </form>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="admin-subsection-panel <?php echo $tabActivo === 'profiles' ? 'is-active' : ''; ?>" id="profilesSection" role="tabpanel" aria-labelledby="profiles-tab" data-tab-panel="profiles" <?php echo $tabActivo === 'profiles' ? '' : 'hidden'; ?> aria-hidden="<?php echo $tabActivo === 'profiles' ? 'false' : 'true'; ?>">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Perfiles de usuario</h5>
+                                                <p class="card-text">Registra nuevos perfiles para asignarlos posteriormente a los usuarios. Estos perfiles se mostrarán en todo el sistema al gestionar cuentas.</p>
+
+                                                <form method="post" class="row g-3 align-items-end mb-4">
+                                                    <div class="col-md-6 col-lg-4">
+                                                        <label for="profile_name" class="form-label">Nombre del perfil</label>
+                                                        <input type="text" class="form-control" id="profile_name" name="profile_name" maxlength="100" value="<?php echo htmlspecialchars($nombrePerfilPropuesto, ENT_QUOTES, 'UTF-8'); ?>" required>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <input type="hidden" name="action" value="create_user_profile">
+                                                        <input type="hidden" name="active_tab" value="profiles">
+                                                        <button type="submit" class="btn btn-primary" data-requires-confirmation="true" data-confirmation-message="Se agregará un nuevo perfil de usuario. ¿Deseas continuar?">Agregar perfil</button>
+                                                    </div>
+                                                </form>
+
+                                                <?php if (empty($listaPerfilesUsuario)) : ?>
+                                                    <div class="alert alert-warning mb-0" role="alert">
+                                                        Aún no se han registrado perfiles adicionales en el sistema.
+                                                    </div>
+                                                <?php else : ?>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm align-middle mb-0">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th style="width: 120px;">ID</th>
+                                                                    <th>Perfil</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <?php foreach ($listaPerfilesUsuario as $perfil) : ?>
+                                                                    <tr>
+                                                                        <td class="text-muted">#<?php echo (int) $perfil['TIPODEUSUARIOID']; ?></td>
+                                                                        <td>
+                                                                            <strong><?php echo htmlspecialchars($perfil['TipoDeUsuario'], ENT_QUOTES, 'UTF-8'); ?></strong>
+                                                                        </td>
+                                                                    </tr>
+                                                                <?php endforeach; ?>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
                                                 <?php endif; ?>
                                             </div>
                                         </div>
