@@ -3,7 +3,7 @@ $(document).ready(function() {
   var $container = $('#ProductosPendientesContainer');
   var templateHtml = $('#ProductoPendienteRowTemplate').html();
   var productosDisponibles = $container.data('productos-disponibles') === 1 || $container.data('productos-disponibles') === '1';
-  var $selectCliente = $('#RazonSocialPendiente');
+  var $selectClientes = $('.select-cliente');
 
   function obtenerIndiceMaximo() {
     var indiceMaximo = -1;
@@ -32,18 +32,18 @@ $(document).ready(function() {
     });
   }
 
-  function inicializarSelectCliente() {
-    if (!$selectCliente.length) {
+  function inicializarSelectCliente($elemento) {
+    if (!$elemento.length) {
       return;
     }
 
-    if ($selectCliente.hasClass('select2-hidden-accessible')) {
+    if ($elemento.hasClass('select2-hidden-accessible')) {
       return;
     }
 
-    $selectCliente.select2({
+    $elemento.select2({
       dropdownParent: $modal,
-      placeholder: $selectCliente.data('placeholder') || 'Selecciona cliente',
+      placeholder: $elemento.data('placeholder') || 'Selecciona cliente',
       allowClear: true,
       width: '100%',
       minimumResultsForSearch: 0
@@ -74,7 +74,9 @@ $(document).ready(function() {
   }
 
   $modal.on('shown.bs.modal', function() {
-    inicializarSelectCliente();
+    $selectClientes.each(function() {
+      inicializarSelectCliente($(this));
+    });
 
     if (productosDisponibles) {
       $container.find('.select2-producto').each(function() {
@@ -116,9 +118,12 @@ $(document).ready(function() {
       $formulario[0].reset();
     }
 
-    if ($selectCliente.length && $selectCliente.hasClass('select2-hidden-accessible')) {
-      $selectCliente.val(null).trigger('change');
-    }
+    $selectClientes.each(function() {
+      var $cliente = $(this);
+      if ($cliente.hasClass('select2-hidden-accessible')) {
+        $cliente.val(null).trigger('change');
+      }
+    });
 
     if (productosDisponibles) {
       $container.find('.producto-pendiente-item').each(function(index) {
