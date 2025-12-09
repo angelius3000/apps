@@ -4,6 +4,7 @@ $(document).ready(function() {
   var templateHtml = $('#ProductoPendienteRowTemplate').html();
   var productosDisponibles = $container.data('productos-disponibles') === 1 || $container.data('productos-disponibles') === '1';
   var $selectClientes = $('.select-cliente');
+  var $selectVendedores = $('.select-vendedor');
 
   function obtenerIndiceMaximo() {
     var indiceMaximo = -1;
@@ -50,6 +51,24 @@ $(document).ready(function() {
     });
   }
 
+  function inicializarSelectVendedor($elemento) {
+    if (!$elemento.length) {
+      return;
+    }
+
+    if ($elemento.hasClass('select2-hidden-accessible')) {
+      return;
+    }
+
+    $elemento.select2({
+      dropdownParent: $modal,
+      placeholder: $elemento.data('placeholder') || 'Selecciona vendedor',
+      allowClear: true,
+      width: '100%',
+      minimumResultsForSearch: 0
+    });
+  }
+
   function actualizarBotonesEliminar() {
     var total = $container.find('.producto-pendiente-item').length;
     var debeMostrar = total > 1;
@@ -76,6 +95,10 @@ $(document).ready(function() {
   $modal.on('shown.bs.modal', function() {
     $selectClientes.each(function() {
       inicializarSelectCliente($(this));
+    });
+
+    $selectVendedores.each(function() {
+      inicializarSelectVendedor($(this));
     });
 
     if (productosDisponibles) {
@@ -122,6 +145,13 @@ $(document).ready(function() {
       var $cliente = $(this);
       if ($cliente.hasClass('select2-hidden-accessible')) {
         $cliente.val(null).trigger('change');
+      }
+    });
+
+    $selectVendedores.each(function() {
+      var $vendedor = $(this);
+      if ($vendedor.hasClass('select2-hidden-accessible')) {
+        $vendedor.val(null).trigger('change');
       }
     });
 

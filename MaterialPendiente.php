@@ -29,6 +29,17 @@ if ($resultadoClientesPendientes instanceof mysqli_result) {
     mysqli_free_result($resultadoClientesPendientes);
 }
 
+$queryVendedoresPendientes = "SELECT vendedorID, NombreVendedor FROM vendedor ORDER BY NombreVendedor ASC";
+$resultadoVendedoresPendientes = mysqli_query($conn, $queryVendedoresPendientes);
+
+$listaVendedoresPendientes = [];
+if ($resultadoVendedoresPendientes instanceof mysqli_result) {
+    while ($rowVendedorPendiente = mysqli_fetch_assoc($resultadoVendedoresPendientes)) {
+        $listaVendedoresPendientes[] = $rowVendedorPendiente;
+    }
+    mysqli_free_result($resultadoVendedoresPendientes);
+}
+
 $opcionesProductosPendientes = '<option value="">Selecciona producto</option>';
 foreach ($listaProductosPendientes as $productoPendiente) {
     $productoId = isset($productoPendiente['PRODUCTOSID']) ? (int) $productoPendiente['PRODUCTOSID'] : 0;
@@ -73,8 +84,21 @@ foreach ($listaClientesPendientes as $clientePendiente) {
     $opcionesClientesPendientes .= '<option value="' . $clienteId . '">' . $textoCliente . '</option>';
 }
 
+$opcionesVendedoresPendientes = '<option value="">Selecciona vendedor</option>';
+foreach ($listaVendedoresPendientes as $vendedorPendiente) {
+    $vendedorId = isset($vendedorPendiente['vendedorID']) ? (int) $vendedorPendiente['vendedorID'] : 0;
+    $nombreVendedor = isset($vendedorPendiente['NombreVendedor']) ? trim((string) $vendedorPendiente['NombreVendedor']) : '';
+
+    $nombreVendedorEscapado = htmlspecialchars($nombreVendedor, ENT_QUOTES, 'UTF-8');
+
+    $textoVendedor = $nombreVendedorEscapado !== '' ? $nombreVendedorEscapado : 'Vendedor #' . $vendedorId;
+
+    $opcionesVendedoresPendientes .= '<option value="' . $vendedorId . '">' . $textoVendedor . '</option>';
+}
+
 $hayProductosPendientes = count($listaProductosPendientes) > 0;
 $hayClientesPendientes = count($listaClientesPendientes) > 0;
+$hayVendedoresPendientes = count($listaVendedoresPendientes) > 0;
 
 $claseBody = '';
 $claseLogo = '';

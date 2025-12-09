@@ -26,12 +26,17 @@
                                             <?php endif; ?>
                                         </div>
                                         <div class="col-lg-6 col-sm-12 mb-4">
-                                            <label for="SurtidorPendiente" class="form-label">Surtidor</label>
-                                            <input type="text" class="form-control" id="SurtidorPendiente" name="SurtidorPendiente" autocomplete="off" required>
+                                            <label for="VendedorPendiente" class="form-label">Vendedor</label>
+                                            <select class="form-select select-vendedor" id="VendedorPendiente" name="VendedorPendiente" data-placeholder="Selecciona vendedor" <?php echo $hayVendedoresPendientes ? '' : 'disabled'; ?> required>
+                                                <?php echo $opcionesVendedoresPendientes; ?>
+                                            </select>
+                                            <?php if (!$hayVendedoresPendientes) : ?>
+                                                <small class="form-text text-muted">No hay vendedores disponibles para seleccionar.</small>
+                                            <?php endif; ?>
                                         </div>
                                         <div class="col-lg-6 col-sm-12 mb-4">
-                                            <label for="VendedorPendiente" class="form-label">Vendedor</label>
-                                            <input type="text" class="form-control" id="VendedorPendiente" name="VendedorPendiente" autocomplete="off" required>
+                                            <label for="SurtidorPendiente" class="form-label">Surtidor</label>
+                                            <input type="text" class="form-control" id="SurtidorPendiente" name="SurtidorPendiente" autocomplete="off" required>
                                         </div>
                                         <div class="col-lg-12 col-sm-12 mb-4">
                                             <label for="NombreClientePendiente" class="form-label">Nombre del Cliente</label>
