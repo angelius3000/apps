@@ -18,7 +18,7 @@
                                         </div>
                                         <div class="col-lg-6 col-sm-12 mb-4">
                                             <label for="RazonSocialPendiente" class="form-label">Razón Social</label>
-                                            <select class="form-select" id="RazonSocialPendiente" name="RazonSocialPendiente" data-placeholder="Selecciona cliente" <?php echo $hayClientesPendientes ? '' : 'disabled'; ?> required>
+                                            <select class="form-select select-cliente" id="RazonSocialPendiente" name="RazonSocialPendiente" data-placeholder="Selecciona cliente" <?php echo $hayClientesPendientes ? '' : 'disabled'; ?> required>
                                                 <?php echo $opcionesClientesPendientes; ?>
                                             </select>
                                             <?php if (!$hayClientesPendientes) : ?>
@@ -35,7 +35,12 @@
                                         </div>
                                         <div class="col-lg-12 col-sm-12 mb-4">
                                             <label for="NombreClientePendiente" class="form-label">Nombre del Cliente</label>
-                                            <input type="text" class="form-control" id="NombreClientePendiente" name="NombreClientePendiente" autocomplete="off" required>
+                                            <select class="form-select select-cliente" id="NombreClientePendiente" name="NombreClientePendiente" data-placeholder="Selecciona cliente" <?php echo $hayClientesPendientes ? '' : 'disabled'; ?> required>
+                                                <?php echo $opcionesClientesPendientes; ?>
+                                            </select>
+                                            <?php if (!$hayClientesPendientes) : ?>
+                                                <small class="form-text text-muted">No hay clientes disponibles para seleccionar.</small>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                     <div class="row">
