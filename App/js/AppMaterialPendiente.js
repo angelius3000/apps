@@ -7,6 +7,8 @@ $(document).ready(function() {
   var $selectVendedores = $('.select-vendedor');
   var $inputSurtidor = $('#SurtidorPendiente');
   var $checkboxOtroSurtidor = $('#OtroSurtidorPendiente');
+  var $vendedorPendienteOtroContainer = $('#VendedorPendienteOtroContainer');
+  var $inputVendedorPendienteOtro = $('#VendedorPendienteOtro');
   var VENDEDOR_OTRO_ID = '22';
 
   function obtenerIndiceMaximo() {
@@ -87,17 +89,33 @@ $(document).ready(function() {
       return;
     }
 
-    var permitirEdicion = esVendedorOtro() || $checkboxOtroSurtidor.is(':checked');
+    var permitirEdicion = $checkboxOtroSurtidor.is(':checked');
     var nombreVendedor = obtenerNombreVendedorSeleccionado();
 
     if (permitirEdicion) {
       $inputSurtidor.prop('readonly', false);
-      if (esVendedorOtro() && !$checkboxOtroSurtidor.is(':checked')) {
-        $inputSurtidor.val('');
-      }
     } else {
       $inputSurtidor.prop('readonly', true);
-      $inputSurtidor.val(nombreVendedor);
+      if (esVendedorOtro()) {
+        $inputSurtidor.val('');
+      } else {
+        $inputSurtidor.val(nombreVendedor);
+      }
+    }
+  }
+
+  function actualizarCampoVendedorOtro() {
+    if (!$vendedorPendienteOtroContainer.length || !$inputVendedorPendienteOtro.length) {
+      return;
+    }
+
+    var mostrarCampo = esVendedorOtro();
+    $vendedorPendienteOtroContainer.toggleClass('d-none', !mostrarCampo);
+
+    if (mostrarCampo) {
+      $inputVendedorPendienteOtro.prop('required', true);
+    } else {
+      $inputVendedorPendienteOtro.prop('required', false).val('');
     }
   }
 
@@ -142,6 +160,7 @@ $(document).ready(function() {
       actualizarBotonesEliminar();
     }
 
+    actualizarCampoVendedorOtro();
     actualizarCampoSurtidor();
   });
 
@@ -221,9 +240,18 @@ $(document).ready(function() {
     if ($inputSurtidor.length) {
       $inputSurtidor.prop('readonly', true).val('');
     }
+
+    if ($vendedorPendienteOtroContainer.length) {
+      $vendedorPendienteOtroContainer.addClass('d-none');
+    }
+
+    if ($inputVendedorPendienteOtro.length) {
+      $inputVendedorPendienteOtro.prop('required', false).val('');
+    }
   });
 
   $selectVendedores.on('change', function() {
+    actualizarCampoVendedorOtro();
     actualizarCampoSurtidor();
   });
 
