@@ -79,7 +79,11 @@ $(document).ready(function() {
     return valorSeleccionado === VENDEDOR_OTRO_ID;
   }
 
-  function obtenerNombreVendedorSeleccionado() {
+  function obtenerNombreVendedor() {
+    if (esVendedorOtro() && $inputVendedorPendienteOtro.length) {
+      return ($inputVendedorPendienteOtro.val() || '').trim();
+    }
+
     var textoSeleccionado = $selectVendedores.find('option:selected').text() || '';
     return textoSeleccionado.trim();
   }
@@ -90,17 +94,13 @@ $(document).ready(function() {
     }
 
     var permitirEdicion = $checkboxOtroSurtidor.is(':checked');
-    var nombreVendedor = obtenerNombreVendedorSeleccionado();
+    var nombreVendedor = obtenerNombreVendedor();
 
     if (permitirEdicion) {
       $inputSurtidor.prop('readonly', false);
     } else {
       $inputSurtidor.prop('readonly', true);
-      if (esVendedorOtro()) {
-        $inputSurtidor.val('');
-      } else {
-        $inputSurtidor.val(nombreVendedor);
-      }
+      $inputSurtidor.val(nombreVendedor);
     }
   }
 
@@ -253,6 +253,12 @@ $(document).ready(function() {
   $selectVendedores.on('change', function() {
     actualizarCampoVendedorOtro();
     actualizarCampoSurtidor();
+  });
+
+  $inputVendedorPendienteOtro.on('input', function() {
+    if (esVendedorOtro()) {
+      actualizarCampoSurtidor();
+    }
   });
 
   $checkboxOtroSurtidor.on('change', function() {
