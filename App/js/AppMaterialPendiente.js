@@ -98,6 +98,8 @@ $(document).ready(function() {
 
     if (permitirEdicion) {
       $inputSurtidor.prop('readonly', false);
+      $inputSurtidor.val('');
+      $inputSurtidor.trigger('focus');
     } else {
       $inputSurtidor.prop('readonly', true);
       $inputSurtidor.val(nombreVendedor);
