@@ -5,6 +5,9 @@ $(document).ready(function() {
   var productosDisponibles = $container.data('productos-disponibles') === 1 || $container.data('productos-disponibles') === '1';
   var $selectClientes = $('.select-cliente');
   var $selectVendedores = $('.select-vendedor');
+  var $inputSurtidor = $('#SurtidorPendiente');
+  var $checkboxOtroSurtidor = $('#OtroSurtidorPendiente');
+  var VENDEDOR_OTRO_ID = '22';
 
   function obtenerIndiceMaximo() {
     var indiceMaximo = -1;
@@ -69,6 +72,35 @@ $(document).ready(function() {
     });
   }
 
+  function esVendedorOtro() {
+    var valorSeleccionado = ($selectVendedores.val() || '').toString();
+    return valorSeleccionado === VENDEDOR_OTRO_ID;
+  }
+
+  function obtenerNombreVendedorSeleccionado() {
+    var textoSeleccionado = $selectVendedores.find('option:selected').text() || '';
+    return textoSeleccionado.trim();
+  }
+
+  function actualizarCampoSurtidor() {
+    if (!$inputSurtidor.length) {
+      return;
+    }
+
+    var permitirEdicion = esVendedorOtro() || $checkboxOtroSurtidor.is(':checked');
+    var nombreVendedor = obtenerNombreVendedorSeleccionado();
+
+    if (permitirEdicion) {
+      $inputSurtidor.prop('readonly', false);
+      if (esVendedorOtro() && !$checkboxOtroSurtidor.is(':checked')) {
+        $inputSurtidor.val('');
+      }
+    } else {
+      $inputSurtidor.prop('readonly', true);
+      $inputSurtidor.val(nombreVendedor);
+    }
+  }
+
   function actualizarBotonesEliminar() {
     var total = $container.find('.producto-pendiente-item').length;
     var debeMostrar = total > 1;
@@ -109,6 +141,8 @@ $(document).ready(function() {
       });
       actualizarBotonesEliminar();
     }
+
+    actualizarCampoSurtidor();
   });
 
   $('#AgregarPartidaPendiente').on('click', function() {
@@ -179,5 +213,21 @@ $(document).ready(function() {
       indiceActual = obtenerIndiceMaximo();
       actualizarBotonesEliminar();
     }
+
+    if ($checkboxOtroSurtidor.length) {
+      $checkboxOtroSurtidor.prop('checked', false);
+    }
+
+    if ($inputSurtidor.length) {
+      $inputSurtidor.prop('readonly', true).val('');
+    }
+  });
+
+  $selectVendedores.on('change', function() {
+    actualizarCampoSurtidor();
+  });
+
+  $checkboxOtroSurtidor.on('change', function() {
+    actualizarCampoSurtidor();
   });
 });
