@@ -33,10 +33,18 @@
                                             <?php if (!$hayVendedoresPendientes) : ?>
                                                 <small class="form-text text-muted">No hay vendedores disponibles para seleccionar.</small>
                                             <?php endif; ?>
+                                            <div id="VendedorPendienteOtroContainer" class="mt-2 d-none">
+                                                <label for="VendedorPendienteOtro" class="form-label">Nombre del vendedor</label>
+                                                <input type="text" class="form-control" id="VendedorPendienteOtro" name="VendedorPendienteOtro" autocomplete="off">
+                                            </div>
                                         </div>
                                         <div class="col-lg-6 col-sm-12 mb-4">
                                             <label for="SurtidorPendiente" class="form-label">Surtidor</label>
-                                            <input type="text" class="form-control" id="SurtidorPendiente" name="SurtidorPendiente" autocomplete="off" required>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="OtroSurtidorPendiente">
+                                                <label class="form-check-label" for="OtroSurtidorPendiente">Otro surtidor</label>
+                                            </div>
+                                            <input type="text" class="form-control" id="SurtidorPendiente" name="SurtidorPendiente" autocomplete="off" required readonly>
                                         </div>
                                         <div class="col-lg-12 col-sm-12 mb-4">
                                             <label for="NombreClientePendiente" class="form-label">Nombre del Cliente</label>
