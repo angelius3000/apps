@@ -33,6 +33,10 @@
                                             <?php if (!$hayVendedoresPendientes) : ?>
                                                 <small class="form-text text-muted">No hay vendedores disponibles para seleccionar.</small>
                                             <?php endif; ?>
+                                            <div id="VendedorPendienteOtroContainer" class="mt-2 d-none">
+                                                <label for="VendedorPendienteOtro" class="form-label">Nombre del vendedor</label>
+                                                <input type="text" class="form-control" id="VendedorPendienteOtro" name="VendedorPendienteOtro" autocomplete="off">
+                                            </div>
                                         </div>
                                         <div class="col-lg-6 col-sm-12 mb-4">
                                             <label for="SurtidorPendiente" class="form-label">Surtidor</label>
