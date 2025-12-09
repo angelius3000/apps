@@ -7,8 +7,6 @@ $(document).ready(function() {
   var $selectVendedores = $('.select-vendedor');
   var $inputSurtidor = $('#SurtidorPendiente');
   var $checkboxOtroSurtidor = $('#OtroSurtidorPendiente');
-  var $inputVendedorOtro = $('#VendedorPendienteOtro');
-  var $contenedorVendedorOtro = $('#VendedorPendienteOtroContainer');
   var VENDEDOR_OTRO_ID = '22';
 
   function obtenerIndiceMaximo() {
@@ -80,10 +78,6 @@ $(document).ready(function() {
   }
 
   function obtenerNombreVendedorSeleccionado() {
-    if (esVendedorOtro()) {
-      return ($inputVendedorOtro.val() || '').trim();
-    }
-
     var textoSeleccionado = $selectVendedores.find('option:selected').text() || '';
     return textoSeleccionado.trim();
   }
@@ -93,28 +87,17 @@ $(document).ready(function() {
       return;
     }
 
-    var permitirEdicion = $checkboxOtroSurtidor.is(':checked');
+    var permitirEdicion = esVendedorOtro() || $checkboxOtroSurtidor.is(':checked');
     var nombreVendedor = obtenerNombreVendedorSeleccionado();
 
-    $inputSurtidor.prop('readonly', !permitirEdicion);
-
-    if (!permitirEdicion) {
+    if (permitirEdicion) {
+      $inputSurtidor.prop('readonly', false);
+      if (esVendedorOtro() && !$checkboxOtroSurtidor.is(':checked')) {
+        $inputSurtidor.val('');
+      }
+    } else {
+      $inputSurtidor.prop('readonly', true);
       $inputSurtidor.val(nombreVendedor);
-    }
-  }
-
-  function actualizarCampoVendedorOtro() {
-    if (!$contenedorVendedorOtro.length) {
-      return;
-    }
-
-    var mostrar = esVendedorOtro();
-
-    $contenedorVendedorOtro.toggleClass('d-none', !mostrar);
-    $inputVendedorOtro.prop('required', mostrar);
-
-    if (!mostrar) {
-      $inputVendedorOtro.val('');
     }
   }
 
@@ -159,7 +142,6 @@ $(document).ready(function() {
       actualizarBotonesEliminar();
     }
 
-    actualizarCampoVendedorOtro();
     actualizarCampoSurtidor();
   });
 
@@ -239,26 +221,13 @@ $(document).ready(function() {
     if ($inputSurtidor.length) {
       $inputSurtidor.prop('readonly', true).val('');
     }
-
-    if ($contenedorVendedorOtro.length) {
-      $contenedorVendedorOtro.addClass('d-none');
-    }
-
-    if ($inputVendedorOtro.length) {
-      $inputVendedorOtro.prop('required', false).val('');
-    }
   });
 
   $selectVendedores.on('change', function() {
-    actualizarCampoVendedorOtro();
     actualizarCampoSurtidor();
   });
 
   $checkboxOtroSurtidor.on('change', function() {
-    actualizarCampoSurtidor();
-  });
-
-  $inputVendedorOtro.on('input', function() {
     actualizarCampoSurtidor();
   });
 });
