@@ -17,6 +17,16 @@ $(document).ready(function() {
   var VENDEDOR_OTRO_ID = '22';
   var ADUANA_OTRO_ID = '4';
 
+  function obtenerConfiguracionIdiomaMinimo() {
+    return {
+      inputTooShort: function(args) {
+        var caracteresFaltantes = args.minimum - (args.input ? args.input.length : 0);
+        var sufijo = caracteresFaltantes === 1 ? '' : 'es';
+        return 'Ingresa ' + caracteresFaltantes + ' caracter' + sufijo + ' o más para buscar';
+      }
+    };
+  }
+
   function obtenerIndiceMaximo() {
     var indiceMaximo = -1;
     $container.find('.producto-pendiente-item').each(function() {
@@ -41,7 +51,8 @@ $(document).ready(function() {
       allowClear: true,
       width: '100%',
       minimumResultsForSearch: 0,
-      minimumInputLength: 3
+      minimumInputLength: 3,
+      language: obtenerConfiguracionIdiomaMinimo()
     });
   }
 
@@ -60,7 +71,8 @@ $(document).ready(function() {
       allowClear: true,
       width: '100%',
       minimumResultsForSearch: 0,
-      minimumInputLength: 2
+      minimumInputLength: 2,
+      language: obtenerConfiguracionIdiomaMinimo()
     });
   }
 
