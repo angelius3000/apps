@@ -13,6 +13,7 @@ $(document).ready(function() {
   var $tablaBodyPartidas = $('#ProductosPendientesTablaBody');
   var productosDisponibles = $container.data('productos-disponibles') === 1 || $container.data('productos-disponibles') === '1';
   var $selectClientes = $('.select-cliente');
+  var $selectRazonSocial = $('#RazonSocialPendiente');
   var $selectVendedores = $('.select-vendedor');
   var $selectAduana = $('#AduanaPendiente');
   var $inputSurtidor = $('#SurtidorPendiente');
@@ -23,6 +24,7 @@ $(document).ready(function() {
   var $inputVendedorPendienteOtro = $('#VendedorPendienteOtro');
   var $aduanaPendienteOtroContainer = $('#AduanaPendienteOtroContainer');
   var $inputAduanaPendienteOtro = $('#AduanaPendienteOtro');
+  var $inputNombreCliente = $('#NombreClientePendiente');
   var VENDEDOR_OTRO_ID = '22';
   var ADUANA_OTRO_ID = '4';
   var partidasPendientes = [];
@@ -46,6 +48,27 @@ $(document).ready(function() {
     }
 
     return texto.substring(0, maximo - 1) + '…';
+  }
+
+  function enfocarCampo($elemento) {
+    if (!$elemento || !$elemento.length || $elemento.is(':disabled') || $elemento.hasClass('d-none')) {
+      return;
+    }
+
+    if ($modal.length && !$modal.hasClass('show')) {
+      return;
+    }
+
+    if ($elemento.hasClass('select2-hidden-accessible')) {
+      var instancia = $elemento.data('select2');
+
+      if (instancia && typeof $elemento.select2 === 'function') {
+        $elemento.select2('open');
+        return;
+      }
+    }
+
+    $elemento.trigger('focus');
   }
 
   function inicializarSelect2($elemento) {
@@ -419,6 +442,14 @@ $(document).ready(function() {
     }
   }
 
+  function obtenerCampoProductoDestino() {
+    if (esOtroProductoActivo() && $inputSkuPendienteOtro.length) {
+      return $inputSkuPendienteOtro;
+    }
+
+    return $selectProductoPendiente;
+  }
+
   $modal.on('shown.bs.modal', function() {
     $selectClientes.each(function() {
       inicializarSelectCliente($(this));
@@ -559,6 +590,13 @@ $(document).ready(function() {
   $selectVendedores.on('change', function() {
     actualizarCampoVendedorOtro();
     actualizarCampoSurtidor();
+
+    if (esVendedorOtro()) {
+      enfocarCampo($inputVendedorPendienteOtro);
+      return;
+    }
+
+    enfocarCampo($inputNombreCliente);
   });
 
   $inputVendedorPendienteOtro.on('input', function() {
@@ -569,17 +607,69 @@ $(document).ready(function() {
 
   $checkboxOtroSurtidor.on('change', function() {
     actualizarCampoSurtidor();
+
+    if ($checkboxOtroSurtidor.is(':checked')) {
+      enfocarCampo($inputSurtidor);
+    }
   });
 
   $checkboxAlmacenista.on('change', function() {
     actualizarCampoSurtidor();
+
+    if ($checkboxAlmacenista.is(':checked')) {
+      enfocarCampo($selectAlmacenista);
+    }
   });
 
-  $selectAduana.on('change', function() {
+  $selectAduana.on('change select2:select', function() {
     actualizarCampoAduanaOtro();
+
+    if (esAduanaOtro()) {
+      enfocarCampo($inputAduanaPendienteOtro);
+      return;
+    }
+
+    enfocarCampo(obtenerCampoProductoDestino());
   });
 
   $checkboxOtroProducto.on('change', function() {
     actualizarModoOtroProducto();
+
+    if ($checkboxOtroProducto.is(':checked')) {
+      enfocarCampo($inputSkuPendienteOtro);
+      return;
+    }
+
+    enfocarCampo($selectProductoPendiente);
+  });
+
+  $selectProductoPendiente.on('change select2:select', function() {
+    enfocarCampo($inputCantidadPendiente);
+  });
+
+  $selectClientes.on('change select2:select', function() {
+    enfocarCampo($selectVendedores);
+  });
+
+  $selectRazonSocial.on('change select2:select', function() {
+    enfocarCampo($selectVendedores);
+  });
+
+  $selectAlmacenista.on('change select2:select', function() {
+    enfocarCampo($inputNombreCliente);
+  });
+
+  $inputCantidadPendiente.on('keydown', function(evento) {
+    if (evento.key === 'Enter') {
+      evento.preventDefault();
+      agregarPartidaPendiente();
+    }
+  });
+
+  $inputCantidadPendienteOtro.on('keydown', function(evento) {
+    if (evento.key === 'Enter') {
+      evento.preventDefault();
+      agregarPartidaPendiente();
+    }
   });
 });
