@@ -40,6 +40,17 @@ if ($resultadoVendedoresPendientes instanceof mysqli_result) {
     mysqli_free_result($resultadoVendedoresPendientes);
 }
 
+$queryAlmacenistasPendientes = "SELECT AlmacenistaID, NombreAlmacenista FROM almacenista ORDER BY NombreAlmacenista ASC";
+$resultadoAlmacenistasPendientes = mysqli_query($conn, $queryAlmacenistasPendientes);
+
+$listaAlmacenistasPendientes = [];
+if ($resultadoAlmacenistasPendientes instanceof mysqli_result) {
+    while ($rowAlmacenistaPendiente = mysqli_fetch_assoc($resultadoAlmacenistasPendientes)) {
+        $listaAlmacenistasPendientes[] = $rowAlmacenistaPendiente;
+    }
+    mysqli_free_result($resultadoAlmacenistasPendientes);
+}
+
 $opcionesProductosPendientes = '<option value="">Selecciona producto</option>';
 foreach ($listaProductosPendientes as $productoPendiente) {
     $productoId = isset($productoPendiente['PRODUCTOSID']) ? (int) $productoPendiente['PRODUCTOSID'] : 0;
@@ -96,9 +107,22 @@ foreach ($listaVendedoresPendientes as $vendedorPendiente) {
     $opcionesVendedoresPendientes .= '<option value="' . $vendedorId . '">' . $textoVendedor . '</option>';
 }
 
+$opcionesAlmacenistasPendientes = '<option value="">Selecciona almacenista</option>';
+foreach ($listaAlmacenistasPendientes as $almacenistaPendiente) {
+    $almacenistaId = isset($almacenistaPendiente['AlmacenistaID']) ? (int) $almacenistaPendiente['AlmacenistaID'] : 0;
+    $nombreAlmacenista = isset($almacenistaPendiente['NombreAlmacenista']) ? trim((string) $almacenistaPendiente['NombreAlmacenista']) : '';
+
+    $nombreAlmacenistaEscapado = htmlspecialchars($nombreAlmacenista, ENT_QUOTES, 'UTF-8');
+
+    $textoAlmacenista = $nombreAlmacenistaEscapado !== '' ? $nombreAlmacenistaEscapado : 'Almacenista #' . $almacenistaId;
+
+    $opcionesAlmacenistasPendientes .= '<option value="' . $almacenistaId . '">' . $textoAlmacenista . '</option>';
+}
+
 $hayProductosPendientes = count($listaProductosPendientes) > 0;
 $hayClientesPendientes = count($listaClientesPendientes) > 0;
 $hayVendedoresPendientes = count($listaVendedoresPendientes) > 0;
+$hayAlmacenistasPendientes = count($listaAlmacenistasPendientes) > 0;
 
 $claseBody = '';
 $claseLogo = '';

@@ -6,7 +6,9 @@ $(document).ready(function() {
   var $selectClientes = $('.select-cliente');
   var $selectVendedores = $('.select-vendedor');
   var $inputSurtidor = $('#SurtidorPendiente');
+  var $selectAlmacenista = $('#SurtidorPendienteAlmacenista');
   var $checkboxOtroSurtidor = $('#OtroSurtidorPendiente');
+  var $checkboxAlmacenista = $('#AlmacenistaPendiente');
   var $vendedorPendienteOtroContainer = $('#VendedorPendienteOtroContainer');
   var $inputVendedorPendienteOtro = $('#VendedorPendienteOtro');
   var VENDEDOR_OTRO_ID = '22';
@@ -74,6 +76,24 @@ $(document).ready(function() {
     });
   }
 
+  function inicializarSelectAlmacenista($elemento) {
+    if (!$elemento.length) {
+      return;
+    }
+
+    if ($elemento.hasClass('select2-hidden-accessible')) {
+      return;
+    }
+
+    $elemento.select2({
+      dropdownParent: $modal,
+      placeholder: $elemento.data('placeholder') || 'Selecciona almacenista',
+      allowClear: true,
+      width: '100%',
+      minimumResultsForSearch: 0
+    });
+  }
+
   function esVendedorOtro() {
     var valorSeleccionado = ($selectVendedores.val() || '').toString();
     return valorSeleccionado === VENDEDOR_OTRO_ID;
@@ -93,8 +113,26 @@ $(document).ready(function() {
       return;
     }
 
+    var usarAlmacenista = $checkboxAlmacenista.is(':checked');
     var permitirEdicion = $checkboxOtroSurtidor.is(':checked');
     var nombreVendedor = obtenerNombreVendedor();
+
+    if (usarAlmacenista && $selectAlmacenista.length) {
+      $checkboxOtroSurtidor.prop('checked', false).prop('disabled', true);
+      $inputSurtidor.prop('required', false).prop('readonly', true).val('').addClass('d-none').attr('name', '');
+
+      $selectAlmacenista.removeClass('d-none').prop('disabled', false).prop('required', true).attr('name', 'SurtidorPendiente');
+      inicializarSelectAlmacenista($selectAlmacenista);
+      return;
+    }
+
+    if ($selectAlmacenista.length) {
+      $selectAlmacenista.val(null).trigger('change');
+      $selectAlmacenista.prop('required', false).attr('name', '').addClass('d-none');
+      $checkboxOtroSurtidor.prop('disabled', false);
+    }
+
+    $inputSurtidor.removeClass('d-none').attr('name', 'SurtidorPendiente').prop('required', true);
 
     if (permitirEdicion) {
       $inputSurtidor.prop('readonly', false);
@@ -152,6 +190,8 @@ $(document).ready(function() {
     $selectVendedores.each(function() {
       inicializarSelectVendedor($(this));
     });
+
+    inicializarSelectAlmacenista($selectAlmacenista);
 
     if (productosDisponibles) {
       $container.find('.select2-producto').each(function() {
@@ -236,11 +276,20 @@ $(document).ready(function() {
     }
 
     if ($checkboxOtroSurtidor.length) {
-      $checkboxOtroSurtidor.prop('checked', false);
+      $checkboxOtroSurtidor.prop('checked', false).prop('disabled', false);
     }
 
     if ($inputSurtidor.length) {
-      $inputSurtidor.prop('readonly', true).val('');
+      $inputSurtidor.prop('readonly', true).val('').removeClass('d-none').attr('name', 'SurtidorPendiente').prop('required', true);
+    }
+
+    if ($selectAlmacenista.length) {
+      $selectAlmacenista.val(null).trigger('change');
+      $selectAlmacenista.prop('required', false).attr('name', '').addClass('d-none');
+    }
+
+    if ($checkboxAlmacenista.length) {
+      $checkboxAlmacenista.prop('checked', false);
     }
 
     if ($vendedorPendienteOtroContainer.length) {
@@ -264,6 +313,10 @@ $(document).ready(function() {
   });
 
   $checkboxOtroSurtidor.on('change', function() {
+    actualizarCampoSurtidor();
+  });
+
+  $checkboxAlmacenista.on('change', function() {
     actualizarCampoSurtidor();
   });
 });
