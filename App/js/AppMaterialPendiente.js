@@ -25,6 +25,7 @@ $(document).ready(function() {
   var $aduanaPendienteOtroContainer = $('#AduanaPendienteOtroContainer');
   var $inputAduanaPendienteOtro = $('#AduanaPendienteOtro');
   var $inputNombreCliente = $('#NombreClientePendiente');
+  var $formularioPendiente = $('#FormularioAgregarPendiente');
   var VENDEDOR_OTRO_ID = '22';
   var ADUANA_OTRO_ID = '4';
   var partidasPendientes = [];
@@ -450,6 +451,15 @@ $(document).ready(function() {
     return $selectProductoPendiente;
   }
 
+  function mostrarMensajeError(mensaje) {
+    var texto = (mensaje || '').toString().trim();
+    if (texto === '') {
+      texto = 'Ocurrió un problema al guardar el material pendiente.';
+    }
+
+    window.alert(texto);
+  }
+
   $modal.on('shown.bs.modal', function() {
     $selectClientes.each(function() {
       inicializarSelectCliente($(this));
@@ -672,4 +682,43 @@ $(document).ready(function() {
       agregarPartidaPendiente();
     }
   });
+
+  if ($formularioPendiente.length) {
+    $formularioPendiente.on('submit', function(evento) {
+      evento.preventDefault();
+
+      if (typeof this.checkValidity === 'function' && !this.checkValidity()) {
+        if (typeof this.reportValidity === 'function') {
+          this.reportValidity();
+        }
+        return;
+      }
+
+      if (partidasPendientes.length === 0) {
+        renderizarPartidasPendientes();
+        mostrarMensajeError('Agrega al menos una partida pendiente antes de guardar.');
+        enfocarCampo(obtenerCampoProductoDestino());
+        return;
+      }
+
+      var dataString = $formularioPendiente.serialize();
+
+      $.ajax({
+        type: 'POST',
+        url: 'App/Server/ServerInsertarMaterialPendiente.php',
+        data: dataString,
+        dataType: 'json'
+      }).done(function(respuesta) {
+        if (respuesta && respuesta.success) {
+          $modal.modal('hide');
+          return;
+        }
+
+        var mensaje = respuesta && respuesta.message ? respuesta.message : '';
+        mostrarMensajeError(mensaje);
+      }).fail(function() {
+        mostrarMensajeError('No se pudo guardar el material pendiente. Inténtalo nuevamente.');
+      });
+    });
+  }
 });
