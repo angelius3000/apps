@@ -94,6 +94,27 @@ $(document).ready(function() {
     });
   }
 
+  function obtenerContenedorSelectAlmacenista() {
+    if (!$selectAlmacenista.length) {
+      return $();
+    }
+
+    var instancia = $selectAlmacenista.data('select2');
+    if (instancia && instancia.$container && instancia.$container.length) {
+      return instancia.$container;
+    }
+
+    return $selectAlmacenista.next('.select2');
+  }
+
+  function mostrarContenedorAlmacenista(debeMostrar) {
+    var $contenedor = obtenerContenedorSelectAlmacenista();
+
+    if ($contenedor.length) {
+      $contenedor.toggleClass('d-none', !debeMostrar);
+    }
+  }
+
   function esVendedorOtro() {
     var valorSeleccionado = ($selectVendedores.val() || '').toString();
     return valorSeleccionado === VENDEDOR_OTRO_ID;
@@ -123,12 +144,14 @@ $(document).ready(function() {
 
       $selectAlmacenista.removeClass('d-none').prop('disabled', false).prop('required', true).attr('name', 'SurtidorPendiente');
       inicializarSelectAlmacenista($selectAlmacenista);
+      mostrarContenedorAlmacenista(true);
       return;
     }
 
     if ($selectAlmacenista.length) {
       $selectAlmacenista.val(null).trigger('change');
       $selectAlmacenista.prop('required', false).attr('name', '').addClass('d-none');
+      mostrarContenedorAlmacenista(false);
       $checkboxOtroSurtidor.prop('disabled', false);
     }
 
@@ -286,6 +309,7 @@ $(document).ready(function() {
     if ($selectAlmacenista.length) {
       $selectAlmacenista.val(null).trigger('change');
       $selectAlmacenista.prop('required', false).attr('name', '').addClass('d-none');
+      mostrarContenedorAlmacenista(false);
     }
 
     if ($checkboxAlmacenista.length) {
