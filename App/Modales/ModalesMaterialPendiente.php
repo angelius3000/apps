@@ -58,14 +58,22 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-lg-12 col-sm-12 mb-4">
+                                        <div class="col-lg-6 col-sm-12 mb-4">
                                             <label for="NombreClientePendiente" class="form-label">Nombre del Cliente</label>
-                                            <select class="form-select select-cliente" id="NombreClientePendiente" name="NombreClientePendiente" data-placeholder="Selecciona cliente" <?php echo $hayClientesPendientes ? '' : 'disabled'; ?> required>
-                                                <?php echo $opcionesClientesPendientes; ?>
+                                            <input type="text" class="form-control" id="NombreClientePendiente" name="NombreClientePendiente" autocomplete="off" placeholder="Nombre del cliente" required>
+                                        </div>
+                                        <div class="col-lg-6 col-sm-12 mb-4">
+                                            <label for="AduanaPendiente" class="form-label">Aduana</label>
+                                            <select class="form-select select-aduana" id="AduanaPendiente" name="AduanaPendiente" data-placeholder="Selecciona aduana" <?php echo $hayAduanasPendientes ? '' : 'disabled'; ?> required>
+                                                <?php echo $opcionesAduanasPendientes; ?>
                                             </select>
-                                            <?php if (!$hayClientesPendientes) : ?>
-                                                <small class="form-text text-muted">No hay clientes disponibles para seleccionar.</small>
+                                            <?php if (!$hayAduanasPendientes) : ?>
+                                                <small class="form-text text-muted">No hay aduanas disponibles para seleccionar.</small>
                                             <?php endif; ?>
+                                            <div id="AduanaPendienteOtroContainer" class="mt-2 d-none">
+                                                <label for="AduanaPendienteOtro" class="form-label">Nombre de la persona</label>
+                                                <input type="text" class="form-control" id="AduanaPendienteOtro" name="AduanaPendienteOtro" autocomplete="off">
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="row">

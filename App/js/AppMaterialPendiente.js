@@ -5,13 +5,17 @@ $(document).ready(function() {
   var productosDisponibles = $container.data('productos-disponibles') === 1 || $container.data('productos-disponibles') === '1';
   var $selectClientes = $('.select-cliente');
   var $selectVendedores = $('.select-vendedor');
+  var $selectAduana = $('#AduanaPendiente');
   var $inputSurtidor = $('#SurtidorPendiente');
   var $selectAlmacenista = $('#SurtidorPendienteAlmacenista');
   var $checkboxOtroSurtidor = $('#OtroSurtidorPendiente');
   var $checkboxAlmacenista = $('#AlmacenistaPendiente');
   var $vendedorPendienteOtroContainer = $('#VendedorPendienteOtroContainer');
   var $inputVendedorPendienteOtro = $('#VendedorPendienteOtro');
+  var $aduanaPendienteOtroContainer = $('#AduanaPendienteOtroContainer');
+  var $inputAduanaPendienteOtro = $('#AduanaPendienteOtro');
   var VENDEDOR_OTRO_ID = '22';
+  var ADUANA_OTRO_ID = '4';
 
   function obtenerIndiceMaximo() {
     var indiceMaximo = -1;
@@ -76,6 +80,24 @@ $(document).ready(function() {
     });
   }
 
+  function inicializarSelectAduana($elemento) {
+    if (!$elemento.length) {
+      return;
+    }
+
+    if ($elemento.hasClass('select2-hidden-accessible')) {
+      return;
+    }
+
+    $elemento.select2({
+      dropdownParent: $modal,
+      placeholder: $elemento.data('placeholder') || 'Selecciona aduana',
+      allowClear: true,
+      width: '100%',
+      minimumResultsForSearch: 0
+    });
+  }
+
   function inicializarSelectAlmacenista($elemento) {
     if (!$elemento.length) {
       return;
@@ -127,6 +149,26 @@ $(document).ready(function() {
 
     var textoSeleccionado = $selectVendedores.find('option:selected').text() || '';
     return textoSeleccionado.trim();
+  }
+
+  function esAduanaOtro() {
+    var valorSeleccionado = ($selectAduana.val() || '').toString();
+    return valorSeleccionado === ADUANA_OTRO_ID;
+  }
+
+  function actualizarCampoAduanaOtro() {
+    if (!$aduanaPendienteOtroContainer.length || !$inputAduanaPendienteOtro.length) {
+      return;
+    }
+
+    var mostrarCampo = esAduanaOtro();
+    $aduanaPendienteOtroContainer.toggleClass('d-none', !mostrarCampo);
+
+    if (mostrarCampo) {
+      $inputAduanaPendienteOtro.prop('required', true);
+    } else {
+      $inputAduanaPendienteOtro.prop('required', false).val('');
+    }
   }
 
   function actualizarCampoSurtidor() {
@@ -214,6 +256,8 @@ $(document).ready(function() {
       inicializarSelectVendedor($(this));
     });
 
+    inicializarSelectAduana($selectAduana);
+
     inicializarSelectAlmacenista($selectAlmacenista);
 
     if (productosDisponibles) {
@@ -227,6 +271,7 @@ $(document).ready(function() {
 
     actualizarCampoVendedorOtro();
     actualizarCampoSurtidor();
+    actualizarCampoAduanaOtro();
   });
 
   $('#AgregarPartidaPendiente').on('click', function() {
@@ -323,6 +368,18 @@ $(document).ready(function() {
     if ($inputVendedorPendienteOtro.length) {
       $inputVendedorPendienteOtro.prop('required', false).val('');
     }
+
+    if ($selectAduana.length) {
+      $selectAduana.val(null).trigger('change');
+    }
+
+    if ($aduanaPendienteOtroContainer.length) {
+      $aduanaPendienteOtroContainer.addClass('d-none');
+    }
+
+    if ($inputAduanaPendienteOtro.length) {
+      $inputAduanaPendienteOtro.prop('required', false).val('');
+    }
   });
 
   $selectVendedores.on('change', function() {
@@ -342,5 +399,9 @@ $(document).ready(function() {
 
   $checkboxAlmacenista.on('change', function() {
     actualizarCampoSurtidor();
+  });
+
+  $selectAduana.on('change', function() {
+    actualizarCampoAduanaOtro();
   });
 });

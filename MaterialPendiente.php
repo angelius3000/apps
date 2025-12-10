@@ -51,6 +51,17 @@ if ($resultadoAlmacenistasPendientes instanceof mysqli_result) {
     mysqli_free_result($resultadoAlmacenistasPendientes);
 }
 
+$queryAduanasPendientes = "SELECT AduanaID, NombreAduana FROM aduana ORDER BY NombreAduana ASC";
+$resultadoAduanasPendientes = mysqli_query($conn, $queryAduanasPendientes);
+
+$listaAduanasPendientes = [];
+if ($resultadoAduanasPendientes instanceof mysqli_result) {
+    while ($rowAduanaPendiente = mysqli_fetch_assoc($resultadoAduanasPendientes)) {
+        $listaAduanasPendientes[] = $rowAduanaPendiente;
+    }
+    mysqli_free_result($resultadoAduanasPendientes);
+}
+
 $opcionesProductosPendientes = '<option value="">Selecciona producto</option>';
 foreach ($listaProductosPendientes as $productoPendiente) {
     $productoId = isset($productoPendiente['PRODUCTOSID']) ? (int) $productoPendiente['PRODUCTOSID'] : 0;
@@ -119,10 +130,22 @@ foreach ($listaAlmacenistasPendientes as $almacenistaPendiente) {
     $opcionesAlmacenistasPendientes .= '<option value="' . $almacenistaId . '">' . $textoAlmacenista . '</option>';
 }
 
+$opcionesAduanasPendientes = '<option value="">Selecciona aduana</option>';
+foreach ($listaAduanasPendientes as $aduanaPendiente) {
+    $aduanaId = isset($aduanaPendiente['AduanaID']) ? (int) $aduanaPendiente['AduanaID'] : 0;
+    $nombreAduana = isset($aduanaPendiente['NombreAduana']) ? trim((string) $aduanaPendiente['NombreAduana']) : '';
+
+    $nombreAduanaEscapado = htmlspecialchars($nombreAduana, ENT_QUOTES, 'UTF-8');
+    $textoAduana = $nombreAduanaEscapado !== '' ? $nombreAduanaEscapado : 'Aduana #' . $aduanaId;
+
+    $opcionesAduanasPendientes .= '<option value="' . $aduanaId . '">' . $textoAduana . '</option>';
+}
+
 $hayProductosPendientes = count($listaProductosPendientes) > 0;
 $hayClientesPendientes = count($listaClientesPendientes) > 0;
 $hayVendedoresPendientes = count($listaVendedoresPendientes) > 0;
 $hayAlmacenistasPendientes = count($listaAlmacenistasPendientes) > 0;
+$hayAduanasPendientes = count($listaAduanasPendientes) > 0;
 
 $claseBody = '';
 $claseLogo = '';
