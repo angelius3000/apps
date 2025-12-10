@@ -89,31 +89,42 @@
                                         <?php endif; ?>
                                         <div class="col-12">
                                             <div id="ProductosPendientesContainer" class="productos-pendientes-container" data-productos-disponibles="<?php echo $hayProductosPendientes ? '1' : '0'; ?>">
-                                                <div class="row producto-pendiente-item align-items-end" data-index="0">
+                                                <div class="row align-items-end">
                                                     <div class="col-lg-8 col-sm-12 mb-4">
-                                                        <label for="ProductoPendiente-0" class="form-label">Producto pendiente</label>
-                                                        <select class="form-select select2-producto" name="productos[0][id]" id="ProductoPendiente-0" data-placeholder="Selecciona producto" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?> required>
+                                                        <label for="ProductoPendienteSelect" class="form-label">Producto pendiente</label>
+                                                        <select class="form-select select2-producto" id="ProductoPendienteSelect" data-placeholder="Selecciona producto" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?> required>
                                                             <?php echo $opcionesProductosPendientes; ?>
                                                         </select>
                                                     </div>
                                                     <div class="col-lg-4 col-sm-12 mb-4">
-                                                        <label for="CantidadPendiente-0" class="form-label">Cantidad pendiente</label>
-                                                        <input type="number" class="form-control" name="productos[0][cantidad]" id="CantidadPendiente-0" min="1" step="1" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?> required>
+                                                        <label for="CantidadPendiente" class="form-label">Cantidad pendiente</label>
+                                                        <input type="number" class="form-control" id="CantidadPendiente" min="1" step="1" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?> required>
                                                     </div>
                                                     <div class="col-12 mb-2">
-                                                        <button type="button" class="btn btn-outline-danger btn-sm eliminar-producto-pendiente d-none">
-                                                            <i class="material-icons-two-tone align-middle">delete</i>
-                                                            <span class="align-middle">Eliminar partida</span>
+                                                        <button type="button" class="btn btn-outline-primary btn-sm" id="AgregarPartidaPendiente" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?>>
+                                                            <i class="material-icons-two-tone align-middle">add_circle</i>
+                                                            <span class="align-middle">Agregar partida</span>
                                                         </button>
                                                     </div>
                                                 </div>
+
+                                                <div class="table-responsive mt-3">
+                                                    <table class="table table-sm" id="ProductosPendientesTabla">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>SKU</th>
+                                                                <th>Descripción</th>
+                                                                <th class="text-end">Cantidad</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="ProductosPendientesTablaBody">
+                                                            <tr class="text-muted">
+                                                                <td colspan="3" class="text-center">Agrega partidas para mostrarlas aquí.</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="col-12">
-                                            <button type="button" class="btn btn-outline-primary btn-sm" id="AgregarPartidaPendiente" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?>>
-                                                <i class="material-icons-two-tone align-middle">add_circle</i>
-                                                <span class="align-middle">Agregar partida</span>
-                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -130,23 +141,3 @@
     </div>
 </div>
 
-<script type="text/template" id="ProductoPendienteRowTemplate">
-    <div class="row producto-pendiente-item align-items-end" data-index="__INDEX__">
-        <div class="col-lg-8 col-sm-12 mb-4">
-            <label for="ProductoPendiente-__INDEX__" class="form-label">Producto pendiente</label>
-            <select class="form-select select2-producto" name="productos[__INDEX__][id]" id="ProductoPendiente-__INDEX__" data-placeholder="Selecciona producto" required>
-                <?php echo $opcionesProductosPendientes; ?>
-            </select>
-        </div>
-        <div class="col-lg-4 col-sm-12 mb-4">
-            <label for="CantidadPendiente-__INDEX__" class="form-label">Cantidad pendiente</label>
-            <input type="number" class="form-control" name="productos[__INDEX__][cantidad]" id="CantidadPendiente-__INDEX__" min="1" step="1" required>
-        </div>
-        <div class="col-12 mb-2">
-            <button type="button" class="btn btn-outline-danger btn-sm eliminar-producto-pendiente">
-                <i class="material-icons-two-tone align-middle">delete</i>
-                <span class="align-middle">Eliminar partida</span>
-            </button>
-        </div>
-    </div>
-</script>

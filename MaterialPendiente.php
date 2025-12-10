@@ -77,7 +77,7 @@ foreach ($listaProductosPendientes as $productoPendiente) {
         $textoOpcion = $descripcionProductoEscapada;
     }
 
-    $opcionesProductosPendientes .= '<option value="' . $productoId . '">' . $textoOpcion . '</option>';
+    $opcionesProductosPendientes .= '<option value="' . $productoId . '" data-sku="' . $skuProductoEscapado . '" data-descripcion="' . $descripcionProductoEscapada . '">' . $textoOpcion . '</option>';
 }
 
 $opcionesClientesPendientes = '<option value="">Selecciona cliente</option>';
