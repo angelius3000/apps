@@ -71,7 +71,7 @@
                                                 <small class="form-text text-muted">No hay aduanas disponibles para seleccionar.</small>
                                             <?php endif; ?>
                                             <div id="AduanaPendienteOtroContainer" class="mt-2 d-none">
-                                                <label for="AduanaPendienteOtro" class="form-label">Nombre de la persona</label>
+                                                <label for="AduanaPendienteOtro" class="form-label">Nombre de revisor</label>
                                                 <input type="text" class="form-control" id="AduanaPendienteOtro" name="AduanaPendienteOtro" autocomplete="off">
                                             </div>
                                         </div>
