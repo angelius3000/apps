@@ -107,18 +107,18 @@
                                                         </div>
                                                     </div>
                                                     <div class="col-12">
-                                                        <div id="OtroProductoPendienteCampos" class="row d-none">
+                                                        <div id="OtroProductoPendienteCampos" class="row align-items-end g-3 d-none">
                                                             <div class="col-lg-3 col-md-4 col-sm-12 mb-4">
                                                                 <label for="SkuPendienteOtro" class="form-label">SKU</label>
                                                                 <input type="text" class="form-control" id="SkuPendienteOtro" name="SkuPendienteOtro" autocomplete="off" style="max-width: 10ch;">
                                                             </div>
-                                                            <div class="col-lg-5 col-md-4 col-sm-12 mb-4">
+                                                            <div class="col-lg-5 col-md-4 col-sm-12 mb-4 d-flex flex-column">
                                                                 <label for="DescripcionPendienteOtro" class="form-label">Descripción</label>
-                                                                <input type="text" class="form-control" id="DescripcionPendienteOtro" name="DescripcionPendienteOtro" autocomplete="off" style="min-width: 24ch;">
+                                                                <input type="text" class="form-control" id="DescripcionPendienteOtro" name="DescripcionPendienteOtro" autocomplete="off" style="width: 100%; max-width: 50ch;">
                                                             </div>
-                                                            <div class="col-lg-4 col-md-4 col-sm-12 mb-4">
+                                                            <div class="col-lg-4 col-md-4 col-sm-12 mb-4 d-flex flex-column align-items-lg-end align-items-md-end">
                                                                 <label for="CantidadPendienteOtro" class="form-label">Cantidad pendiente</label>
-                                                                <input type="number" class="form-control" id="CantidadPendienteOtro" name="CantidadPendienteOtro" min="1" step="1" autocomplete="off" style="max-width: 7ch;">
+                                                                <input type="number" class="form-control ms-lg-auto ms-md-auto" id="CantidadPendienteOtro" name="CantidadPendienteOtro" min="1" step="1" autocomplete="off" style="width: 100%; max-width: 6ch;">
                                                             </div>
                                                         </div>
                                                     </div>
