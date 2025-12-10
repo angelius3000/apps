@@ -1,0 +1,189 @@
+<?php
+
+include("../../Connections/ConDB.php");
+
+header('Content-Type: application/json');
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'message' => 'Método no permitido.']);
+    exit;
+}
+
+if (!$conn) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'No se pudo conectar a la base de datos.']);
+    exit;
+}
+
+function obtenerTextoCatalogo(mysqli $conn, string $tabla, string $columnaId, string $columnaTexto, int $id): string
+{
+    $valor = '';
+    $stmt = @mysqli_prepare(
+        $conn,
+        "SELECT $columnaTexto FROM $tabla WHERE $columnaId = ? LIMIT 1"
+    );
+
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, 'i', $id);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_bind_result($stmt, $texto);
+
+        if (mysqli_stmt_fetch($stmt) && $texto !== null) {
+            $valor = trim((string) $texto);
+        }
+
+        mysqli_stmt_close($stmt);
+    }
+
+    return $valor;
+}
+
+function normalizarTexto(?string $valor): string
+{
+    return trim((string) $valor);
+}
+
+$numeroFactura = normalizarTexto($_POST['NumeroFacturaPendiente'] ?? '');
+$clienteId = isset($_POST['RazonSocialPendiente']) ? (int) $_POST['RazonSocialPendiente'] : 0;
+$vendedorId = isset($_POST['VendedorPendiente']) ? (int) $_POST['VendedorPendiente'] : 0;
+$vendedorOtro = normalizarTexto($_POST['VendedorPendienteOtro'] ?? '');
+$aduanaId = isset($_POST['AduanaPendiente']) ? (int) $_POST['AduanaPendiente'] : 0;
+$aduanaOtro = normalizarTexto($_POST['AduanaPendienteOtro'] ?? '');
+$surtidorValor = normalizarTexto($_POST['SurtidorPendiente'] ?? '');
+$nombreCliente = normalizarTexto($_POST['NombreClientePendiente'] ?? '');
+$productos = $_POST['productos'] ?? [];
+
+if ($numeroFactura === '' || $clienteId <= 0 || empty($productos)) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Captura el número de documento, el cliente y al menos una partida pendiente.'
+    ]);
+    exit;
+}
+
+$clienteNombre = obtenerTextoCatalogo($conn, 'clientes', 'CLIENTEID', 'NombreCliente', $clienteId);
+
+$VENDEDOR_OTRO_ID = 22;
+if ($vendedorId === $VENDEDOR_OTRO_ID) {
+    $vendedorNombre = $vendedorOtro;
+} else {
+    $vendedorNombre = obtenerTextoCatalogo($conn, 'vendedor', 'vendedorID', 'NombreVendedor', $vendedorId);
+}
+
+if ($vendedorNombre === '') {
+    $vendedorNombre = $vendedorOtro;
+}
+
+$ADUANA_OTRO_ID = 4;
+if ($aduanaId === $ADUANA_OTRO_ID) {
+    $aduanaNombre = $aduanaOtro;
+} else {
+    $aduanaNombre = obtenerTextoCatalogo($conn, 'aduana', 'AduanaID', 'NombreAduana', $aduanaId);
+}
+
+if ($aduanaNombre === '') {
+    $aduanaNombre = $aduanaOtro;
+}
+
+if ($surtidorValor !== '' && ctype_digit($surtidorValor)) {
+    $almacenistaNombre = obtenerTextoCatalogo($conn, 'almacenista', 'AlmacenistaID', 'NombreAlmacenista', (int) $surtidorValor);
+    if ($almacenistaNombre !== '') {
+        $surtidorValor = $almacenistaNombre;
+    }
+}
+
+$fechaActual = date('Y-m-d');
+
+$productosValidos = [];
+foreach ($productos as $producto) {
+    if (!is_array($producto)) {
+        continue;
+    }
+
+    $sku = normalizarTexto($producto['sku'] ?? '');
+    $descripcion = normalizarTexto($producto['descripcion'] ?? '');
+    $cantidad = isset($producto['cantidad']) ? (int) $producto['cantidad'] : 0;
+    $esOtro = !empty($producto['otro']);
+
+    if ($sku === '' || $descripcion === '' || $cantidad <= 0) {
+        continue;
+    }
+
+    $productosValidos[] = [
+        'sku' => $sku,
+        'descripcion' => $descripcion,
+        'cantidad' => $cantidad,
+        'otro' => $esOtro ? '1' : '0'
+    ];
+}
+
+if (empty($productosValidos)) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Agrega al menos una partida pendiente válida.'
+    ]);
+    exit;
+}
+
+mysqli_begin_transaction($conn);
+
+$stmt = mysqli_prepare(
+    $conn,
+    'INSERT INTO MaterialPendiente (NumeroFactura, Sku, Cliente, Cantidad, Fecha, Surtidor, Vendedor, Aduana, OtroProducto, DescripcionMP, FechaMP, FechaDP, Otro) '
+        . 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+);
+
+if (!$stmt) {
+    mysqli_rollback($conn);
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'No se pudo preparar la inserción de material pendiente.']);
+    exit;
+}
+
+$fechaMP = $fechaActual;
+$fechaDP = null;
+$otroCampo = $nombreCliente !== '' ? $nombreCliente : null;
+$clienteParaGuardar = $clienteNombre !== '' ? $clienteNombre : $nombreCliente;
+
+$insertados = 0;
+
+foreach ($productosValidos as $producto) {
+    mysqli_stmt_bind_param(
+        $stmt,
+        'sssisssssssss',
+        $numeroFactura,
+        $producto['sku'],
+        $clienteParaGuardar,
+        $producto['cantidad'],
+        $fechaActual,
+        $surtidorValor,
+        $vendedorNombre,
+        $aduanaNombre,
+        $producto['otro'],
+        $producto['descripcion'],
+        $fechaMP,
+        $fechaDP,
+        $otroCampo
+    );
+
+    if (!mysqli_stmt_execute($stmt)) {
+        mysqli_stmt_close($stmt);
+        mysqli_rollback($conn);
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'No se pudo guardar la información capturada.']);
+        exit;
+    }
+
+    $insertados++;
+}
+
+mysqli_stmt_close($stmt);
+mysqli_commit($conn);
+
+echo json_encode([
+    'success' => true,
+    'inserted' => $insertados
+]);
