@@ -41,9 +41,21 @@
                                         <div class="col-lg-6 col-sm-12 mb-4">
                                             <label for="SurtidorPendiente" class="form-label">Surtidor</label>
                                             <input type="text" class="form-control" id="SurtidorPendiente" name="SurtidorPendiente" autocomplete="off" required readonly>
-                                            <div class="form-check mt-2">
-                                                <input class="form-check-input" type="checkbox" id="OtroSurtidorPendiente">
-                                                <label class="form-check-label" for="OtroSurtidorPendiente">Otro surtidor</label>
+                                            <select class="form-select select-almacenista d-none mt-2" id="SurtidorPendienteAlmacenista" data-placeholder="Selecciona almacenista" <?php echo $hayAlmacenistasPendientes ? '' : 'disabled'; ?>>
+                                                <?php echo $opcionesAlmacenistasPendientes; ?>
+                                            </select>
+                                            <?php if (!$hayAlmacenistasPendientes) : ?>
+                                                <small class="form-text text-muted">No hay almacenistas disponibles para seleccionar.</small>
+                                            <?php endif; ?>
+                                            <div class="d-flex flex-wrap gap-3 mt-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="AlmacenistaPendiente" <?php echo $hayAlmacenistasPendientes ? '' : 'disabled'; ?>>
+                                                    <label class="form-check-label" for="AlmacenistaPendiente">Almacenista</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="OtroSurtidorPendiente">
+                                                    <label class="form-check-label" for="OtroSurtidorPendiente">Otro surtidor</label>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="col-lg-12 col-sm-12 mb-4">
