@@ -90,13 +90,13 @@
                                         <div class="col-12">
                                             <div id="ProductosPendientesContainer" class="productos-pendientes-container" data-productos-disponibles="<?php echo $hayProductosPendientes ? '1' : '0'; ?>">
                                                 <div class="row align-items-end">
-                                                    <div class="col-lg-8 col-sm-12 mb-4">
+                                                    <div class="col-lg-8 col-sm-12 mb-4" id="ProductoPendienteSelectContainer">
                                                         <label for="ProductoPendienteSelect" class="form-label">Producto pendiente</label>
                                                         <select class="form-select select2-producto" id="ProductoPendienteSelect" data-placeholder="Selecciona producto" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?> required>
                                                             <?php echo $opcionesProductosPendientes; ?>
                                                         </select>
                                                     </div>
-                                                    <div class="col-lg-4 col-sm-12 mb-4">
+                                                    <div class="col-lg-4 col-sm-12 mb-4" id="CantidadPendienteContainer">
                                                         <label for="CantidadPendiente" class="form-label">Cantidad pendiente</label>
                                                         <input type="number" class="form-control" id="CantidadPendiente" min="1" step="1" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?> required>
                                                     </div>

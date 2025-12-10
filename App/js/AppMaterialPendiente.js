@@ -3,6 +3,8 @@ $(document).ready(function() {
   var $container = $('#ProductosPendientesContainer');
   var $selectProductoPendiente = $('#ProductoPendienteSelect');
   var $inputCantidadPendiente = $('#CantidadPendiente');
+  var $selectProductoPendienteContainer = $('#ProductoPendienteSelectContainer');
+  var $inputCantidadPendienteContainer = $('#CantidadPendienteContainer');
   var $checkboxOtroProducto = $('#OtroProductoPendiente');
   var $otroProductoCampos = $('#OtroProductoPendienteCampos');
   var $inputSkuPendienteOtro = $('#SkuPendienteOtro');
@@ -279,6 +281,14 @@ $(document).ready(function() {
     var activo = esOtroProductoActivo();
 
     $otroProductoCampos.toggleClass('d-none', !activo);
+
+    if ($selectProductoPendienteContainer.length) {
+      $selectProductoPendienteContainer.toggleClass('d-none', activo);
+    }
+
+    if ($inputCantidadPendienteContainer.length) {
+      $inputCantidadPendienteContainer.toggleClass('d-none', activo);
+    }
 
     if ($selectProductoPendiente.length) {
       var debeDesactivarSelect = activo || !productosDisponibles;
