@@ -101,7 +101,29 @@
                                                         <input type="number" class="form-control" id="CantidadPendiente" min="1" step="1" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?> required>
                                                     </div>
                                                     <div class="col-12 mb-2">
-                                                        <button type="button" class="btn btn-outline-primary btn-sm" id="AgregarPartidaPendiente" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?>>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" id="OtroProductoPendiente">
+                                                            <label class="form-check-label" for="OtroProductoPendiente">Otro producto</label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <div id="OtroProductoPendienteCampos" class="row d-none">
+                                                            <div class="col-lg-4 col-sm-12 mb-4">
+                                                                <label for="SkuPendienteOtro" class="form-label">SKU</label>
+                                                                <input type="text" class="form-control" id="SkuPendienteOtro" name="SkuPendienteOtro" autocomplete="off">
+                                                            </div>
+                                                            <div class="col-lg-4 col-sm-12 mb-4">
+                                                                <label for="DescripcionPendienteOtro" class="form-label">Descripción</label>
+                                                                <input type="text" class="form-control" id="DescripcionPendienteOtro" name="DescripcionPendienteOtro" autocomplete="off">
+                                                            </div>
+                                                            <div class="col-lg-4 col-sm-12 mb-4">
+                                                                <label for="CantidadPendienteOtro" class="form-label">Cantidad pendiente</label>
+                                                                <input type="number" class="form-control" id="CantidadPendienteOtro" name="CantidadPendienteOtro" min="1" step="1" autocomplete="off">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12 mb-2">
+                                                        <button type="button" class="btn btn-outline-primary btn-sm" id="AgregarPartidaPendiente">
                                                             <i class="material-icons-two-tone align-middle">add_circle</i>
                                                             <span class="align-middle">Agregar partida</span>
                                                         </button>
