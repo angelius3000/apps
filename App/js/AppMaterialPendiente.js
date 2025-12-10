@@ -60,7 +60,7 @@ $(document).ready(function() {
       allowClear: true,
       width: '100%',
       minimumResultsForSearch: 0,
-      minimumInputLength: 3
+      minimumInputLength: 2
     });
   }
 
