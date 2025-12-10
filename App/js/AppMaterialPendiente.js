@@ -40,7 +40,8 @@ $(document).ready(function() {
       placeholder: $elemento.data('placeholder') || 'Selecciona producto',
       allowClear: true,
       width: '100%',
-      minimumResultsForSearch: 0
+      minimumResultsForSearch: 0,
+      minimumInputLength: 3
     });
   }
 
@@ -58,7 +59,8 @@ $(document).ready(function() {
       placeholder: $elemento.data('placeholder') || 'Selecciona cliente',
       allowClear: true,
       width: '100%',
-      minimumResultsForSearch: 0
+      minimumResultsForSearch: 0,
+      minimumInputLength: 2
     });
   }
 
