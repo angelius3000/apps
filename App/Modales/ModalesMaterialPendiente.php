@@ -110,7 +110,7 @@
                                                         <div id="OtroProductoPendienteCampos" class="row align-items-end g-3 d-none">
                                                             <div class="col-lg-3 col-md-4 col-sm-12 mb-4">
                                                                 <label for="SkuPendienteOtro" class="form-label">SKU</label>
-                                                                <input type="text" class="form-control" id="SkuPendienteOtro" name="SkuPendienteOtro" autocomplete="off" style="max-width: 10ch;">
+                                                                <input type="text" class="form-control w-100" id="SkuPendienteOtro" name="SkuPendienteOtro" autocomplete="off">
                                                             </div>
                                                             <div class="col-lg-6 col-md-5 col-sm-12 mb-4">
                                                                 <label for="DescripcionPendienteOtro" class="form-label">Descripción</label>
@@ -118,7 +118,7 @@
                                                             </div>
                                                             <div class="col-lg-3 col-md-3 col-sm-12 mb-4 d-flex flex-column align-items-lg-end align-items-md-end ms-lg-auto ms-md-auto">
                                                                 <label for="CantidadPendienteOtro" class="form-label">Cantidad pendiente</label>
-                                                                <input type="number" class="form-control ms-lg-auto ms-md-auto" id="CantidadPendienteOtro" name="CantidadPendienteOtro" min="1" step="1" autocomplete="off" style="width: 100%; max-width: 6ch;">
+                                                                <input type="number" class="form-control w-100" id="CantidadPendienteOtro" name="CantidadPendienteOtro" min="1" step="1" autocomplete="off">
                                                             </div>
                                                         </div>
                                                     </div>
