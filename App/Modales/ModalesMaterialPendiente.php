@@ -13,7 +13,7 @@
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-lg-6 col-sm-12 mb-4">
-                                            <label for="NumeroFacturaPendiente" class="form-label">Número de Factura</label>
+                                            <label for="NumeroFacturaPendiente" class="form-label">Numero de documento</label>
                                             <input type="text" class="form-control" id="NumeroFacturaPendiente" name="NumeroFacturaPendiente" autocomplete="off" required>
                                         </div>
                                         <div class="col-lg-6 col-sm-12 mb-4">
