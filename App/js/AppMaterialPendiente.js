@@ -3,6 +3,11 @@ $(document).ready(function() {
   var $container = $('#ProductosPendientesContainer');
   var $selectProductoPendiente = $('#ProductoPendienteSelect');
   var $inputCantidadPendiente = $('#CantidadPendiente');
+  var $checkboxOtroProducto = $('#OtroProductoPendiente');
+  var $otroProductoCampos = $('#OtroProductoPendienteCampos');
+  var $inputSkuPendienteOtro = $('#SkuPendienteOtro');
+  var $inputDescripcionPendienteOtro = $('#DescripcionPendienteOtro');
+  var $inputCantidadPendienteOtro = $('#CantidadPendienteOtro');
   var $tablaBodyPartidas = $('#ProductosPendientesTablaBody');
   var productosDisponibles = $container.data('productos-disponibles') === 1 || $container.data('productos-disponibles') === '1';
   var $selectClientes = $('.select-cliente');
@@ -139,6 +144,18 @@ $(document).ready(function() {
     if ($inputCantidadPendiente.length) {
       $inputCantidadPendiente.val('');
     }
+
+    if ($inputSkuPendienteOtro.length) {
+      $inputSkuPendienteOtro.val('');
+    }
+
+    if ($inputDescripcionPendienteOtro.length) {
+      $inputDescripcionPendienteOtro.val('');
+    }
+
+    if ($inputCantidadPendienteOtro.length) {
+      $inputCantidadPendienteOtro.val('');
+    }
   }
 
   function renderizarPartidasPendientes() {
@@ -146,10 +163,10 @@ $(document).ready(function() {
       return;
     }
 
-    if (productosDisponibles) {
-      $selectProductoPendiente.prop('required', partidasPendientes.length === 0);
-      $inputCantidadPendiente.prop('required', partidasPendientes.length === 0);
-    }
+    var requiereSeleccionProducto = productosDisponibles && !esOtroProductoActivo() && partidasPendientes.length === 0;
+
+    $selectProductoPendiente.prop('required', requiereSeleccionProducto);
+    $inputCantidadPendiente.prop('required', requiereSeleccionProducto);
 
     $tablaBodyPartidas.empty();
 
@@ -166,8 +183,11 @@ $(document).ready(function() {
       var $celdaCantidad = $('<td class="text-end"></td>').text(partida.cantidad);
 
       $celdaSku.append($enlaceEditar);
-      $celdaSku.append('<input type="hidden" name="productos[' + indice + '][id]" value="' + partida.id + '">');
-      $celdaSku.append('<input type="hidden" name="productos[' + indice + '][cantidad]" value="' + partida.cantidad + '">');
+      $celdaSku.append($('<input>', { type: 'hidden', name: 'productos[' + indice + '][id]', value: partida.id || '' }));
+      $celdaSku.append($('<input>', { type: 'hidden', name: 'productos[' + indice + '][sku]', value: partida.sku || '' }));
+      $celdaSku.append($('<input>', { type: 'hidden', name: 'productos[' + indice + '][descripcion]', value: partida.descripcion || '' }));
+      $celdaSku.append($('<input>', { type: 'hidden', name: 'productos[' + indice + '][cantidad]', value: partida.cantidad }));
+      $celdaSku.append($('<input>', { type: 'hidden', name: 'productos[' + indice + '][otro]', value: partida.esOtro ? '1' : '0' }));
 
       $fila.append($celdaSku, $celdaDescripcion, $celdaCantidad);
       $tablaBodyPartidas.append($fila);
@@ -198,30 +218,100 @@ $(document).ready(function() {
   }
 
   function agregarPartidaPendiente() {
-    if (!productosDisponibles) {
+    var esOtroProducto = esOtroProductoActivo();
+
+    if (!esOtroProducto && !productosDisponibles) {
       return;
     }
 
-    var datosProducto = obtenerDatosProductoSeleccionado();
-    var cantidad = parseInt($inputCantidadPendiente.val(), 10);
+    if (esOtroProducto) {
+      var skuOtro = ($inputSkuPendienteOtro.val() || '').trim();
+      var descripcionOtro = ($inputDescripcionPendienteOtro.val() || '').trim();
+      var cantidadOtro = parseInt($inputCantidadPendienteOtro.val(), 10);
 
-    if (!datosProducto.id || isNaN(cantidad) || cantidad <= 0) {
-      return;
+      if (!skuOtro || !descripcionOtro || isNaN(cantidadOtro) || cantidadOtro <= 0) {
+        return;
+      }
+
+      partidasPendientes.push({
+        id: null,
+        sku: skuOtro,
+        descripcion: descripcionOtro,
+        cantidad: cantidadOtro,
+        esOtro: true
+      });
+    } else {
+      var datosProducto = obtenerDatosProductoSeleccionado();
+      var cantidad = parseInt($inputCantidadPendiente.val(), 10);
+
+      if (!datosProducto.id || isNaN(cantidad) || cantidad <= 0) {
+        return;
+      }
+
+      partidasPendientes.push({
+        id: datosProducto.id,
+        sku: datosProducto.sku,
+        descripcion: datosProducto.descripcion,
+        cantidad: cantidad,
+        esOtro: false
+      });
     }
-
-    partidasPendientes.push({
-      id: datosProducto.id,
-      sku: datosProducto.sku,
-      descripcion: datosProducto.descripcion,
-      cantidad: cantidad
-    });
 
     renderizarPartidasPendientes();
     limpiarCamposPartidaPendiente();
 
-    if ($selectProductoPendiente.length) {
+    if (esOtroProducto && $inputSkuPendienteOtro.length) {
+      $inputSkuPendienteOtro.trigger('focus');
+    } else if ($selectProductoPendiente.length) {
       $selectProductoPendiente.trigger('focus');
     }
+  }
+
+  function esOtroProductoActivo() {
+    return $checkboxOtroProducto.length && $checkboxOtroProducto.is(':checked');
+  }
+
+  function actualizarModoOtroProducto() {
+    if (!$checkboxOtroProducto.length) {
+      return;
+    }
+
+    var activo = esOtroProductoActivo();
+
+    $otroProductoCampos.toggleClass('d-none', !activo);
+
+    if ($selectProductoPendiente.length) {
+      var debeDesactivarSelect = activo || !productosDisponibles;
+      $selectProductoPendiente.prop('disabled', debeDesactivarSelect);
+
+      if (debeDesactivarSelect) {
+        $selectProductoPendiente.val(null).trigger('change');
+      }
+    }
+
+    if ($inputCantidadPendiente.length) {
+      $inputCantidadPendiente.prop('disabled', activo || !productosDisponibles);
+      if (activo) {
+        $inputCantidadPendiente.val('');
+      }
+    }
+
+    if ($inputSkuPendienteOtro.length) {
+      $inputSkuPendienteOtro.prop('required', activo);
+    }
+
+    if ($inputDescripcionPendienteOtro.length) {
+      $inputDescripcionPendienteOtro.prop('required', activo);
+    }
+
+    if ($inputCantidadPendienteOtro.length) {
+      $inputCantidadPendienteOtro.prop('required', activo).prop('disabled', !activo);
+      if (!activo) {
+        $inputCantidadPendienteOtro.val('');
+      }
+    }
+
+    renderizarPartidasPendientes();
   }
 
   function mostrarContenedorAlmacenista(debeMostrar) {
@@ -339,6 +429,7 @@ $(document).ready(function() {
     actualizarCampoVendedorOtro();
     actualizarCampoSurtidor();
     actualizarCampoAduanaOtro();
+    actualizarModoOtroProducto();
   });
 
   $('#AgregarPartidaPendiente').on('click', function() {
@@ -368,6 +459,10 @@ $(document).ready(function() {
     partidasPendientes = [];
     renderizarPartidasPendientes();
     limpiarCamposPartidaPendiente();
+
+    if ($checkboxOtroProducto.length) {
+      $checkboxOtroProducto.prop('checked', false);
+    }
 
     if ($checkboxOtroSurtidor.length) {
       $checkboxOtroSurtidor.prop('checked', false).prop('disabled', false);
@@ -426,6 +521,26 @@ $(document).ready(function() {
     partidasPendientes.splice(indice, 1);
     renderizarPartidasPendientes();
 
+    if (partida.esOtro) {
+      if ($checkboxOtroProducto.length) {
+        $checkboxOtroProducto.prop('checked', true);
+      }
+
+      actualizarModoOtroProducto();
+
+      $inputSkuPendienteOtro.val(partida.sku);
+      $inputDescripcionPendienteOtro.val(partida.descripcion);
+      $inputCantidadPendienteOtro.val(partida.cantidad);
+      $inputSkuPendienteOtro.trigger('focus');
+      return;
+    }
+
+    if ($checkboxOtroProducto.length) {
+      $checkboxOtroProducto.prop('checked', false);
+    }
+
+    actualizarModoOtroProducto();
+
     $selectProductoPendiente.val(partida.id).trigger('change');
     $inputCantidadPendiente.val(partida.cantidad);
     $inputCantidadPendiente.trigger('focus');
@@ -452,5 +567,9 @@ $(document).ready(function() {
 
   $selectAduana.on('change', function() {
     actualizarCampoAduanaOtro();
+  });
+
+  $checkboxOtroProducto.on('change', function() {
+    actualizarModoOtroProducto();
   });
 });
