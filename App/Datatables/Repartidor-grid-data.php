@@ -150,7 +150,7 @@ while ($row = mysqli_fetch_array($query)) {  // preparing an array ... Preparand
     $nestedData[] = '<a href="tel:' . $row["TelefonoDeReceptor"] . '">' . $row["TelefonoDeReceptor"] . '</a>'; //(12) Teléfono de receptor
     $nestedData[] = $row["PrimerNombre_REP"] . ' ' . $row["SegundoNombre_REP"] . ' ' . $row["ApellidoPaterno_REP"] . ' ' . $row["ApellidoMaterno_REP"]; //(4) Repartidor
     $nestedData[] = $row["Surtidores"]; //(3) Surtidor
-    $nestedData[] = SoloFecha($row["FechaDeRegistro"]);
+    $nestedData[] = date('d-m-Y H:i', strtotime($row["FechaDeRegistro"]));
     $nestedData[] = $row["FechaRepartoFormatted"]; //(6) Fecha de reparto
     $nestedData[] = $row["HoraReparto"]; //(7) Hora de reparto
     $nestedData[] = $row["PrimerNombre"] . ' ' . $row["SegundoNombre"] . ' ' . $row["ApellidoPaterno"] . ' ' . $row["ApellidoMaterno"];
