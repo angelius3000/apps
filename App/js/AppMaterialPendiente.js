@@ -184,15 +184,37 @@ $(document).ready(function() {
     }
   }
 
+  function actualizarRequerimientosPartida() {
+    var requierePartida = partidasPendientes.length === 0;
+    var esOtroProducto = esOtroProductoActivo();
+
+    if ($selectProductoPendiente.length) {
+      $selectProductoPendiente.prop('required', productosDisponibles && !esOtroProducto && requierePartida);
+    }
+
+    if ($inputCantidadPendiente.length) {
+      $inputCantidadPendiente.prop('required', productosDisponibles && !esOtroProducto && requierePartida);
+    }
+
+    if ($inputSkuPendienteOtro.length) {
+      $inputSkuPendienteOtro.prop('required', esOtroProducto && requierePartida);
+    }
+
+    if ($inputDescripcionPendienteOtro.length) {
+      $inputDescripcionPendienteOtro.prop('required', esOtroProducto && requierePartida);
+    }
+
+    if ($inputCantidadPendienteOtro.length) {
+      $inputCantidadPendienteOtro.prop('required', esOtroProducto && requierePartida);
+    }
+  }
+
   function renderizarPartidasPendientes() {
     if (!$tablaBodyPartidas.length) {
       return;
     }
 
-    var requiereSeleccionProducto = productosDisponibles && !esOtroProductoActivo() && partidasPendientes.length === 0;
-
-    $selectProductoPendiente.prop('required', requiereSeleccionProducto);
-    $inputCantidadPendiente.prop('required', requiereSeleccionProducto);
+    actualizarRequerimientosPartida();
 
     $tablaBodyPartidas.empty();
 
@@ -331,15 +353,21 @@ $(document).ready(function() {
     }
 
     if ($inputSkuPendienteOtro.length) {
-      $inputSkuPendienteOtro.prop('required', activo);
+      $inputSkuPendienteOtro.prop('disabled', !activo);
+      if (!activo) {
+        $inputSkuPendienteOtro.val('');
+      }
     }
 
     if ($inputDescripcionPendienteOtro.length) {
-      $inputDescripcionPendienteOtro.prop('required', activo);
+      $inputDescripcionPendienteOtro.prop('disabled', !activo);
+      if (!activo) {
+        $inputDescripcionPendienteOtro.val('');
+      }
     }
 
     if ($inputCantidadPendienteOtro.length) {
-      $inputCantidadPendienteOtro.prop('required', activo).prop('disabled', !activo);
+      $inputCantidadPendienteOtro.prop('disabled', !activo);
       if (!activo) {
         $inputCantidadPendienteOtro.val('');
       }
