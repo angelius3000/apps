@@ -4,16 +4,48 @@ include("../../Connections/ConDB.php");
 
 header('Content-Type: application/json');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Método no permitido.']);
+function responderError(string $mensaje, int $codigo = 500): void
+{
+    http_response_code($codigo);
+    echo json_encode(['success' => false, 'message' => $mensaje]);
     exit;
 }
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    responderError('Método no permitido.', 405);
+}
+
 if (!$conn) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'No se pudo conectar a la base de datos.']);
-    exit;
+    responderError('No se pudo conectar a la base de datos.');
+}
+
+function asegurarTablaMaterialPendiente(mysqli $conn): bool
+{
+    $sqlCrearTabla = "CREATE TABLE IF NOT EXISTS MaterialPendiente (
+        MaterialPendienteID INT NOT NULL AUTO_INCREMENT,
+        NumeroFactura VARCHAR(100) NOT NULL,
+        Sku VARCHAR(100) NOT NULL,
+        Cliente VARCHAR(255) NOT NULL,
+        Cantidad INT NOT NULL DEFAULT 0,
+        Fecha DATE NOT NULL,
+        Surtidor VARCHAR(255) DEFAULT NULL,
+        Vendedor VARCHAR(255) DEFAULT NULL,
+        Aduana VARCHAR(255) DEFAULT NULL,
+        OtroProducto TINYINT(1) NOT NULL DEFAULT 0,
+        DescripcionMP VARCHAR(255) NOT NULL,
+        FechaMP DATE NOT NULL,
+        FechaDP DATE DEFAULT NULL,
+        Otro VARCHAR(255) DEFAULT NULL,
+        PRIMARY KEY (MaterialPendienteID),
+        INDEX idx_materialpendiente_factura (NumeroFactura),
+        INDEX idx_materialpendiente_sku (Sku)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+    return @mysqli_query($conn, $sqlCrearTabla) === true;
+}
+
+if (!asegurarTablaMaterialPendiente($conn)) {
+    responderError('No se pudo preparar la tabla de material pendiente. Intenta nuevamente.');
 }
 
 function obtenerTextoCatalogo(mysqli $conn, string $tabla, string $columnaId, string $columnaTexto, int $id): string
@@ -55,12 +87,7 @@ $nombreCliente = normalizarTexto($_POST['NombreClientePendiente'] ?? '');
 $productos = $_POST['productos'] ?? [];
 
 if ($numeroFactura === '' || $clienteId <= 0 || empty($productos)) {
-    http_response_code(400);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Captura el número de documento, el cliente y al menos una partida pendiente.'
-    ]);
-    exit;
+    responderError('Captura el número de documento, el cliente y al menos una partida pendiente.', 400);
 }
 
 $clienteNombre = obtenerTextoCatalogo($conn, 'clientes', 'CLIENTEID', 'NombreCliente', $clienteId);
@@ -120,12 +147,7 @@ foreach ($productos as $producto) {
 }
 
 if (empty($productosValidos)) {
-    http_response_code(400);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Agrega al menos una partida pendiente válida.'
-    ]);
-    exit;
+    responderError('Agrega al menos una partida pendiente válida.', 400);
 }
 
 mysqli_begin_transaction($conn);
@@ -138,9 +160,7 @@ $stmt = mysqli_prepare(
 
 if (!$stmt) {
     mysqli_rollback($conn);
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'No se pudo preparar la inserción de material pendiente.']);
-    exit;
+    responderError('No se pudo preparar la inserción de material pendiente.');
 }
 
 $fechaMP = $fechaActual;
@@ -172,9 +192,7 @@ foreach ($productosValidos as $producto) {
     if (!mysqli_stmt_execute($stmt)) {
         mysqli_stmt_close($stmt);
         mysqli_rollback($conn);
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'No se pudo guardar la información capturada.']);
-        exit;
+        responderError('No se pudo guardar la información capturada.');
     }
 
     $insertados++;
