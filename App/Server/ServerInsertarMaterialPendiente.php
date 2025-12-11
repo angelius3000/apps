@@ -32,10 +32,7 @@ function asegurarTablaMaterialPendiente(mysqli $conn): bool
         SkuMP VARCHAR(100) NOT NULL,
         DescripcionMP VARCHAR(255) NOT NULL,
         CantidadMP INT NOT NULL DEFAULT 0,
-        OtroProductoMP TINYINT(1) NOT NULL DEFAULT 0,
-        FechaMP DATE NOT NULL,
-        FechaDP DATE DEFAULT NULL,
-        OtraInfoMP VARCHAR(255) DEFAULT NULL,
+        FechaMP DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (MaterialPendienteID),
         INDEX idx_materialpendiente_documento (DocumentoMP),
         INDEX idx_materialpendiente_sku (SkuMP)
@@ -123,8 +120,6 @@ if ($surtidorValor !== '' && ctype_digit($surtidorValor)) {
     }
 }
 
-$fechaActual = date('Y-m-d');
-
 $productosValidos = [];
 foreach ($productos as $producto) {
     if (!is_array($producto)) {
@@ -134,7 +129,6 @@ foreach ($productos as $producto) {
     $sku = normalizarTexto($producto['sku'] ?? '');
     $descripcion = normalizarTexto($producto['descripcion'] ?? '');
     $cantidad = isset($producto['cantidad']) ? (int) $producto['cantidad'] : 0;
-    $esOtro = !empty($producto['otro']);
 
     if ($sku === '' || $descripcion === '' || $cantidad <= 0) {
         continue;
@@ -143,8 +137,7 @@ foreach ($productos as $producto) {
     $productosValidos[] = [
         'sku' => $sku,
         'descripcion' => $descripcion,
-        'cantidad' => $cantidad,
-        'otro' => $esOtro ? '1' : '0'
+        'cantidad' => $cantidad
     ];
 }
 
@@ -156,8 +149,8 @@ mysqli_begin_transaction($conn);
 
 $stmt = mysqli_prepare(
     $conn,
-    'INSERT INTO materialpendiente (DocumentoMP, RazonSocialMP, VendedorMP, SurtidorMP, ClienteMP, AduanaMP, SkuMP, DescripcionMP, CantidadMP, OtroProductoMP, FechaMP, FechaDP, OtraInfoMP) '
-        . 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO materialpendiente (DocumentoMP, RazonSocialMP, VendedorMP, SurtidorMP, ClienteMP, AduanaMP, SkuMP, DescripcionMP, CantidadMP, FechaMP) '
+        . 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 );
 
 if (!$stmt) {
@@ -165,9 +158,7 @@ if (!$stmt) {
     responderError('No se pudo preparar la inserción de material pendiente.');
 }
 
-$fechaMP = $fechaActual;
-$fechaDP = null;
-$otroCampo = $nombreCliente !== '' ? $nombreCliente : null;
+$fechaMP = date('Y-m-d H:i:s');
 $clienteParaGuardar = $nombreCliente !== '' ? $nombreCliente : $razonSocial;
 
 $insertados = 0;
@@ -177,7 +168,7 @@ foreach ($productosValidos as $producto) {
 
     mysqli_stmt_bind_param(
         $stmt,
-        'ssssssssiiisss',
+        'ssssssssis',
         $numeroFactura,
         $razonSocial,
         $vendedorNombre,
@@ -187,10 +178,7 @@ foreach ($productosValidos as $producto) {
         $producto['sku'],
         $producto['descripcion'],
         $producto['cantidad'],
-        $otroProducto,
-        $fechaMP,
-        $fechaDP,
-        $otroCampo
+        $fechaMP
     );
 
     if (!mysqli_stmt_execute($stmt)) {
