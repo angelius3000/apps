@@ -164,6 +164,8 @@ $clienteParaGuardar = $nombreCliente !== '' ? $nombreCliente : $razonSocial;
 $insertados = 0;
 
 foreach ($productosValidos as $producto) {
+    $otroProducto = $producto['otro'] === '1' ? 1 : 0;
+
     mysqli_stmt_bind_param(
         $stmt,
         'ssssssssis',
