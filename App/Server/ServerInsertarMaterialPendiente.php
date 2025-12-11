@@ -32,7 +32,7 @@ function asegurarTablaMaterialPendiente(mysqli $conn): bool
         SkuMP VARCHAR(100) NOT NULL,
         DescripcionMP VARCHAR(255) NOT NULL,
         CantidadMP INT NOT NULL DEFAULT 0,
-        FechaMP DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FechaMP TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (MaterialPendienteID),
         INDEX idx_materialpendiente_documento (DocumentoMP),
         INDEX idx_materialpendiente_sku (SkuMP)
@@ -149,8 +149,8 @@ mysqli_begin_transaction($conn);
 
 $stmt = mysqli_prepare(
     $conn,
-    'INSERT INTO materialpendiente (DocumentoMP, RazonSocialMP, VendedorMP, SurtidorMP, ClienteMP, AduanaMP, SkuMP, DescripcionMP, CantidadMP, FechaMP) '
-        . 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO materialpendiente (DocumentoMP, RazonSocialMP, VendedorMP, SurtidorMP, ClienteMP, AduanaMP, SkuMP, DescripcionMP, CantidadMP) '
+        . 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)' 
 );
 
 if (!$stmt) {
@@ -158,7 +158,6 @@ if (!$stmt) {
     responderError('No se pudo preparar la inserción de material pendiente.');
 }
 
-$fechaMP = date('Y-m-d H:i:s');
 $clienteParaGuardar = $nombreCliente !== '' ? $nombreCliente : $razonSocial;
 
 $insertados = 0;
@@ -168,7 +167,7 @@ foreach ($productosValidos as $producto) {
 
     mysqli_stmt_bind_param(
         $stmt,
-        'ssssssssis',
+        'ssssssssi',
         $numeroFactura,
         $razonSocial,
         $vendedorNombre,
@@ -177,8 +176,7 @@ foreach ($productosValidos as $producto) {
         $aduanaNombre,
         $producto['sku'],
         $producto['descripcion'],
-        $producto['cantidad'],
-        $fechaMP
+        $producto['cantidad']
     );
 
     if (!mysqli_stmt_execute($stmt)) {
