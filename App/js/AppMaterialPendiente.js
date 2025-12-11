@@ -637,7 +637,7 @@ $(document).ready(function() {
     enfocarCampo($inputNombreCliente);
   });
 
-  $inputVendedorPendienteOtro.on('input', function() {
+  $inputVendedorPendienteOtro.on('blur', function() {
     if (esVendedorOtro()) {
       actualizarCampoSurtidor();
     }
