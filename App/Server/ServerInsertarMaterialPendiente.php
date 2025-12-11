@@ -21,24 +21,24 @@ if (!$conn) {
 
 function asegurarTablaMaterialPendiente(mysqli $conn): bool
 {
-    $sqlCrearTabla = "CREATE TABLE IF NOT EXISTS MaterialPendiente (
+    $sqlCrearTabla = "CREATE TABLE IF NOT EXISTS materialpendiente (
         MaterialPendienteID INT NOT NULL AUTO_INCREMENT,
-        NumeroFactura VARCHAR(100) NOT NULL,
-        Sku VARCHAR(100) NOT NULL,
-        Cliente VARCHAR(255) NOT NULL,
-        Cantidad INT NOT NULL DEFAULT 0,
-        Fecha DATE NOT NULL,
-        Surtidor VARCHAR(255) DEFAULT NULL,
-        Vendedor VARCHAR(255) DEFAULT NULL,
-        Aduana VARCHAR(255) DEFAULT NULL,
-        OtroProducto TINYINT(1) NOT NULL DEFAULT 0,
+        DocumentoMP VARCHAR(100) NOT NULL,
+        RazonSocialMP VARCHAR(255) NOT NULL,
+        VendedorMP VARCHAR(255) DEFAULT NULL,
+        SurtidorMP VARCHAR(255) DEFAULT NULL,
+        ClienteMP VARCHAR(255) NOT NULL,
+        AduanaMP VARCHAR(255) DEFAULT NULL,
+        SkuMP VARCHAR(100) NOT NULL,
         DescripcionMP VARCHAR(255) NOT NULL,
+        CantidadMP INT NOT NULL DEFAULT 0,
+        OtroProductoMP TINYINT(1) NOT NULL DEFAULT 0,
         FechaMP DATE NOT NULL,
         FechaDP DATE DEFAULT NULL,
-        Otro VARCHAR(255) DEFAULT NULL,
+        OtraInfoMP VARCHAR(255) DEFAULT NULL,
         PRIMARY KEY (MaterialPendienteID),
-        INDEX idx_materialpendiente_factura (NumeroFactura),
-        INDEX idx_materialpendiente_sku (Sku)
+        INDEX idx_materialpendiente_documento (DocumentoMP),
+        INDEX idx_materialpendiente_sku (SkuMP)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 
     return @mysqli_query($conn, $sqlCrearTabla) === true;
@@ -91,6 +91,8 @@ if ($numeroFactura === '' || $clienteId <= 0 || empty($productos)) {
 }
 
 $clienteNombre = obtenerTextoCatalogo($conn, 'clientes', 'CLIENTEID', 'NombreCliente', $clienteId);
+
+$razonSocial = $clienteNombre !== '' ? $clienteNombre : 'Cliente #' . $clienteId;
 
 $VENDEDOR_OTRO_ID = 22;
 if ($vendedorId === $VENDEDOR_OTRO_ID) {
@@ -154,7 +156,7 @@ mysqli_begin_transaction($conn);
 
 $stmt = mysqli_prepare(
     $conn,
-    'INSERT INTO MaterialPendiente (NumeroFactura, Sku, Cliente, Cantidad, Fecha, Surtidor, Vendedor, Aduana, OtroProducto, DescripcionMP, FechaMP, FechaDP, Otro) '
+    'INSERT INTO materialpendiente (DocumentoMP, RazonSocialMP, VendedorMP, SurtidorMP, ClienteMP, AduanaMP, SkuMP, DescripcionMP, CantidadMP, OtroProductoMP, FechaMP, FechaDP, OtraInfoMP) '
         . 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 );
 
@@ -166,24 +168,26 @@ if (!$stmt) {
 $fechaMP = $fechaActual;
 $fechaDP = null;
 $otroCampo = $nombreCliente !== '' ? $nombreCliente : null;
-$clienteParaGuardar = $clienteNombre !== '' ? $clienteNombre : $nombreCliente;
+$clienteParaGuardar = $nombreCliente !== '' ? $nombreCliente : $razonSocial;
 
 $insertados = 0;
 
 foreach ($productosValidos as $producto) {
+    $otroProducto = $producto['otro'] === '1' ? 1 : 0;
+
     mysqli_stmt_bind_param(
         $stmt,
-        'sssisssssssss',
+        'ssssssssiiisss',
         $numeroFactura,
-        $producto['sku'],
-        $clienteParaGuardar,
-        $producto['cantidad'],
-        $fechaActual,
-        $surtidorValor,
+        $razonSocial,
         $vendedorNombre,
+        $surtidorValor,
+        $clienteParaGuardar,
         $aduanaNombre,
-        $producto['otro'],
+        $producto['sku'],
         $producto['descripcion'],
+        $producto['cantidad'],
+        $otroProducto,
         $fechaMP,
         $fechaDP,
         $otroCampo
