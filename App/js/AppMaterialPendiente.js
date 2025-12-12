@@ -654,7 +654,7 @@ $(document).ready(function() {
 
   function prepararRegistroEntregas() {
     if ($registroEntregasBody.length) {
-      $registroEntregasBody.html('<tr class="text-muted"><td colspan="6" class="text-center">Cargando entregas…</td></tr>');
+$registroEntregasBody.html('<tr class="text-muted"><td colspan="6" class="text-center">Cargando entregas…</td></tr>');
     }
   }
 
