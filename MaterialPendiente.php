@@ -308,6 +308,70 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                             </div>
                         </div>
 
+                        <div class="row mt-3">
+                            <div class="col-lg-12">
+                                <div class="card d-none" id="PanelEntregaMaterialPendiente">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                                            <div>
+                                                <h5 class="mb-1" id="DetalleMaterialPendienteTitulo">Selecciona un folio para gestionar su entrega</h5>
+                                                <div class="small text-muted" id="DetalleMaterialPendienteInfo"></div>
+                                            </div>
+                                            <div class="d-flex gap-2">
+                                                <button type="button" class="btn btn-outline-secondary btn-sm" id="EntregarDocumentoCompleto">
+                                                    Entregar todo el documento
+                                                </button>
+                                                <button type="button" class="btn btn-light btn-sm" id="ReiniciarEntregas">
+                                                    Limpiar selección
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="alert alert-danger d-none" id="DetalleMaterialPendienteError" role="alert"></div>
+                                        <div class="alert alert-success d-none" id="DetalleMaterialPendienteExito" role="alert"></div>
+
+                                        <form id="FormularioEntregaMaterialPendiente" class="mt-3">
+                                            <input type="hidden" id="EntregaFolio" name="folio" value="">
+                                            <input type="hidden" id="EntregaDocumento" name="documento" value="">
+
+                                            <div class="table-responsive mb-3">
+                                                <table class="table table-sm mb-0" id="TablaPartidasEntrega">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>SKU</th>
+                                                            <th>Descripción</th>
+                                                            <th class="text-end">Pendiente</th>
+                                                            <th class="text-end" style="width: 180px;">Entregar</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="DetallePartidasPendientes">
+                                                        <tr class="text-muted">
+                                                            <td colspan="4" class="text-center">Selecciona un folio para ver sus partidas.</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            <div class="row g-3 mb-3">
+                                                <div class="col-lg-4 col-md-6 col-sm-12">
+                                                    <label class="form-label" for="EntregaRecibio">Nombre de quien recibe</label>
+                                                    <input type="text" class="form-control" id="EntregaRecibio" name="recibio" autocomplete="off" required>
+                                                </div>
+                                                <div class="col-lg-4 col-md-6 col-sm-12">
+                                                    <label class="form-label" for="EntregaAduana">Aduana que entrega</label>
+                                                    <input type="text" class="form-control" id="EntregaAduana" name="aduanaEntrega" autocomplete="off" required>
+                                                </div>
+                                            </div>
+
+                                            <div class="d-flex gap-2 justify-content-end">
+                                                <button type="submit" class="btn btn-primary" id="BtnRegistrarEntrega" disabled>Registrar entrega</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>

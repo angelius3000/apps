@@ -66,7 +66,7 @@ if (!empty($fechaFolio)) {
 
 $stmtPartidas = mysqli_prepare(
     $conn,
-    'SELECT SkuMP, DescripcionMP, CantidadMP FROM materialpendiente WHERE DocumentoMP = ? ORDER BY MaterialPendienteID ASC'
+    'SELECT MaterialPendienteID, SkuMP, DescripcionMP, CantidadMP FROM materialpendiente WHERE DocumentoMP = ? ORDER BY MaterialPendienteID ASC'
 );
 
 if (!$stmtPartidas) {
@@ -75,11 +75,12 @@ if (!$stmtPartidas) {
 
 mysqli_stmt_bind_param($stmtPartidas, 's', $documento);
 mysqli_stmt_execute($stmtPartidas);
-mysqli_stmt_bind_result($stmtPartidas, $sku, $descripcion, $cantidad);
+mysqli_stmt_bind_result($stmtPartidas, $partidaId, $sku, $descripcion, $cantidad);
 
 $partidas = [];
 while (mysqli_stmt_fetch($stmtPartidas)) {
     $partidas[] = [
+        'id' => (int) $partidaId,
         'sku' => $sku,
         'descripcion' => $descripcion,
         'cantidad' => (int) $cantidad
