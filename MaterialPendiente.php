@@ -147,6 +147,20 @@ $hayVendedoresPendientes = count($listaVendedoresPendientes) > 0;
 $hayAlmacenistasPendientes = count($listaAlmacenistasPendientes) > 0;
 $hayAduanasPendientes = count($listaAduanasPendientes) > 0;
 
+$listaMaterialPendiente = [];
+$queryMaterialPendiente = "SELECT DocumentoMP, RazonSocialMP, VendedorMP, SurtidorMP, ClienteMP, AduanaMP, MIN(FechaMP) AS FechaRegistro "
+    . "FROM materialpendiente GROUP BY DocumentoMP, RazonSocialMP, VendedorMP, SurtidorMP, ClienteMP, AduanaMP "
+    . "ORDER BY FechaRegistro DESC, DocumentoMP ASC";
+
+$resultadoMaterialPendiente = @mysqli_query($conn, $queryMaterialPendiente);
+
+if ($resultadoMaterialPendiente instanceof mysqli_result) {
+    while ($rowMaterialPendiente = mysqli_fetch_assoc($resultadoMaterialPendiente)) {
+        $listaMaterialPendiente[] = $rowMaterialPendiente;
+    }
+    mysqli_free_result($resultadoMaterialPendiente);
+}
+
 $claseBody = '';
 $claseLogo = '';
 $iconoFlecha = 'first_page';
@@ -210,15 +224,65 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                             <div class="col-lg-12">
                                 <div class="card">
                                     <div class="card-body">
-                                        <div class="d-flex align-items-center">
+                                        <div class="d-flex align-items-center mb-3">
                                             <i class="material-icons-two-tone me-2">pending_actions</i>
                                             <div>
                                                 Registra y gestiona el material pendiente de entrega para tus clientes.
                                             </div>
                                         </div>
-                                        <p class="text-muted mb-0 mt-3">
-                                            Esta sección pronto mostrará el listado de facturas con material pendiente. Por ahora, puedes comenzar a capturar la información desde el botón «Agregar Pendiente».
-                                        </p>
+                                        <div class="table-responsive">
+                                            <table class="table align-middle mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="text-muted">Folio</th>
+                                                        <th class="text-muted">Fecha</th>
+                                                        <th class="text-muted">Número de documento</th>
+                                                        <th class="text-muted">Razón Social</th>
+                                                        <th class="text-muted">Vendedor</th>
+                                                        <th class="text-muted">Surtidor</th>
+                                                        <th class="text-muted">Nombre del cliente</th>
+                                                        <th class="text-muted">Aduana</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php if (empty($listaMaterialPendiente)) : ?>
+                                                        <tr>
+                                                            <td colspan="8" class="text-center text-muted">No hay material pendiente registrado.</td>
+                                                        </tr>
+                                                    <?php else : ?>
+                                                        <?php foreach ($listaMaterialPendiente as $index => $materialPendiente) : ?>
+                                                            <?php
+                                                            $folio = $index + 1;
+                                                            $numeroDocumento = htmlspecialchars($materialPendiente['DocumentoMP'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                            $razonSocial = htmlspecialchars($materialPendiente['RazonSocialMP'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                            $vendedor = htmlspecialchars($materialPendiente['VendedorMP'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                            $surtidor = htmlspecialchars($materialPendiente['SurtidorMP'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                            $cliente = htmlspecialchars($materialPendiente['ClienteMP'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                            $aduana = htmlspecialchars($materialPendiente['AduanaMP'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                            $fechaRegistro = '';
+
+                                                            if (!empty($materialPendiente['FechaRegistro'])) {
+                                                                $marcaTemporal = strtotime((string) $materialPendiente['FechaRegistro']);
+                                                                if ($marcaTemporal !== false) {
+                                                                    $fechaRegistro = date('d/m/y H:i', $marcaTemporal);
+                                                                }
+                                                            }
+                                                            ?>
+                                                            <tr>
+                                                                <td><?php echo $folio; ?></td>
+                                                                <td><?php echo $fechaRegistro !== '' ? $fechaRegistro : '-'; ?></td>
+                                                                <td class="fw-semibold"><?php echo $numeroDocumento; ?></td>
+                                                                <td><?php echo $razonSocial; ?></td>
+                                                                <td><?php echo $vendedor !== '' ? $vendedor : '-'; ?></td>
+                                                                <td><?php echo $surtidor !== '' ? $surtidor : '-'; ?></td>
+                                                                <td><?php echo $cliente; ?></td>
+                                                                <td><?php echo $aduana !== '' ? $aduana : '-'; ?></td>
+                                                            </tr>
+                                                        <?php endforeach; ?>
+                                                    <?php endif; ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
