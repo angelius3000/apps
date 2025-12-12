@@ -26,6 +26,12 @@ $(document).ready(function() {
   var $inputAduanaPendienteOtro = $('#AduanaPendienteOtro');
   var $inputNombreCliente = $('#NombreClientePendiente');
   var $formularioPendiente = $('#FormularioAgregarPendiente');
+  var $tablaMaterialPendiente = $('#TablaMaterialPendiente');
+  var $modalDetallePartidas = $('#ModalPartidasMaterialPendiente');
+  var $detalleTitulo = $('#DetalleMaterialPendienteTitulo');
+  var $detalleInfo = $('#DetalleMaterialPendienteInfo');
+  var $detallePartidasBody = $('#DetallePartidasPendientes');
+  var $detalleError = $('#DetalleMaterialPendienteError');
   var VENDEDOR_OTRO_ID = '22';
   var ADUANA_OTRO_ID = '4';
   var partidasPendientes = [];
@@ -49,6 +55,10 @@ $(document).ready(function() {
     }
 
     return texto.substring(0, maximo - 1) + '…';
+  }
+
+  function escaparHtml(texto) {
+    return $('<div>').text(texto == null ? '' : texto).html();
   }
 
   function enfocarCampo($elemento) {
@@ -488,6 +498,109 @@ $(document).ready(function() {
     window.alert(texto);
   }
 
+  function prepararModalDetalle(documento, folio) {
+    var titulo = 'Partidas pendientes';
+
+    if (folio) {
+      titulo += ' - Folio #' + folio;
+    }
+
+    if ($detalleTitulo.length) {
+      $detalleTitulo.text(titulo);
+    }
+
+    if ($detalleInfo.length) {
+      $detalleInfo.text(documento ? 'Documento: ' + documento : '');
+    }
+
+    if ($detalleError.length) {
+      $detalleError.addClass('d-none').text('');
+    }
+
+    if ($detallePartidasBody.length) {
+      $detallePartidasBody.html('<tr class="text-muted"><td colspan="3" class="text-center">Cargando partidas…</td></tr>');
+    }
+  }
+
+  function renderizarDetalleFactura(factura, documentoFallback, folioFallback) {
+    if (!$detalleTitulo.length || !$detalleInfo.length) {
+      return;
+    }
+
+    var folio = factura && factura.folio ? factura.folio : folioFallback;
+    var documento = factura && factura.documento ? factura.documento : documentoFallback;
+    var secciones = [];
+
+    if (documento) {
+      secciones.push('Documento: ' + documento);
+    }
+
+    if (factura && factura.fecha) {
+      secciones.push('Fecha: ' + factura.fecha);
+    }
+
+    if (factura && factura.razonSocial) {
+      secciones.push('Razón Social: ' + factura.razonSocial);
+    }
+
+    if (factura && factura.vendedor) {
+      secciones.push('Vendedor: ' + factura.vendedor);
+    }
+
+    if (factura && factura.surtidor) {
+      secciones.push('Surtidor: ' + factura.surtidor);
+    }
+
+    if (factura && factura.cliente) {
+      secciones.push('Cliente: ' + factura.cliente);
+    }
+
+    if (factura && factura.aduana) {
+      secciones.push('Aduana: ' + factura.aduana);
+    }
+
+    var titulo = 'Partidas pendientes';
+
+    if (folio) {
+      titulo += ' - Folio #' + folio;
+    }
+
+    $detalleTitulo.text(titulo);
+    $detalleInfo.text(secciones.join(' • '));
+  }
+
+  function renderizarDetallePartidas(partidas) {
+    if (!$detallePartidasBody.length) {
+      return;
+    }
+
+    if (!partidas || !partidas.length) {
+      $detallePartidasBody.html('<tr class="text-muted"><td colspan="3" class="text-center">El folio no tiene partidas pendientes registradas.</td></tr>');
+      return;
+    }
+
+    var filas = partidas.map(function(partida) {
+      var cantidad = partida && partida.cantidad ? partida.cantidad : 0;
+      return '<tr>' +
+        '<td>' + escaparHtml(partida && partida.sku) + '</td>' +
+        '<td>' + escaparHtml(partida && partida.descripcion) + '</td>' +
+        '<td class="text-end">' + cantidad + '</td>' +
+        '</tr>';
+    }).join('');
+
+    $detallePartidasBody.html(filas);
+  }
+
+  function mostrarErrorDetalle(mensaje) {
+    if ($detalleError.length) {
+      $detalleError.removeClass('d-none').text(mensaje || 'Ocurrió un problema al cargar las partidas.');
+    }
+
+    if ($detallePartidasBody.length) {
+      $detallePartidasBody.html('<tr class="text-muted"><td colspan="3" class="text-center">No se pudieron cargar las partidas.</td></tr>');
+    }
+  }
+
   $modal.on('shown.bs.modal', function() {
     $selectClientes.each(function() {
       inicializarSelectCliente($(this));
@@ -581,6 +694,38 @@ $(document).ready(function() {
       $inputAduanaPendienteOtro.prop('required', false).val('');
     }
   });
+
+  if ($tablaMaterialPendiente.length && $modalDetallePartidas.length) {
+    $tablaMaterialPendiente.on('click', '.material-pendiente-row', function() {
+      var folio = $(this).data('folio');
+      var documento = $(this).data('documento') || '';
+
+      if (!folio) {
+        return;
+      }
+
+      prepararModalDetalle(documento, folio);
+      $modalDetallePartidas.modal('show');
+
+      $.ajax({
+        url: 'App/Server/ServerObtenerPartidasMaterialPendiente.php',
+        method: 'GET',
+        dataType: 'json',
+        data: { folio: folio }
+      }).done(function(respuesta) {
+        if (respuesta && respuesta.success) {
+          renderizarDetalleFactura(respuesta.factura || {}, documento, folio);
+          renderizarDetallePartidas(respuesta.partidas || []);
+          return;
+        }
+
+        var mensaje = respuesta && respuesta.message ? respuesta.message : 'No se pudieron cargar las partidas.';
+        mostrarErrorDetalle(mensaje);
+      }).fail(function() {
+        mostrarErrorDetalle('No se pudieron cargar las partidas.');
+      });
+    });
+  }
 
   $tablaBodyPartidas.on('click', '.editar-partida', function(evento) {
     evento.preventDefault();
