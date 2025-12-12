@@ -251,7 +251,7 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                             </div>
                                         </div>
                                         <div class="table-responsive">
-                                            <table class="table align-middle mb-0">
+                                            <table class="table align-middle mb-0 table-hover" id="TablaMaterialPendiente">
                                                 <thead>
                                                     <tr>
                                                         <th class="text-muted">Folio</th>
@@ -288,7 +288,7 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                                                 }
                                                             }
                                                             ?>
-                                                            <tr>
+                                                            <tr class="material-pendiente-row" data-folio="<?php echo $folio; ?>" data-documento="<?php echo $numeroDocumento; ?>" style="cursor: pointer;" role="button">
                                                                 <td><?php echo $folio !== '' ? $folio : '-'; ?></td>
                                                                 <td><?php echo $fechaRegistro !== '' ? $fechaRegistro : '-'; ?></td>
                                                                 <td class="fw-semibold"><?php echo $numeroDocumento; ?></td>
