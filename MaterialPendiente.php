@@ -388,6 +388,7 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                                     <thead>
                                                         <tr>
                                                             <th>Fecha</th>
+                                                            <th>SKU</th>
                                                             <th>Producto</th>
                                                             <th class="text-end">Cantidad</th>
                                                             <th>Recibió</th>
@@ -396,7 +397,7 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                                     </thead>
                                                     <tbody id="RegistroEntregasBody">
                                                         <tr class="text-muted">
-                                                            <td colspan="5" class="text-center">Selecciona un folio para ver su historial de entregas.</td>
+                                                            <td colspan="6" class="text-center">Selecciona un folio para ver su historial de entregas.</td>
                                                         </tr>
                                                     </tbody>
                                                 </table>

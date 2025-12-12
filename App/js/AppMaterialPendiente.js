@@ -648,13 +648,13 @@ $(document).ready(function() {
 
   function limpiarRegistroEntregasSeleccion() {
     if ($registroEntregasBody.length) {
-      $registroEntregasBody.html('<tr class="text-muted"><td colspan="5" class="text-center">Selecciona un folio para ver su historial de entregas.</td></tr>');
+      $registroEntregasBody.html('<tr class="text-muted"><td colspan="6" class="text-center">Selecciona un folio para ver su historial de entregas.</td></tr>');
     }
   }
 
   function prepararRegistroEntregas() {
     if ($registroEntregasBody.length) {
-      $registroEntregasBody.html('<tr class="text-muted"><td colspan="5" class="text-center">Cargando entregas…</td></tr>');
+$registroEntregasBody.html('<tr class="text-muted"><td colspan="6" class="text-center">Cargando entregas…</td></tr>');
     }
   }
 
@@ -664,28 +664,15 @@ $(document).ready(function() {
     }
 
     if (!entregas || !entregas.length) {
-      $registroEntregasBody.html('<tr class="text-muted"><td colspan="5" class="text-center">No hay entregas registradas para este folio.</td></tr>');
+      $registroEntregasBody.html('<tr class="text-muted"><td colspan="6" class="text-center">No hay entregas registradas para este folio.</td></tr>');
       return;
     }
 
     var filas = entregas.map(function(entrega) {
-      var producto = '';
       var sku = entrega && entrega.sku ? entrega.sku : '';
       var descripcion = entrega && entrega.descripcion ? entrega.descripcion : '';
-      var partidaId = entrega && entrega.partidaId ? entrega.partidaId : '';
-
-      if (sku) {
-        producto += sku;
-      }
-
-      if (descripcion) {
-        producto += (producto ? ' - ' : '') + descripcion;
-      }
-
-      if (!producto && partidaId) {
-        producto = 'Partida #' + partidaId;
-      }
-
+      var producto = descripcion ? descripcion : '-';
+      
       var cantidad = entrega && entrega.cantidad ? entrega.cantidad : 0;
       var recibio = entrega && entrega.recibio ? entrega.recibio : '-';
       var aduana = entrega && entrega.aduana ? entrega.aduana : '-';
@@ -693,6 +680,7 @@ $(document).ready(function() {
 
       return '<tr>' +
         '<td>' + escaparHtml(fecha) + '</td>' +
+        '<td>' + escaparHtml(sku || '-') + '</td>' +
         '<td>' + escaparHtml(producto) + '</td>' +
         '<td class="text-end">' + cantidad + '</td>' +
         '<td>' + escaparHtml(recibio) + '</td>' +
@@ -717,7 +705,7 @@ $(document).ready(function() {
     }
 
     if ($registroEntregasBody.length) {
-      $registroEntregasBody.html('<tr class="text-muted"><td colspan="5" class="text-center">No se pudieron cargar las entregas.</td></tr>');
+      $registroEntregasBody.html('<tr class="text-muted"><td colspan="6" class="text-center">No se pudieron cargar las entregas.</td></tr>');
     }
 
     if ($btnRegistrarEntrega.length) {
