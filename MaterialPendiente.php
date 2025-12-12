@@ -251,7 +251,7 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                             </div>
                                         </div>
                                         <div class="table-responsive">
-                                            <table class="table align-middle mb-0">
+                                            <table class="table align-middle mb-0 table-hover" id="TablaMaterialPendiente">
                                                 <thead>
                                                     <tr>
                                                         <th class="text-muted">Folio</th>
@@ -288,7 +288,7 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                                                 }
                                                             }
                                                             ?>
-                                                            <tr>
+                                                            <tr class="material-pendiente-row" data-folio="<?php echo $folio; ?>" data-documento="<?php echo $numeroDocumento; ?>" style="cursor: pointer;" role="button">
                                                                 <td><?php echo $folio !== '' ? $folio : '-'; ?></td>
                                                                 <td><?php echo $fechaRegistro !== '' ? $fechaRegistro : '-'; ?></td>
                                                                 <td class="fw-semibold"><?php echo $numeroDocumento; ?></td>
@@ -302,6 +302,106 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                                     <?php endif; ?>
                                                 </tbody>
                                             </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-lg-12">
+                                <div class="card d-none" id="PanelEntregaMaterialPendiente">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                                            <div>
+                                                <h5 class="mb-1" id="DetalleMaterialPendienteTitulo">Selecciona un folio para gestionar su entrega</h5>
+                                                <div class="small text-muted" id="DetalleMaterialPendienteInfo"></div>
+                                            </div>
+                                            <div class="d-flex gap-2">
+                                                <button type="button" class="btn btn-outline-secondary btn-sm" id="EntregarDocumentoCompleto">
+                                                    Entregar todo el documento
+                                                </button>
+                                                <button type="button" class="btn btn-light btn-sm" id="ReiniciarEntregas">
+                                                    Limpiar selección
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="alert alert-danger d-none" id="DetalleMaterialPendienteError" role="alert"></div>
+                                        <div class="alert alert-success d-none" id="DetalleMaterialPendienteExito" role="alert"></div>
+
+                                        <form id="FormularioEntregaMaterialPendiente" class="mt-3">
+                                            <input type="hidden" id="EntregaFolio" name="folio" value="">
+                                            <input type="hidden" id="EntregaDocumento" name="documento" value="">
+
+                                            <div class="table-responsive mb-3">
+                                                <table class="table table-sm mb-0" id="TablaPartidasEntrega">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>SKU</th>
+                                                            <th>Descripción</th>
+                                                            <th class="text-end">Pendiente</th>
+                                                            <th class="text-end" style="width: 180px;">Entregar</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="DetallePartidasPendientes">
+                                                        <tr class="text-muted">
+                                                            <td colspan="4" class="text-center">Selecciona un folio para ver sus partidas.</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            <div class="row g-3 mb-3">
+                                                <div class="col-lg-4 col-md-6 col-sm-12">
+                                                    <label class="form-label" for="EntregaRecibio">Nombre de quien recibe</label>
+                                                    <input type="text" class="form-control" id="EntregaRecibio" name="recibio" autocomplete="off" required>
+                                                </div>
+                                                <div class="col-lg-4 col-md-6 col-sm-12">
+                                                    <label class="form-label" for="EntregaAduana">Aduana que entrega</label>
+                                                    <select class="form-select select-aduana-entrega" id="EntregaAduana" data-placeholder="Selecciona aduana" <?php echo $hayAduanasPendientes ? '' : 'disabled'; ?> required>
+                                                        <?php echo $opcionesAduanasPendientes; ?>
+                                                    </select>
+                                                    <?php if (!$hayAduanasPendientes) : ?>
+                                                        <small class="form-text text-muted">No hay aduanas disponibles para seleccionar.</small>
+                                                    <?php endif; ?>
+                                                    <div id="EntregaAduanaOtroContainer" class="mt-2 d-none">
+                                                        <label for="EntregaAduanaOtro" class="form-label">Nombre de la aduana</label>
+                                                        <input type="text" class="form-control" id="EntregaAduanaOtro" autocomplete="off">
+                                                    </div>
+                                                    <input type="hidden" id="EntregaAduanaTexto" name="aduanaEntrega" value="">
+                                                </div>
+                                            </div>
+
+                                            <div class="d-flex gap-2 justify-content-end">
+                                                <button type="submit" class="btn btn-primary" id="BtnRegistrarEntrega" disabled>Registrar entrega</button>
+                                            </div>
+                                        </form>
+
+                                        <div class="mt-4">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <i class="material-icons-two-tone me-2">history</i>
+                                                <h6 class="mb-0">Registro de entregas</h6>
+                                            </div>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm mb-0" id="TablaRegistroEntregas">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Fecha</th>
+                                                            <th>SKU</th>
+                                                            <th>Producto</th>
+                                                            <th class="text-end">Cantidad</th>
+                                                            <th>Recibió</th>
+                                                            <th>Aduana</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="RegistroEntregasBody">
+                                                        <tr class="text-muted">
+                                                            <td colspan="6" class="text-center">Selecciona un folio para ver su historial de entregas.</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
