@@ -163,3 +163,37 @@
     </div>
 </div>
 
+<div class="modal fade" id="ModalPartidasMaterialPendiente" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="DetalleMaterialPendienteTitulo">Partidas pendientes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="btn-close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="small text-muted mb-3" id="DetalleMaterialPendienteInfo"></div>
+                <div class="alert alert-danger d-none" id="DetalleMaterialPendienteError" role="alert"></div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>Descripción</th>
+                                <th class="text-end">Cantidad</th>
+                            </tr>
+                        </thead>
+                        <tbody id="DetallePartidasPendientes">
+                            <tr class="text-muted">
+                                <td colspan="3" class="text-center">Selecciona un folio para ver sus partidas.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
