@@ -148,9 +148,29 @@ $hayAlmacenistasPendientes = count($listaAlmacenistasPendientes) > 0;
 $hayAduanasPendientes = count($listaAduanasPendientes) > 0;
 
 $listaMaterialPendiente = [];
-$queryMaterialPendiente = "SELECT DocumentoMP, RazonSocialMP, VendedorMP, SurtidorMP, ClienteMP, AduanaMP, MIN(FechaMP) AS FechaRegistro "
-    . "FROM materialpendiente GROUP BY DocumentoMP, RazonSocialMP, VendedorMP, SurtidorMP, ClienteMP, AduanaMP "
-    . "ORDER BY FechaRegistro DESC, DocumentoMP ASC";
+
+function asegurarTablaFacturaMPListado(mysqli $conn): void
+{
+    $sql = "CREATE TABLE IF NOT EXISTS facturamp (
+        FacturaMPID INT NOT NULL AUTO_INCREMENT,
+        FechaFMP TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        DocumentoFMP VARCHAR(100) NOT NULL,
+        RazonSocialFMP VARCHAR(255) NOT NULL,
+        VendedorFMP VARCHAR(255) DEFAULT NULL,
+        SurtidorFMP VARCHAR(255) DEFAULT NULL,
+        ClienteFMP VARCHAR(255) NOT NULL,
+        AduanaFMP VARCHAR(255) DEFAULT NULL,
+        PRIMARY KEY (FacturaMPID),
+        INDEX idx_facturamp_documento (DocumentoFMP)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+    @mysqli_query($conn, $sql);
+}
+
+asegurarTablaFacturaMPListado($conn);
+
+$queryMaterialPendiente = "SELECT FacturaMPID, FechaFMP, DocumentoFMP, RazonSocialFMP, VendedorFMP, SurtidorFMP, ClienteFMP, AduanaFMP "
+    . "FROM facturamp ORDER BY FacturaMPID DESC";
 
 $resultadoMaterialPendiente = @mysqli_query($conn, $queryMaterialPendiente);
 
@@ -250,26 +270,26 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                                             <td colspan="8" class="text-center text-muted">No hay material pendiente registrado.</td>
                                                         </tr>
                                                     <?php else : ?>
-                                                        <?php foreach ($listaMaterialPendiente as $index => $materialPendiente) : ?>
+                                                        <?php foreach ($listaMaterialPendiente as $materialPendiente) : ?>
                                                             <?php
-                                                            $folio = $index + 1;
-                                                            $numeroDocumento = htmlspecialchars($materialPendiente['DocumentoMP'] ?? '', ENT_QUOTES, 'UTF-8');
-                                                            $razonSocial = htmlspecialchars($materialPendiente['RazonSocialMP'] ?? '', ENT_QUOTES, 'UTF-8');
-                                                            $vendedor = htmlspecialchars($materialPendiente['VendedorMP'] ?? '', ENT_QUOTES, 'UTF-8');
-                                                            $surtidor = htmlspecialchars($materialPendiente['SurtidorMP'] ?? '', ENT_QUOTES, 'UTF-8');
-                                                            $cliente = htmlspecialchars($materialPendiente['ClienteMP'] ?? '', ENT_QUOTES, 'UTF-8');
-                                                            $aduana = htmlspecialchars($materialPendiente['AduanaMP'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                            $folio = isset($materialPendiente['FacturaMPID']) ? (int) $materialPendiente['FacturaMPID'] : '';
+                                                            $numeroDocumento = htmlspecialchars($materialPendiente['DocumentoFMP'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                            $razonSocial = htmlspecialchars($materialPendiente['RazonSocialFMP'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                            $vendedor = htmlspecialchars($materialPendiente['VendedorFMP'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                            $surtidor = htmlspecialchars($materialPendiente['SurtidorFMP'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                            $cliente = htmlspecialchars($materialPendiente['ClienteFMP'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                            $aduana = htmlspecialchars($materialPendiente['AduanaFMP'] ?? '', ENT_QUOTES, 'UTF-8');
                                                             $fechaRegistro = '';
 
-                                                            if (!empty($materialPendiente['FechaRegistro'])) {
-                                                                $marcaTemporal = strtotime((string) $materialPendiente['FechaRegistro']);
+                                                            if (!empty($materialPendiente['FechaFMP'])) {
+                                                                $marcaTemporal = strtotime((string) $materialPendiente['FechaFMP']);
                                                                 if ($marcaTemporal !== false) {
                                                                     $fechaRegistro = date('d/m/y H:i', $marcaTemporal);
                                                                 }
                                                             }
                                                             ?>
                                                             <tr>
-                                                                <td><?php echo $folio; ?></td>
+                                                                <td><?php echo $folio !== '' ? $folio : '-'; ?></td>
                                                                 <td><?php echo $fechaRegistro !== '' ? $fechaRegistro : '-'; ?></td>
                                                                 <td class="fw-semibold"><?php echo $numeroDocumento; ?></td>
                                                                 <td><?php echo $razonSocial; ?></td>
