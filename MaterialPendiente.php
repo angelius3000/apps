@@ -147,6 +147,40 @@ $hayVendedoresPendientes = count($listaVendedoresPendientes) > 0;
 $hayAlmacenistasPendientes = count($listaAlmacenistasPendientes) > 0;
 $hayAduanasPendientes = count($listaAduanasPendientes) > 0;
 
+$listaMaterialPendiente = [];
+
+function asegurarTablaFacturaMPListado(mysqli $conn): void
+{
+    $sql = "CREATE TABLE IF NOT EXISTS facturamp (
+        FacturaMPID INT NOT NULL AUTO_INCREMENT,
+        FechaFMP TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        DocumentoFMP VARCHAR(100) NOT NULL,
+        RazonSocialFMP VARCHAR(255) NOT NULL,
+        VendedorFMP VARCHAR(255) DEFAULT NULL,
+        SurtidorFMP VARCHAR(255) DEFAULT NULL,
+        ClienteFMP VARCHAR(255) NOT NULL,
+        AduanaFMP VARCHAR(255) DEFAULT NULL,
+        PRIMARY KEY (FacturaMPID),
+        INDEX idx_facturamp_documento (DocumentoFMP)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+    @mysqli_query($conn, $sql);
+}
+
+asegurarTablaFacturaMPListado($conn);
+
+$queryMaterialPendiente = "SELECT FacturaMPID, FechaFMP, DocumentoFMP, RazonSocialFMP, VendedorFMP, SurtidorFMP, ClienteFMP, AduanaFMP "
+    . "FROM facturamp ORDER BY FacturaMPID DESC";
+
+$resultadoMaterialPendiente = @mysqli_query($conn, $queryMaterialPendiente);
+
+if ($resultadoMaterialPendiente instanceof mysqli_result) {
+    while ($rowMaterialPendiente = mysqli_fetch_assoc($resultadoMaterialPendiente)) {
+        $listaMaterialPendiente[] = $rowMaterialPendiente;
+    }
+    mysqli_free_result($resultadoMaterialPendiente);
+}
+
 $claseBody = '';
 $claseLogo = '';
 $iconoFlecha = 'first_page';
@@ -210,15 +244,65 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                             <div class="col-lg-12">
                                 <div class="card">
                                     <div class="card-body">
-                                        <div class="d-flex align-items-center">
+                                        <div class="d-flex align-items-center mb-3">
                                             <i class="material-icons-two-tone me-2">pending_actions</i>
                                             <div>
                                                 Registra y gestiona el material pendiente de entrega para tus clientes.
                                             </div>
                                         </div>
-                                        <p class="text-muted mb-0 mt-3">
-                                            Esta sección pronto mostrará el listado de facturas con material pendiente. Por ahora, puedes comenzar a capturar la información desde el botón «Agregar Pendiente».
-                                        </p>
+                                        <div class="table-responsive">
+                                            <table class="table align-middle mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="text-muted">Folio</th>
+                                                        <th class="text-muted">Fecha</th>
+                                                        <th class="text-muted">Número de documento</th>
+                                                        <th class="text-muted">Razón Social</th>
+                                                        <th class="text-muted">Vendedor</th>
+                                                        <th class="text-muted">Surtidor</th>
+                                                        <th class="text-muted">Nombre del cliente</th>
+                                                        <th class="text-muted">Aduana</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php if (empty($listaMaterialPendiente)) : ?>
+                                                        <tr>
+                                                            <td colspan="8" class="text-center text-muted">No hay material pendiente registrado.</td>
+                                                        </tr>
+                                                    <?php else : ?>
+                                                        <?php foreach ($listaMaterialPendiente as $materialPendiente) : ?>
+                                                            <?php
+                                                            $folio = isset($materialPendiente['FacturaMPID']) ? (int) $materialPendiente['FacturaMPID'] : '';
+                                                            $numeroDocumento = htmlspecialchars($materialPendiente['DocumentoFMP'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                            $razonSocial = htmlspecialchars($materialPendiente['RazonSocialFMP'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                            $vendedor = htmlspecialchars($materialPendiente['VendedorFMP'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                            $surtidor = htmlspecialchars($materialPendiente['SurtidorFMP'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                            $cliente = htmlspecialchars($materialPendiente['ClienteFMP'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                            $aduana = htmlspecialchars($materialPendiente['AduanaFMP'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                            $fechaRegistro = '';
+
+                                                            if (!empty($materialPendiente['FechaFMP'])) {
+                                                                $marcaTemporal = strtotime((string) $materialPendiente['FechaFMP']);
+                                                                if ($marcaTemporal !== false) {
+                                                                    $fechaRegistro = date('d/m/y H:i', $marcaTemporal);
+                                                                }
+                                                            }
+                                                            ?>
+                                                            <tr>
+                                                                <td><?php echo $folio !== '' ? $folio : '-'; ?></td>
+                                                                <td><?php echo $fechaRegistro !== '' ? $fechaRegistro : '-'; ?></td>
+                                                                <td class="fw-semibold"><?php echo $numeroDocumento; ?></td>
+                                                                <td><?php echo $razonSocial; ?></td>
+                                                                <td><?php echo $vendedor !== '' ? $vendedor : '-'; ?></td>
+                                                                <td><?php echo $surtidor !== '' ? $surtidor : '-'; ?></td>
+                                                                <td><?php echo $cliente; ?></td>
+                                                                <td><?php echo $aduana !== '' ? $aduana : '-'; ?></td>
+                                                            </tr>
+                                                        <?php endforeach; ?>
+                                                    <?php endif; ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
