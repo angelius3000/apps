@@ -24,6 +24,38 @@ function referenciarValores(array &$array): array
     return $array;
 }
 
+function asegurarTablaEntregas(mysqli $conn, string $baseDatos): void
+{
+    $crearTablaSQL = "CREATE TABLE IF NOT EXISTS materialpendiente_entregas (\n        EntregaID INT NOT NULL AUTO_INCREMENT,\n        MaterialPendienteID INT NOT NULL,\n        FolioID INT NOT NULL,\n        Documento VARCHAR(100) NOT NULL,\n        CantidadEntregada INT NOT NULL,\n        Recibio VARCHAR(255) NOT NULL,\n        AduanaEntrega VARCHAR(255) NOT NULL,\n        SkuEntrega VARCHAR(100) DEFAULT NULL,\n        DescripcionEntrega VARCHAR(255) DEFAULT NULL,\n        FechaEntrega TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n        PRIMARY KEY (EntregaID),\n        INDEX idx_entrega_material (MaterialPendienteID),\n        INDEX idx_entrega_documento (Documento)\n    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+    @mysqli_query($conn, $crearTablaSQL);
+
+    $columnasRequeridas = [
+        'SkuEntrega' => "ALTER TABLE materialpendiente_entregas ADD COLUMN SkuEntrega VARCHAR(100) DEFAULT NULL AFTER AduanaEntrega",
+        'DescripcionEntrega' => "ALTER TABLE materialpendiente_entregas ADD COLUMN DescripcionEntrega VARCHAR(255) DEFAULT NULL AFTER SkuEntrega",
+    ];
+
+    foreach ($columnasRequeridas as $columna => $sqlAlter) {
+        $stmtColumna = mysqli_prepare(
+            $conn,
+            'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1'
+        );
+
+        if ($stmtColumna) {
+            $tabla = 'materialpendiente_entregas';
+            mysqli_stmt_bind_param($stmtColumna, 'sss', $baseDatos, $tabla, $columna);
+            mysqli_stmt_execute($stmtColumna);
+            mysqli_stmt_store_result($stmtColumna);
+
+            if (mysqli_stmt_num_rows($stmtColumna) === 0) {
+                @mysqli_query($conn, $sqlAlter);
+            }
+
+            mysqli_stmt_close($stmtColumna);
+        }
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     responderError('Método no permitido.', 405);
 }
@@ -31,6 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 if (!$conn) {
     responderError('No se pudo conectar a la base de datos.');
 }
+
+asegurarTablaEntregas($conn, $dbname ?? '');
 
 $folio = isset($_POST['folio']) ? (int) $_POST['folio'] : 0;
 $documento = isset($_POST['documento']) ? trim((string) $_POST['documento']) : '';
@@ -71,7 +105,7 @@ foreach ($partidas as $partida) {
 $idsPlaceholders = implode(',', array_fill(0, count($idsPartidas), '?'));
 $tipos = str_repeat('i', count($idsPartidas));
 
-$consulta = "SELECT MaterialPendienteID, CantidadMP FROM materialpendiente WHERE MaterialPendienteID IN ($idsPlaceholders) AND DocumentoMP = ?";
+$consulta = "SELECT MaterialPendienteID, CantidadMP, SkuMP, DescripcionMP FROM materialpendiente WHERE MaterialPendienteID IN ($idsPlaceholders) AND DocumentoMP = ?";
 $stmt = mysqli_prepare($conn, $consulta);
 if (!$stmt) {
     responderError('No se pudieron validar las partidas.');
@@ -84,7 +118,11 @@ $resultado = mysqli_stmt_get_result($stmt);
 
 $partidasDisponibles = [];
 while ($fila = mysqli_fetch_assoc($resultado)) {
-    $partidasDisponibles[(int) $fila['MaterialPendienteID']] = (int) $fila['CantidadMP'];
+    $partidasDisponibles[(int) $fila['MaterialPendienteID']] = [
+        'cantidad' => (int) $fila['CantidadMP'],
+        'sku' => isset($fila['SkuMP']) ? trim((string) $fila['SkuMP']) : '',
+        'descripcion' => isset($fila['DescripcionMP']) ? trim((string) $fila['DescripcionMP']) : '',
+    ];
 }
 
 mysqli_stmt_close($stmt);
@@ -95,13 +133,12 @@ if (count($partidasDisponibles) !== count($idsPartidas)) {
 
 mysqli_begin_transaction($conn);
 
-$crearTablaSQL = "CREATE TABLE IF NOT EXISTS materialpendiente_entregas (\n        EntregaID INT NOT NULL AUTO_INCREMENT,\n        MaterialPendienteID INT NOT NULL,\n        FolioID INT NOT NULL,\n        Documento VARCHAR(100) NOT NULL,\n        CantidadEntregada INT NOT NULL,\n        Recibio VARCHAR(255) NOT NULL,\n        AduanaEntrega VARCHAR(255) NOT NULL,\n        FechaEntrega TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n        PRIMARY KEY (EntregaID),\n        INDEX idx_entrega_material (MaterialPendienteID),\n        INDEX idx_entrega_documento (Documento)\n    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
-@mysqli_query($conn, $crearTablaSQL);
-
 foreach ($partidas as $partida) {
     $partidaId = (int) $partida['id'];
     $cantidadEntregada = (int) $partida['entregar'];
-    $pendienteActual = $partidasDisponibles[$partidaId];
+    $pendienteActual = $partidasDisponibles[$partidaId]['cantidad'];
+    $skuEntrega = $partidasDisponibles[$partidaId]['sku'];
+    $descripcionEntrega = $partidasDisponibles[$partidaId]['descripcion'];
 
     if ($cantidadEntregada > $pendienteActual) {
         mysqli_rollback($conn);
@@ -128,11 +165,11 @@ foreach ($partidas as $partida) {
 
     $stmtInsert = mysqli_prepare(
         $conn,
-        'INSERT INTO materialpendiente_entregas (MaterialPendienteID, FolioID, Documento, CantidadEntregada, Recibio, AduanaEntrega) VALUES (?, ?, ?, ?, ?, ?)'
+        'INSERT INTO materialpendiente_entregas (MaterialPendienteID, FolioID, Documento, CantidadEntregada, Recibio, AduanaEntrega, SkuEntrega, DescripcionEntrega) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     );
 
     if ($stmtInsert) {
-        mysqli_stmt_bind_param($stmtInsert, 'iisiss', $partidaId, $folio, $documento, $cantidadEntregada, $recibio, $aduanaEntrega);
+        mysqli_stmt_bind_param($stmtInsert, 'iisissss', $partidaId, $folio, $documento, $cantidadEntregada, $recibio, $aduanaEntrega, $skuEntrega, $descripcionEntrega);
         mysqli_stmt_execute($stmtInsert);
         mysqli_stmt_close($stmtInsert);
     }

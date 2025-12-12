@@ -11,6 +11,38 @@ function responderError(string $mensaje, int $codigo = 500): void
     exit;
 }
 
+function asegurarTablaEntregas(mysqli $conn, string $baseDatos): void
+{
+    $crearTablaSQL = "CREATE TABLE IF NOT EXISTS materialpendiente_entregas (\n        EntregaID INT NOT NULL AUTO_INCREMENT,\n        MaterialPendienteID INT NOT NULL,\n        FolioID INT NOT NULL,\n        Documento VARCHAR(100) NOT NULL,\n        CantidadEntregada INT NOT NULL,\n        Recibio VARCHAR(255) NOT NULL,\n        AduanaEntrega VARCHAR(255) NOT NULL,\n        SkuEntrega VARCHAR(100) DEFAULT NULL,\n        DescripcionEntrega VARCHAR(255) DEFAULT NULL,\n        FechaEntrega TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n        PRIMARY KEY (EntregaID),\n        INDEX idx_entrega_material (MaterialPendienteID),\n        INDEX idx_entrega_documento (Documento)\n    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+    @mysqli_query($conn, $crearTablaSQL);
+
+    $columnasRequeridas = [
+        'SkuEntrega' => "ALTER TABLE materialpendiente_entregas ADD COLUMN SkuEntrega VARCHAR(100) DEFAULT NULL AFTER AduanaEntrega",
+        'DescripcionEntrega' => "ALTER TABLE materialpendiente_entregas ADD COLUMN DescripcionEntrega VARCHAR(255) DEFAULT NULL AFTER SkuEntrega",
+    ];
+
+    foreach ($columnasRequeridas as $columna => $sqlAlter) {
+        $stmtColumna = mysqli_prepare(
+            $conn,
+            'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1'
+        );
+
+        if ($stmtColumna) {
+            $tabla = 'materialpendiente_entregas';
+            mysqli_stmt_bind_param($stmtColumna, 'sss', $baseDatos, $tabla, $columna);
+            mysqli_stmt_execute($stmtColumna);
+            mysqli_stmt_store_result($stmtColumna);
+
+            if (mysqli_stmt_num_rows($stmtColumna) === 0) {
+                @mysqli_query($conn, $sqlAlter);
+            }
+
+            mysqli_stmt_close($stmtColumna);
+        }
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     responderError('Método no permitido.', 405);
 }
@@ -18,6 +50,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 if (!$conn) {
     responderError('No se pudo conectar a la base de datos.');
 }
+
+$nombreBaseDatos = $dbname ?? '';
+asegurarTablaEntregas($conn, $nombreBaseDatos);
 
 $folio = isset($_GET['folio']) ? (int) $_GET['folio'] : 0;
 
@@ -89,6 +124,42 @@ while (mysqli_stmt_fetch($stmtPartidas)) {
 
 mysqli_stmt_close($stmtPartidas);
 
+$entregas = [];
+
+$stmtEntregas = mysqli_prepare(
+    $conn,
+    'SELECT EntregaID, MaterialPendienteID, CantidadEntregada, Recibio, AduanaEntrega, FechaEntrega, SkuEntrega, DescripcionEntrega FROM materialpendiente_entregas WHERE FolioID = ? ORDER BY FechaEntrega DESC, EntregaID DESC'
+);
+
+if ($stmtEntregas) {
+    mysqli_stmt_bind_param($stmtEntregas, 'i', $folio);
+    mysqli_stmt_execute($stmtEntregas);
+    mysqli_stmt_bind_result($stmtEntregas, $entregaId, $materialIdEntrega, $cantidadEntrega, $recibioEntrega, $aduanaEntrega, $fechaEntregaDb, $skuEntrega, $descripcionEntrega);
+
+    while (mysqli_stmt_fetch($stmtEntregas)) {
+        $fechaEntregaFormateada = '';
+        if (!empty($fechaEntregaDb)) {
+            $marcaEntrega = strtotime((string) $fechaEntregaDb);
+            if ($marcaEntrega !== false) {
+                $fechaEntregaFormateada = date('d/m/y H:i', $marcaEntrega);
+            }
+        }
+
+        $entregas[] = [
+            'id' => (int) $entregaId,
+            'partidaId' => (int) $materialIdEntrega,
+            'cantidad' => (int) $cantidadEntrega,
+            'recibio' => $recibioEntrega,
+            'aduana' => $aduanaEntrega,
+            'fecha' => $fechaEntregaFormateada,
+            'sku' => $skuEntrega,
+            'descripcion' => $descripcionEntrega,
+        ];
+    }
+
+    mysqli_stmt_close($stmtEntregas);
+}
+
 echo json_encode([
     'success' => true,
     'factura' => [
@@ -102,5 +173,6 @@ echo json_encode([
         'aduana' => $aduana,
     ],
     'partidas' => $partidas,
+    'entregas' => $entregas,
 ]);
 

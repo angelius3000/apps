@@ -377,6 +377,31 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                                 <button type="submit" class="btn btn-primary" id="BtnRegistrarEntrega" disabled>Registrar entrega</button>
                                             </div>
                                         </form>
+
+                                        <div class="mt-4">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <i class="material-icons-two-tone me-2">history</i>
+                                                <h6 class="mb-0">Registro de entregas</h6>
+                                            </div>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm mb-0" id="TablaRegistroEntregas">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Fecha</th>
+                                                            <th>Producto</th>
+                                                            <th class="text-end">Cantidad</th>
+                                                            <th>Recibió</th>
+                                                            <th>Aduana</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="RegistroEntregasBody">
+                                                        <tr class="text-muted">
+                                                            <td colspan="5" class="text-center">Selecciona un folio para ver su historial de entregas.</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

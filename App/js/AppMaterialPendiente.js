@@ -31,6 +31,7 @@ $(document).ready(function() {
   var $detalleTitulo = $('#DetalleMaterialPendienteTitulo');
   var $detalleInfo = $('#DetalleMaterialPendienteInfo');
   var $detallePartidasBody = $('#DetallePartidasPendientes');
+  var $registroEntregasBody = $('#RegistroEntregasBody');
   var $detalleError = $('#DetalleMaterialPendienteError');
   var $detalleExito = $('#DetalleMaterialPendienteExito');
   var $inputFolioEntrega = $('#EntregaFolio');
@@ -645,6 +646,63 @@ $(document).ready(function() {
     $detallePartidasBody.html(filas);
   }
 
+  function limpiarRegistroEntregasSeleccion() {
+    if ($registroEntregasBody.length) {
+      $registroEntregasBody.html('<tr class="text-muted"><td colspan="5" class="text-center">Selecciona un folio para ver su historial de entregas.</td></tr>');
+    }
+  }
+
+  function prepararRegistroEntregas() {
+    if ($registroEntregasBody.length) {
+      $registroEntregasBody.html('<tr class="text-muted"><td colspan="5" class="text-center">Cargando entregas…</td></tr>');
+    }
+  }
+
+  function renderizarRegistroEntregas(entregas) {
+    if (!$registroEntregasBody.length) {
+      return;
+    }
+
+    if (!entregas || !entregas.length) {
+      $registroEntregasBody.html('<tr class="text-muted"><td colspan="5" class="text-center">No hay entregas registradas para este folio.</td></tr>');
+      return;
+    }
+
+    var filas = entregas.map(function(entrega) {
+      var producto = '';
+      var sku = entrega && entrega.sku ? entrega.sku : '';
+      var descripcion = entrega && entrega.descripcion ? entrega.descripcion : '';
+      var partidaId = entrega && entrega.partidaId ? entrega.partidaId : '';
+
+      if (sku) {
+        producto += sku;
+      }
+
+      if (descripcion) {
+        producto += (producto ? ' - ' : '') + descripcion;
+      }
+
+      if (!producto && partidaId) {
+        producto = 'Partida #' + partidaId;
+      }
+
+      var cantidad = entrega && entrega.cantidad ? entrega.cantidad : 0;
+      var recibio = entrega && entrega.recibio ? entrega.recibio : '-';
+      var aduana = entrega && entrega.aduana ? entrega.aduana : '-';
+      var fecha = entrega && entrega.fecha ? entrega.fecha : '-';
+
+      return '<tr>' +
+        '<td>' + escaparHtml(fecha) + '</td>' +
+        '<td>' + escaparHtml(producto) + '</td>' +
+        '<td class="text-end">' + cantidad + '</td>' +
+        '<td>' + escaparHtml(recibio) + '</td>' +
+        '<td>' + escaparHtml(aduana) + '</td>' +
+        '</tr>';
+    }).join('');
+
+    $registroEntregasBody.html(filas);
+  }
+
   function mostrarErrorDetalle(mensaje) {
     if ($detalleError.length) {
       $detalleError.removeClass('d-none').text(mensaje || 'Ocurrió un problema al cargar las partidas.');
@@ -658,6 +716,10 @@ $(document).ready(function() {
       $detallePartidasBody.html('<tr class="text-muted"><td colspan="4" class="text-center">No se pudieron cargar las partidas.</td></tr>');
     }
 
+    if ($registroEntregasBody.length) {
+      $registroEntregasBody.html('<tr class="text-muted"><td colspan="5" class="text-center">No se pudieron cargar las entregas.</td></tr>');
+    }
+
     if ($btnRegistrarEntrega.length) {
       $btnRegistrarEntrega.prop('disabled', true);
     }
@@ -667,6 +729,8 @@ $(document).ready(function() {
     if ($detallePartidasBody.length) {
       $detallePartidasBody.html('<tr class="text-muted"><td colspan="4" class="text-center">Selecciona un folio para ver sus partidas.</td></tr>');
     }
+
+    limpiarRegistroEntregasSeleccion();
 
     if ($detalleInfo.length) {
       $detalleInfo.text('');
@@ -743,10 +807,10 @@ $(document).ready(function() {
     $btnRegistrarEntrega.prop('disabled', !(hayCantidad && camposRequeridosLlenos));
   }
 
-  function prepararPanelDetalle(documento, folio) {
-    if ($panelDetalle.length) {
-      $panelDetalle.removeClass('d-none');
-    }
+    function prepararPanelDetalle(documento, folio) {
+      if ($panelDetalle.length) {
+        $panelDetalle.removeClass('d-none');
+      }
 
     if ($detalleError.length) {
       $detalleError.addClass('d-none').text('');
@@ -756,20 +820,22 @@ $(document).ready(function() {
       $detalleExito.addClass('d-none').text('');
     }
 
-    $inputRecibio.val('');
-    $selectAduanaEntrega.val(null).trigger('change');
-    $inputAduanaEntregaOtro.val('');
-    $inputAduanaEntregaTexto.val('');
-    actualizarCampoAduanaEntregaOtro();
-    $btnRegistrarEntrega.prop('disabled', true);
+      $inputRecibio.val('');
+      $selectAduanaEntrega.val(null).trigger('change');
+      $inputAduanaEntregaOtro.val('');
+      $inputAduanaEntregaTexto.val('');
+      actualizarCampoAduanaEntregaOtro();
+      $btnRegistrarEntrega.prop('disabled', true);
 
-    if ($detallePartidasBody.length) {
-      $detallePartidasBody.html('<tr class="text-muted"><td colspan="4" class="text-center">Cargando partidas…</td></tr>');
+      if ($detallePartidasBody.length) {
+        $detallePartidasBody.html('<tr class="text-muted"><td colspan="4" class="text-center">Cargando partidas…</td></tr>');
+      }
+
+      prepararRegistroEntregas();
+
+      $inputFolioEntrega.val(folio);
+      $inputDocumentoEntrega.val(documento);
     }
-
-    $inputFolioEntrega.val(folio);
-    $inputDocumentoEntrega.val(documento);
-  }
 
   function cargarDetallePartidas(documento, folio) {
     prepararModalDetalle(documento, folio);
@@ -784,6 +850,7 @@ $(document).ready(function() {
       if (respuesta && respuesta.success) {
         renderizarDetalleFactura(respuesta.factura || {}, documento, folio);
         renderizarDetallePartidas(respuesta.partidas || []);
+        renderizarRegistroEntregas(respuesta.entregas || []);
         actualizarHabilitadoEntrega();
         return;
       }
