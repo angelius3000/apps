@@ -41,8 +41,30 @@ function asegurarTablaMaterialPendiente(mysqli $conn): bool
     return @mysqli_query($conn, $sqlCrearTabla) === true;
 }
 
+function asegurarTablaFacturaMP(mysqli $conn): bool
+{
+    $sqlCrearTablaFactura = "CREATE TABLE IF NOT EXISTS facturamp (
+        FacturaMPID INT NOT NULL AUTO_INCREMENT,
+        FechaFMP TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        DocumentoFMP VARCHAR(100) NOT NULL,
+        RazonSocialFMP VARCHAR(255) NOT NULL,
+        VendedorFMP VARCHAR(255) DEFAULT NULL,
+        SurtidorFMP VARCHAR(255) DEFAULT NULL,
+        ClienteFMP VARCHAR(255) NOT NULL,
+        AduanaFMP VARCHAR(255) DEFAULT NULL,
+        PRIMARY KEY (FacturaMPID),
+        INDEX idx_facturamp_documento (DocumentoFMP)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+    return @mysqli_query($conn, $sqlCrearTablaFactura) === true;
+}
+
 if (!asegurarTablaMaterialPendiente($conn)) {
     responderError('No se pudo preparar la tabla de material pendiente. Intenta nuevamente.');
+}
+
+if (!asegurarTablaFacturaMP($conn)) {
+    responderError('No se pudo preparar la tabla de facturas de material pendiente. Intenta nuevamente.');
 }
 
 function obtenerTextoCatalogo(mysqli $conn, string $tabla, string $columnaId, string $columnaTexto, int $id): string
@@ -113,6 +135,8 @@ if ($aduanaNombre === '') {
     $aduanaNombre = $aduanaOtro;
 }
 
+$clienteParaGuardar = $nombreCliente !== '' ? $nombreCliente : $razonSocial;
+
 if ($surtidorValor !== '' && ctype_digit($surtidorValor)) {
     $almacenistaNombre = obtenerTextoCatalogo($conn, 'almacenista', 'AlmacenistaID', 'NombreAlmacenista', (int) $surtidorValor);
     if ($almacenistaNombre !== '') {
@@ -147,10 +171,41 @@ if (empty($productosValidos)) {
 
 mysqli_begin_transaction($conn);
 
+$stmtFactura = mysqli_prepare(
+    $conn,
+    'INSERT INTO facturamp (DocumentoFMP, RazonSocialFMP, VendedorFMP, SurtidorFMP, ClienteFMP, AduanaFMP) '
+        . 'VALUES (?, ?, ?, ?, ?, ?)'
+);
+
+if (!$stmtFactura) {
+    mysqli_rollback($conn);
+    responderError('No se pudo preparar la inserción del folio.');
+}
+
+mysqli_stmt_bind_param(
+    $stmtFactura,
+    'ssssss',
+    $numeroFactura,
+    $razonSocial,
+    $vendedorNombre,
+    $surtidorValor,
+    $clienteParaGuardar,
+    $aduanaNombre
+);
+
+if (!mysqli_stmt_execute($stmtFactura)) {
+    mysqli_stmt_close($stmtFactura);
+    mysqli_rollback($conn);
+    responderError('No se pudo guardar el folio de la factura.');
+}
+
+$folioInsertado = mysqli_insert_id($conn);
+mysqli_stmt_close($stmtFactura);
+
 $stmt = mysqli_prepare(
     $conn,
     'INSERT INTO materialpendiente (DocumentoMP, RazonSocialMP, VendedorMP, SurtidorMP, ClienteMP, AduanaMP, SkuMP, DescripcionMP, CantidadMP) '
-        . 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)' 
+        . 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
 );
 
 if (!$stmt) {
@@ -158,13 +213,9 @@ if (!$stmt) {
     responderError('No se pudo preparar la inserción de material pendiente.');
 }
 
-$clienteParaGuardar = $nombreCliente !== '' ? $nombreCliente : $razonSocial;
-
 $insertados = 0;
 
 foreach ($productosValidos as $producto) {
-    $otroProducto = $producto['otro'] === '1' ? 1 : 0;
-
     mysqli_stmt_bind_param(
         $stmt,
         'ssssssssi',
@@ -193,5 +244,6 @@ mysqli_commit($conn);
 
 echo json_encode([
     'success' => true,
-    'inserted' => $insertados
+    'inserted' => $insertados,
+    'folio' => $folioInsertado
 ]);

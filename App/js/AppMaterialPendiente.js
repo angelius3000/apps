@@ -738,6 +738,9 @@ $(document).ready(function() {
         dataType: 'json'
       }).done(function(respuesta) {
         if (respuesta && respuesta.success) {
+          $modal.one('hidden.bs.modal', function() {
+            window.location.reload();
+          });
           $modal.modal('hide');
           return;
         }
