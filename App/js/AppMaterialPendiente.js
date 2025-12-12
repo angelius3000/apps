@@ -48,6 +48,19 @@ $(document).ready(function() {
   var ADUANA_OTRO_ID = '4';
   var partidasPendientes = [];
 
+  function desplazarASeccionEntrega() {
+    if (!$panelDetalle.length) {
+      return;
+    }
+
+    var posicion = $panelDetalle.offset();
+    if (!posicion) {
+      return;
+    }
+
+    $('html, body').animate({ scrollTop: Math.max(posicion.top - 16, 0) }, 400);
+  }
+
   function obtenerConfiguracionIdiomaMinimo() {
     return {
       inputTooShort: function(args) {
@@ -654,7 +667,7 @@ $(document).ready(function() {
 
   function prepararRegistroEntregas() {
     if ($registroEntregasBody.length) {
-$registroEntregasBody.html('<tr class="text-muted"><td colspan="6" class="text-center">Cargando entregas…</td></tr>');
+      $registroEntregasBody.html('<tr class="text-muted"><td colspan="6" class="text-center">Cargando entregas…</td></tr>');
     }
   }
 
@@ -795,10 +808,11 @@ $registroEntregasBody.html('<tr class="text-muted"><td colspan="6" class="text-c
     $btnRegistrarEntrega.prop('disabled', !(hayCantidad && camposRequeridosLlenos));
   }
 
-    function prepararPanelDetalle(documento, folio) {
-      if ($panelDetalle.length) {
-        $panelDetalle.removeClass('d-none');
-      }
+  function prepararPanelDetalle(documento, folio) {
+    if ($panelDetalle.length) {
+      $panelDetalle.removeClass('d-none');
+      desplazarASeccionEntrega();
+    }
 
     if ($detalleError.length) {
       $detalleError.addClass('d-none').text('');
