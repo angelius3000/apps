@@ -26,6 +26,20 @@ $(document).ready(function() {
   var $inputAduanaPendienteOtro = $('#AduanaPendienteOtro');
   var $inputNombreCliente = $('#NombreClientePendiente');
   var $formularioPendiente = $('#FormularioAgregarPendiente');
+  var $tablaMaterialPendiente = $('#TablaMaterialPendiente');
+  var $panelDetalle = $('#PanelEntregaMaterialPendiente');
+  var $detalleTitulo = $('#DetalleMaterialPendienteTitulo');
+  var $detalleInfo = $('#DetalleMaterialPendienteInfo');
+  var $detallePartidasBody = $('#DetallePartidasPendientes');
+  var $detalleError = $('#DetalleMaterialPendienteError');
+  var $detalleExito = $('#DetalleMaterialPendienteExito');
+  var $inputFolioEntrega = $('#EntregaFolio');
+  var $inputDocumentoEntrega = $('#EntregaDocumento');
+  var $inputRecibio = $('#EntregaRecibio');
+  var $inputAduanaEntrega = $('#EntregaAduana');
+  var $btnRegistrarEntrega = $('#BtnRegistrarEntrega');
+  var $btnEntregarTodo = $('#EntregarDocumentoCompleto');
+  var $btnReiniciarEntregas = $('#ReiniciarEntregas');
   var VENDEDOR_OTRO_ID = '22';
   var ADUANA_OTRO_ID = '4';
   var partidasPendientes = [];
@@ -49,6 +63,10 @@ $(document).ready(function() {
     }
 
     return texto.substring(0, maximo - 1) + '…';
+  }
+
+  function escaparHtml(texto) {
+    return $('<div>').text(texto == null ? '' : texto).html();
   }
 
   function enfocarCampo($elemento) {
@@ -488,6 +506,236 @@ $(document).ready(function() {
     window.alert(texto);
   }
 
+  function prepararModalDetalle(documento, folio) {
+    var titulo = 'Entrega de material pendiente';
+
+    if (folio) {
+      titulo += ' - Folio #' + folio;
+    }
+
+    if ($detalleTitulo.length) {
+      $detalleTitulo.text(titulo);
+    }
+
+    if ($detalleInfo.length) {
+      $detalleInfo.text(documento ? 'Documento: ' + documento : '');
+    }
+
+    if ($detalleError.length) {
+      $detalleError.addClass('d-none').text('');
+    }
+
+    if ($detallePartidasBody.length) {
+      $detallePartidasBody.html('<tr class="text-muted"><td colspan="4" class="text-center">Cargando partidas…</td></tr>');
+    }
+  }
+
+  function renderizarDetalleFactura(factura, documentoFallback, folioFallback) {
+    if (!$detalleTitulo.length || !$detalleInfo.length) {
+      return;
+    }
+
+    var folio = factura && factura.folio ? factura.folio : folioFallback;
+    var documento = factura && factura.documento ? factura.documento : documentoFallback;
+    var secciones = [];
+
+    if (documento) {
+      secciones.push('Documento: ' + documento);
+    }
+
+    if (factura && factura.fecha) {
+      secciones.push('Fecha: ' + factura.fecha);
+    }
+
+    if (factura && factura.razonSocial) {
+      secciones.push('Razón Social: ' + factura.razonSocial);
+    }
+
+    if (factura && factura.vendedor) {
+      secciones.push('Vendedor: ' + factura.vendedor);
+    }
+
+    if (factura && factura.surtidor) {
+      secciones.push('Surtidor: ' + factura.surtidor);
+    }
+
+    if (factura && factura.cliente) {
+      secciones.push('Cliente: ' + factura.cliente);
+    }
+
+    if (factura && factura.aduana) {
+      secciones.push('Aduana: ' + factura.aduana);
+    }
+
+    var titulo = 'Entrega de material pendiente';
+
+    if (folio) {
+      titulo += ' - Folio #' + folio;
+    }
+
+    $detalleTitulo.text(titulo);
+    $detalleInfo.text(secciones.join(' • '));
+    $inputFolioEntrega.val(folio);
+    $inputDocumentoEntrega.val(documento);
+  }
+
+  function renderizarDetallePartidas(partidas) {
+    if (!$detallePartidasBody.length) {
+      return;
+    }
+
+    if (!partidas || !partidas.length) {
+      $detallePartidasBody.html('<tr class="text-muted"><td colspan="4" class="text-center">El folio no tiene partidas pendientes registradas.</td></tr>');
+      return;
+    }
+
+    var filas = partidas.map(function(partida) {
+      var cantidad = partida && partida.cantidad ? partida.cantidad : 0;
+      var partidaId = partida && partida.id ? partida.id : '';
+      var inputId = 'entrega-partida-' + partidaId;
+      return '<tr>' +
+        '<td>' + escaparHtml(partida && partida.sku) + '</td>' +
+        '<td>' + escaparHtml(partida && partida.descripcion) + '</td>' +
+        '<td class="text-end" data-pendiente="' + cantidad + '">' + cantidad + '</td>' +
+        '<td class="text-end">' +
+          '<input type="number" class="form-control form-control-sm text-end campo-entregar" min="0" max="' + cantidad + '" step="1" data-id="' + partidaId + '" id="' + inputId + '" value="0">' +
+        '</td>' +
+        '</tr>';
+    }).join('');
+
+    $detallePartidasBody.html(filas);
+  }
+
+  function mostrarErrorDetalle(mensaje) {
+    if ($detalleError.length) {
+      $detalleError.removeClass('d-none').text(mensaje || 'Ocurrió un problema al cargar las partidas.');
+    }
+
+    if ($detalleExito.length) {
+      $detalleExito.addClass('d-none').text('');
+    }
+
+    if ($detallePartidasBody.length) {
+      $detallePartidasBody.html('<tr class="text-muted"><td colspan="4" class="text-center">No se pudieron cargar las partidas.</td></tr>');
+    }
+
+    if ($btnRegistrarEntrega.length) {
+      $btnRegistrarEntrega.prop('disabled', true);
+    }
+  }
+
+  function limpiarPanelEntrega() {
+    if ($detallePartidasBody.length) {
+      $detallePartidasBody.html('<tr class="text-muted"><td colspan="4" class="text-center">Selecciona un folio para ver sus partidas.</td></tr>');
+    }
+
+    if ($detalleInfo.length) {
+      $detalleInfo.text('');
+    }
+
+    if ($detalleTitulo.length) {
+      $detalleTitulo.text('Selecciona un folio para gestionar su entrega');
+    }
+
+    if ($detalleError.length) {
+      $detalleError.addClass('d-none').text('');
+    }
+
+    if ($detalleExito.length) {
+      $detalleExito.addClass('d-none').text('');
+    }
+
+    if ($inputFolioEntrega.length) {
+      $inputFolioEntrega.val('');
+    }
+
+    if ($inputDocumentoEntrega.length) {
+      $inputDocumentoEntrega.val('');
+    }
+
+    if ($inputRecibio.length) {
+      $inputRecibio.val('');
+    }
+
+    if ($inputAduanaEntrega.length) {
+      $inputAduanaEntrega.val('');
+    }
+
+    if ($btnRegistrarEntrega.length) {
+      $btnRegistrarEntrega.prop('disabled', true);
+    }
+
+    if ($panelDetalle.length) {
+      $panelDetalle.addClass('d-none');
+    }
+  }
+
+  function actualizarHabilitadoEntrega() {
+    if (!$detallePartidasBody.length || !$btnRegistrarEntrega.length) {
+      return;
+    }
+
+    var hayCantidad = false;
+    $detallePartidasBody.find('.campo-entregar').each(function() {
+      var valor = parseInt($(this).val(), 10);
+      if (!isNaN(valor) && valor > 0) {
+        hayCantidad = true;
+      }
+    });
+
+    var camposRequeridosLlenos = $inputRecibio.val().trim() !== '' && $inputAduanaEntrega.val().trim() !== '';
+    $btnRegistrarEntrega.prop('disabled', !(hayCantidad && camposRequeridosLlenos));
+  }
+
+  function prepararPanelDetalle(documento, folio) {
+    if ($panelDetalle.length) {
+      $panelDetalle.removeClass('d-none');
+    }
+
+    if ($detalleError.length) {
+      $detalleError.addClass('d-none').text('');
+    }
+
+    if ($detalleExito.length) {
+      $detalleExito.addClass('d-none').text('');
+    }
+
+    $inputRecibio.val('');
+    $inputAduanaEntrega.val('');
+    $btnRegistrarEntrega.prop('disabled', true);
+
+    if ($detallePartidasBody.length) {
+      $detallePartidasBody.html('<tr class="text-muted"><td colspan="4" class="text-center">Cargando partidas…</td></tr>');
+    }
+
+    $inputFolioEntrega.val(folio);
+    $inputDocumentoEntrega.val(documento);
+  }
+
+  function cargarDetallePartidas(documento, folio) {
+    prepararModalDetalle(documento, folio);
+    prepararPanelDetalle(documento, folio);
+
+    $.ajax({
+      url: 'App/Server/ServerObtenerPartidasMaterialPendiente.php',
+      method: 'GET',
+      dataType: 'json',
+      data: { folio: folio }
+    }).done(function(respuesta) {
+      if (respuesta && respuesta.success) {
+        renderizarDetalleFactura(respuesta.factura || {}, documento, folio);
+        renderizarDetallePartidas(respuesta.partidas || []);
+        actualizarHabilitadoEntrega();
+        return;
+      }
+
+      var mensaje = respuesta && respuesta.message ? respuesta.message : 'No se pudieron cargar las partidas.';
+      mostrarErrorDetalle(mensaje);
+    }).fail(function() {
+      mostrarErrorDetalle('No se pudieron cargar las partidas.');
+    });
+  }
+
   $modal.on('shown.bs.modal', function() {
     $selectClientes.each(function() {
       inicializarSelectCliente($(this));
@@ -581,6 +829,19 @@ $(document).ready(function() {
       $inputAduanaPendienteOtro.prop('required', false).val('');
     }
   });
+
+  if ($tablaMaterialPendiente.length) {
+    $tablaMaterialPendiente.on('click', '.material-pendiente-row', function() {
+      var folio = $(this).data('folio');
+      var documento = $(this).data('documento') || '';
+
+      if (!folio) {
+        return;
+      }
+
+      cargarDetallePartidas(documento, folio);
+    });
+  }
 
   $tablaBodyPartidas.on('click', '.editar-partida', function(evento) {
     evento.preventDefault();
@@ -681,6 +942,109 @@ $(document).ready(function() {
     enfocarCampo($selectProductoPendiente);
   });
 
+  $detallePartidasBody.on('input', '.campo-entregar', function() {
+    var $input = $(this);
+    var maximo = parseInt($input.attr('max'), 10);
+    var valor = parseInt($input.val(), 10);
+
+    if (isNaN(valor) || valor < 0) {
+      valor = 0;
+    }
+
+    if (!isNaN(maximo) && valor > maximo) {
+      valor = maximo;
+    }
+
+    $input.val(valor);
+    actualizarHabilitadoEntrega();
+  });
+
+  $inputRecibio.on('input', function() {
+    actualizarHabilitadoEntrega();
+  });
+
+  $inputAduanaEntrega.on('input', function() {
+    actualizarHabilitadoEntrega();
+  });
+
+  $btnEntregarTodo.on('click', function() {
+    $detallePartidasBody.find('.campo-entregar').each(function() {
+      var $input = $(this);
+      var maximo = parseInt($input.attr('max'), 10);
+      if (!isNaN(maximo)) {
+        $input.val(maximo);
+      }
+    });
+
+    actualizarHabilitadoEntrega();
+  });
+
+  $btnReiniciarEntregas.on('click', function() {
+    limpiarPanelEntrega();
+  });
+
+  $('#FormularioEntregaMaterialPendiente').on('submit', function(evento) {
+    evento.preventDefault();
+
+    if ($btnRegistrarEntrega.length) {
+      $btnRegistrarEntrega.prop('disabled', true);
+    }
+
+    if ($detalleError.length) {
+      $detalleError.addClass('d-none').text('');
+    }
+
+    var folio = $inputFolioEntrega.val();
+    var documento = $inputDocumentoEntrega.val();
+    var recibio = $inputRecibio.val().trim();
+    var aduana = $inputAduanaEntrega.val().trim();
+    var partidas = [];
+
+    $detallePartidasBody.find('.campo-entregar').each(function() {
+      var $input = $(this);
+      var valor = parseInt($input.val(), 10);
+      var partidaId = parseInt($input.data('id'), 10);
+
+      if (!isNaN(valor) && valor > 0 && !isNaN(partidaId)) {
+        partidas.push({ id: partidaId, entregar: valor });
+      }
+    });
+
+    if (!folio || !documento || partidas.length === 0) {
+      mostrarErrorDetalle('Selecciona un folio y captura al menos una cantidad a entregar.');
+      return;
+    }
+
+    $.ajax({
+      url: 'App/Server/ServerRegistrarEntregaMaterialPendiente.php',
+      method: 'POST',
+      dataType: 'json',
+      data: {
+        folio: folio,
+        documento: documento,
+        recibio: recibio,
+        aduanaEntrega: aduana,
+        partidas: JSON.stringify(partidas)
+      }
+    }).done(function(respuesta) {
+      if (respuesta && respuesta.success) {
+        if ($detalleExito.length) {
+          $detalleExito.removeClass('d-none').text(respuesta.message || 'Entrega registrada.');
+        }
+
+        cargarDetallePartidas(documento, folio);
+        return;
+      }
+
+      var mensaje = respuesta && respuesta.message ? respuesta.message : 'No se pudo registrar la entrega.';
+      mostrarErrorDetalle(mensaje);
+    }).fail(function() {
+      mostrarErrorDetalle('No se pudo registrar la entrega.');
+    }).always(function() {
+      actualizarHabilitadoEntrega();
+    });
+  });
+
   $selectProductoPendiente.on('change select2:select', function() {
     enfocarCampo($inputCantidadPendiente);
   });
@@ -752,4 +1116,6 @@ $(document).ready(function() {
       });
     });
   }
+
+  limpiarPanelEntrega();
 });
