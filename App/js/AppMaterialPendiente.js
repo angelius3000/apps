@@ -36,7 +36,10 @@ $(document).ready(function() {
   var $inputFolioEntrega = $('#EntregaFolio');
   var $inputDocumentoEntrega = $('#EntregaDocumento');
   var $inputRecibio = $('#EntregaRecibio');
-  var $inputAduanaEntrega = $('#EntregaAduana');
+  var $selectAduanaEntrega = $('#EntregaAduana');
+  var $aduanaEntregaOtroContainer = $('#EntregaAduanaOtroContainer');
+  var $inputAduanaEntregaOtro = $('#EntregaAduanaOtro');
+  var $inputAduanaEntregaTexto = $('#EntregaAduanaTexto');
   var $btnRegistrarEntrega = $('#BtnRegistrarEntrega');
   var $btnEntregarTodo = $('#EntregarDocumentoCompleto');
   var $btnReiniciarEntregas = $('#ReiniciarEntregas');
@@ -144,7 +147,7 @@ $(document).ready(function() {
     });
   }
 
-  function inicializarSelectAduana($elemento) {
+  function inicializarSelectAduana($elemento, configuracion) {
     if (!$elemento.length) {
       return;
     }
@@ -153,8 +156,10 @@ $(document).ready(function() {
       return;
     }
 
+    var dropdownParent = configuracion && configuracion.dropdownParent ? configuracion.dropdownParent : $modal;
+
     $elemento.select2({
-      dropdownParent: $modal,
+      dropdownParent: dropdownParent,
       placeholder: $elemento.data('placeholder') || 'Selecciona aduana',
       allowClear: true,
       width: '100%',
@@ -421,6 +426,11 @@ $(document).ready(function() {
     return valorSeleccionado === ADUANA_OTRO_ID;
   }
 
+  function esAduanaEntregaOtro() {
+    var valorSeleccionado = ($selectAduanaEntrega.val() || '').toString();
+    return valorSeleccionado === ADUANA_OTRO_ID;
+  }
+
   function actualizarCampoAduanaOtro() {
     if (!$aduanaPendienteOtroContainer.length || !$inputAduanaPendienteOtro.length) {
       return;
@@ -434,6 +444,22 @@ $(document).ready(function() {
     } else {
       $inputAduanaPendienteOtro.prop('required', false).val('');
     }
+  }
+
+  function actualizarCampoAduanaEntregaOtro() {
+    if (!$aduanaEntregaOtroContainer.length || !$inputAduanaEntregaOtro.length) {
+      return;
+    }
+
+    var mostrarCampo = esAduanaEntregaOtro();
+    $aduanaEntregaOtroContainer.toggleClass('d-none', !mostrarCampo);
+
+    if (mostrarCampo) {
+      $inputAduanaEntregaOtro.prop('required', true);
+      return;
+    }
+
+    $inputAduanaEntregaOtro.prop('required', false).val('');
   }
 
   function actualizarCampoSurtidor() {
@@ -472,6 +498,19 @@ $(document).ready(function() {
       $inputSurtidor.prop('readonly', true);
       $inputSurtidor.val(nombreVendedor);
     }
+  }
+
+  function obtenerNombreAduanaEntrega() {
+    if (esAduanaEntregaOtro() && $inputAduanaEntregaOtro.length) {
+      return ($inputAduanaEntregaOtro.val() || '').trim();
+    }
+
+    if (!$selectAduanaEntrega.length) {
+      return '';
+    }
+
+    var textoSeleccionado = $selectAduanaEntrega.find('option:selected').text() || '';
+    return textoSeleccionado.trim();
   }
 
   function actualizarCampoVendedorOtro() {
@@ -657,9 +696,19 @@ $(document).ready(function() {
       $inputRecibio.val('');
     }
 
-    if ($inputAduanaEntrega.length) {
-      $inputAduanaEntrega.val('');
+    if ($selectAduanaEntrega.length) {
+      $selectAduanaEntrega.val(null).trigger('change');
     }
+
+    if ($inputAduanaEntregaOtro.length) {
+      $inputAduanaEntregaOtro.val('');
+    }
+
+    if ($inputAduanaEntregaTexto.length) {
+      $inputAduanaEntregaTexto.val('');
+    }
+
+    actualizarCampoAduanaEntregaOtro();
 
     if ($btnRegistrarEntrega.length) {
       $btnRegistrarEntrega.prop('disabled', true);
@@ -683,7 +732,14 @@ $(document).ready(function() {
       }
     });
 
-    var camposRequeridosLlenos = $inputRecibio.val().trim() !== '' && $inputAduanaEntrega.val().trim() !== '';
+    var aduanaSeleccionada = ($selectAduanaEntrega.val() || '').toString();
+    var aduanaSeleccion = obtenerNombreAduanaEntrega();
+
+    if ($inputAduanaEntregaTexto.length) {
+      $inputAduanaEntregaTexto.val(aduanaSeleccion);
+    }
+
+    var camposRequeridosLlenos = $inputRecibio.val().trim() !== '' && aduanaSeleccionada !== '' && aduanaSeleccion !== '';
     $btnRegistrarEntrega.prop('disabled', !(hayCantidad && camposRequeridosLlenos));
   }
 
@@ -701,7 +757,10 @@ $(document).ready(function() {
     }
 
     $inputRecibio.val('');
-    $inputAduanaEntrega.val('');
+    $selectAduanaEntrega.val(null).trigger('change');
+    $inputAduanaEntregaOtro.val('');
+    $inputAduanaEntregaTexto.val('');
+    actualizarCampoAduanaEntregaOtro();
     $btnRegistrarEntrega.prop('disabled', true);
 
     if ($detallePartidasBody.length) {
@@ -735,6 +794,8 @@ $(document).ready(function() {
       mostrarErrorDetalle('No se pudieron cargar las partidas.');
     });
   }
+
+  inicializarSelectAduana($selectAduanaEntrega, { dropdownParent: $panelDetalle });
 
   $modal.on('shown.bs.modal', function() {
     $selectClientes.each(function() {
@@ -931,6 +992,15 @@ $(document).ready(function() {
     enfocarCampo(obtenerCampoProductoDestino());
   });
 
+  $selectAduanaEntrega.on('change select2:select', function() {
+    actualizarCampoAduanaEntregaOtro();
+    actualizarHabilitadoEntrega();
+
+    if (esAduanaEntregaOtro()) {
+      enfocarCampo($inputAduanaEntregaOtro);
+    }
+  });
+
   $checkboxOtroProducto.on('change', function() {
     actualizarModoOtroProducto();
 
@@ -963,7 +1033,7 @@ $(document).ready(function() {
     actualizarHabilitadoEntrega();
   });
 
-  $inputAduanaEntrega.on('input', function() {
+  $inputAduanaEntregaOtro.on('input', function() {
     actualizarHabilitadoEntrega();
   });
 
@@ -997,8 +1067,12 @@ $(document).ready(function() {
     var folio = $inputFolioEntrega.val();
     var documento = $inputDocumentoEntrega.val();
     var recibio = $inputRecibio.val().trim();
-    var aduana = $inputAduanaEntrega.val().trim();
+    var aduana = obtenerNombreAduanaEntrega();
     var partidas = [];
+
+    if ($inputAduanaEntregaTexto.length) {
+      $inputAduanaEntregaTexto.val(aduana);
+    }
 
     $detallePartidasBody.find('.campo-entregar').each(function() {
       var $input = $(this);

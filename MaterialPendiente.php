@@ -359,7 +359,17 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                                 </div>
                                                 <div class="col-lg-4 col-md-6 col-sm-12">
                                                     <label class="form-label" for="EntregaAduana">Aduana que entrega</label>
-                                                    <input type="text" class="form-control" id="EntregaAduana" name="aduanaEntrega" autocomplete="off" required>
+                                                    <select class="form-select select-aduana-entrega" id="EntregaAduana" data-placeholder="Selecciona aduana" <?php echo $hayAduanasPendientes ? '' : 'disabled'; ?> required>
+                                                        <?php echo $opcionesAduanasPendientes; ?>
+                                                    </select>
+                                                    <?php if (!$hayAduanasPendientes) : ?>
+                                                        <small class="form-text text-muted">No hay aduanas disponibles para seleccionar.</small>
+                                                    <?php endif; ?>
+                                                    <div id="EntregaAduanaOtroContainer" class="mt-2 d-none">
+                                                        <label for="EntregaAduanaOtro" class="form-label">Nombre de la aduana</label>
+                                                        <input type="text" class="form-control" id="EntregaAduanaOtro" autocomplete="off">
+                                                    </div>
+                                                    <input type="hidden" id="EntregaAduanaTexto" name="aduanaEntrega" value="">
                                                 </div>
                                             </div>
 
