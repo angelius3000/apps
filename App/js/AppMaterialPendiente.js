@@ -536,7 +536,9 @@ $(document).ready(function() {
     }
 
     var usarAlmacenista = $checkboxAlmacenista.length && typeof $checkboxAlmacenista.is === 'function' ? $checkboxAlmacenista.is(':checked') : false;
-    var permitirEdicion = $checkboxOtroSurtidor.length && typeof $checkboxOtroSurtidor.is === 'function' ? $checkboxOtroSurtidor.is(':checked') : false;
+    var permitirEdicion =
+      esVendedorOtro() ||
+      ($checkboxOtroSurtidor.length && typeof $checkboxOtroSurtidor.is === 'function' ? $checkboxOtroSurtidor.is(':checked') : false);
     var nombreVendedor = obtenerNombreVendedor();
 
     if (usarAlmacenista && $selectAlmacenista.length) {
@@ -560,12 +562,13 @@ $(document).ready(function() {
 
     if (permitirEdicion) {
       $inputSurtidor.prop('readonly', false);
-      $inputSurtidor.val('');
-      $inputSurtidor.trigger('focus');
-    } else {
-      $inputSurtidor.prop('readonly', true);
       $inputSurtidor.val(nombreVendedor);
+      $inputSurtidor.trigger('focus');
+      return;
     }
+
+    $inputSurtidor.prop('readonly', true);
+    $inputSurtidor.val(nombreVendedor);
   }
 
   function obtenerNombreAduanaEntrega() {
@@ -1142,6 +1145,12 @@ $(document).ready(function() {
   });
 
   $inputVendedorPendienteOtro.on('blur', function() {
+    if (esVendedorOtro()) {
+      actualizarCampoSurtidor();
+    }
+  });
+
+  $inputVendedorPendienteOtro.on('input', function() {
     if (esVendedorOtro()) {
       actualizarCampoSurtidor();
     }
