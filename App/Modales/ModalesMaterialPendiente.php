@@ -18,12 +18,26 @@
                                         </div>
                                         <div class="col-lg-6 col-sm-12 mb-4">
                                             <label for="RazonSocialPendiente" class="form-label">Razón Social</label>
-                                            <select class="form-select select-cliente" id="RazonSocialPendiente" name="RazonSocialPendiente" data-placeholder="Selecciona cliente" <?php echo $hayClientesPendientes ? '' : 'disabled'; ?> required>
-                                                <?php echo $opcionesClientesPendientes; ?>
-                                            </select>
-                                            <?php if (!$hayClientesPendientes) : ?>
-                                                <small class="form-text text-muted">No hay clientes disponibles para seleccionar.</small>
-                                            <?php endif; ?>
+                                            <div id="RazonSocialPendienteSelectContainer">
+                                                <select class="form-select select-cliente" id="RazonSocialPendiente" name="RazonSocialPendiente" data-placeholder="Selecciona cliente" <?php echo $hayClientesPendientes ? '' : 'disabled'; ?> required>
+                                                    <?php echo $opcionesClientesPendientes; ?>
+                                                </select>
+                                                <?php if (!$hayClientesPendientes) : ?>
+                                                    <small class="form-text text-muted">No hay clientes disponibles para seleccionar.</small>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="form-check mt-2">
+                                                <input class="form-check-input" type="checkbox" id="OtraRazonSocialPendiente" name="OtraRazonSocialPendiente" value="1">
+                                                <label class="form-check-label" for="OtraRazonSocialPendiente">Otra razón social</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-6 col-sm-12 mb-4 d-none" id="NumeroClientePendienteContainer">
+                                            <label for="NumeroClientePendienteOtro" class="form-label">Número de cliente</label>
+                                            <input type="text" class="form-control" id="NumeroClientePendienteOtro" name="NumeroClientePendienteOtro" autocomplete="off">
+                                        </div>
+                                        <div class="col-lg-6 col-sm-12 mb-4 d-none" id="OtraRazonSocialPendienteContainer">
+                                            <label for="RazonSocialPendienteOtra" class="form-label">Razón social</label>
+                                            <input type="text" class="form-control" id="RazonSocialPendienteOtra" name="RazonSocialPendienteOtra" autocomplete="off">
                                         </div>
                                         <div class="col-lg-6 col-sm-12 mb-4">
                                             <label for="VendedorPendiente" class="form-label">Vendedor</label>

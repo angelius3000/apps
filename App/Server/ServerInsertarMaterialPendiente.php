@@ -96,7 +96,10 @@ function normalizarTexto(?string $valor): string
 }
 
 $numeroFactura = normalizarTexto($_POST['NumeroFacturaPendiente'] ?? '');
-$clienteId = isset($_POST['RazonSocialPendiente']) ? (int) $_POST['RazonSocialPendiente'] : 0;
+$usarOtraRazonSocial = isset($_POST['OtraRazonSocialPendiente']) && $_POST['OtraRazonSocialPendiente'] === '1';
+$clienteId = $usarOtraRazonSocial ? 0 : (isset($_POST['RazonSocialPendiente']) ? (int) $_POST['RazonSocialPendiente'] : 0);
+$numeroClienteManual = normalizarTexto($_POST['NumeroClientePendienteOtro'] ?? '');
+$razonSocialManual = normalizarTexto($_POST['RazonSocialPendienteOtra'] ?? '');
 $vendedorId = isset($_POST['VendedorPendiente']) ? (int) $_POST['VendedorPendiente'] : 0;
 $vendedorOtro = normalizarTexto($_POST['VendedorPendienteOtro'] ?? '');
 $aduanaId = isset($_POST['AduanaPendiente']) ? (int) $_POST['AduanaPendiente'] : 0;
@@ -105,13 +108,27 @@ $surtidorValor = normalizarTexto($_POST['SurtidorPendiente'] ?? '');
 $nombreCliente = normalizarTexto($_POST['NombreClientePendiente'] ?? '');
 $productos = $_POST['productos'] ?? [];
 
-if ($numeroFactura === '' || $clienteId <= 0 || empty($productos)) {
-    responderError('Captura el número de documento, el cliente y al menos una partida pendiente.', 400);
+if ($numeroFactura === '' || empty($productos)) {
+    responderError('Captura el número de documento y al menos una partida pendiente.', 400);
 }
 
-$clienteNombre = obtenerTextoCatalogo($conn, 'clientes', 'CLIENTEID', 'NombreCliente', $clienteId);
+if ($usarOtraRazonSocial) {
+    if ($numeroClienteManual === '' || $razonSocialManual === '') {
+        responderError('Captura el número de cliente y su razón social.', 400);
+    }
+} elseif ($clienteId <= 0) {
+    responderError('Selecciona una razón social de la lista o captura una nueva.', 400);
+}
 
-$razonSocial = $clienteNombre !== '' ? $clienteNombre : 'Cliente #' . $clienteId;
+$clienteNombre = '';
+
+if ($usarOtraRazonSocial) {
+    $clienteNombre = $razonSocialManual;
+    $razonSocial = $razonSocialManual . ' (Cliente #' . $numeroClienteManual . ')';
+} else {
+    $clienteNombre = obtenerTextoCatalogo($conn, 'clientes', 'CLIENTEID', 'NombreCliente', $clienteId);
+    $razonSocial = $clienteNombre !== '' ? $clienteNombre : 'Cliente #' . $clienteId;
+}
 
 $VENDEDOR_OTRO_ID = 22;
 if ($vendedorId === $VENDEDOR_OTRO_ID) {
@@ -135,7 +152,11 @@ if ($aduanaNombre === '') {
     $aduanaNombre = $aduanaOtro;
 }
 
-$clienteParaGuardar = $nombreCliente !== '' ? $nombreCliente : $razonSocial;
+$clienteParaGuardar = $nombreCliente !== ''
+    ? $nombreCliente
+    : ($usarOtraRazonSocial
+        ? ($numeroClienteManual !== '' ? $numeroClienteManual : $razonSocialManual)
+        : $razonSocial);
 
 if ($surtidorValor !== '' && ctype_digit($surtidorValor)) {
     $almacenistaNombre = obtenerTextoCatalogo($conn, 'almacenista', 'AlmacenistaID', 'NombreAlmacenista', (int) $surtidorValor);
