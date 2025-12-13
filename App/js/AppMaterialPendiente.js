@@ -608,7 +608,9 @@ $(document).ready(function() {
         .prop('required', true)
         .prop('disabled', false)
         .prop('readonly', false)
-        .removeAttr('disabled');
+        .removeAttr('disabled')
+        .removeAttr('readonly')
+        .removeAttr('aria-disabled');
     } else {
       $inputVendedorPendienteOtro.prop('required', false).prop('disabled', true).val('');
     }
