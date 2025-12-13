@@ -111,6 +111,13 @@ foreach ($listaVendedoresPendientes as $vendedorPendiente) {
     $vendedorId = isset($vendedorPendiente['vendedorID']) ? (int) $vendedorPendiente['vendedorID'] : 0;
     $nombreVendedor = isset($vendedorPendiente['NombreVendedor']) ? trim((string) $vendedorPendiente['NombreVendedor']) : '';
 
+    $nombreVendedorNormalizado = strtolower($nombreVendedor);
+    $esOpcionOtro = $vendedorId === 22 || $nombreVendedorNormalizado === 'otro';
+
+    if ($esOpcionOtro) {
+        continue;
+    }
+
     $nombreVendedorEscapado = htmlspecialchars($nombreVendedor, ENT_QUOTES, 'UTF-8');
 
     $textoVendedor = $nombreVendedorEscapado !== '' ? $nombreVendedorEscapado : 'Vendedor #' . $vendedorId;

@@ -100,6 +100,7 @@ $usarOtraRazonSocial = isset($_POST['OtraRazonSocialPendiente']) && $_POST['Otra
 $clienteId = $usarOtraRazonSocial ? 0 : (isset($_POST['RazonSocialPendiente']) ? (int) $_POST['RazonSocialPendiente'] : 0);
 $numeroClienteManual = normalizarTexto($_POST['NumeroClientePendienteOtro'] ?? '');
 $razonSocialManual = normalizarTexto($_POST['RazonSocialPendienteOtra'] ?? '');
+$usarOtroVendedor = isset($_POST['OtroVendedorPendiente']) && $_POST['OtroVendedorPendiente'] === '1';
 $vendedorId = isset($_POST['VendedorPendiente']) ? (int) $_POST['VendedorPendiente'] : 0;
 $vendedorOtro = normalizarTexto($_POST['VendedorPendienteOtro'] ?? '');
 $aduanaId = isset($_POST['AduanaPendiente']) ? (int) $_POST['AduanaPendiente'] : 0;
@@ -120,6 +121,18 @@ if ($usarOtraRazonSocial) {
     responderError('Selecciona una razón social de la lista o captura una nueva.', 400);
 }
 
+if ($usarOtroVendedor) {
+    $vendedorId = 0;
+}
+
+if ($usarOtroVendedor && $vendedorOtro === '') {
+    responderError('Captura el nombre del vendedor.', 400);
+}
+
+if (!$usarOtroVendedor && $vendedorId <= 0) {
+    responderError('Selecciona un vendedor o captura uno nuevo.', 400);
+}
+
 $clienteNombre = '';
 
 if ($usarOtraRazonSocial) {
@@ -130,8 +143,8 @@ if ($usarOtraRazonSocial) {
     $razonSocial = $clienteNombre !== '' ? $clienteNombre : 'Cliente #' . $clienteId;
 }
 
-$VENDEDOR_OTRO_ID = 22;
-if ($vendedorId === $VENDEDOR_OTRO_ID) {
+$vendedorNombre = '';
+if ($usarOtroVendedor) {
     $vendedorNombre = $vendedorOtro;
 } else {
     $vendedorNombre = obtenerTextoCatalogo($conn, 'vendedor', 'vendedorID', 'NombreVendedor', $vendedorId);
