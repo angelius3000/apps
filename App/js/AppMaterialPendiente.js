@@ -604,7 +604,11 @@ $(document).ready(function() {
     }
 
     if (mostrarCampo) {
-      $inputVendedorPendienteOtro.prop('required', true).prop('disabled', false).removeAttr('disabled');
+      $inputVendedorPendienteOtro
+        .prop('required', true)
+        .prop('disabled', false)
+        .prop('readonly', false)
+        .removeAttr('disabled');
     } else {
       $inputVendedorPendienteOtro.prop('required', false).prop('disabled', true).val('');
     }
