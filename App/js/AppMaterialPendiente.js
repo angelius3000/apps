@@ -535,8 +535,8 @@ $(document).ready(function() {
       return;
     }
 
-    var usarAlmacenista = $checkboxAlmacenista.is(':checked');
-    var permitirEdicion = $checkboxOtroSurtidor.is(':checked');
+    var usarAlmacenista = $checkboxAlmacenista.length && typeof $checkboxAlmacenista.is === 'function' ? $checkboxAlmacenista.is(':checked') : false;
+    var permitirEdicion = $checkboxOtroSurtidor.length && typeof $checkboxOtroSurtidor.is === 'function' ? $checkboxOtroSurtidor.is(':checked') : false;
     var nombreVendedor = obtenerNombreVendedor();
 
     if (usarAlmacenista && $selectAlmacenista.length) {
