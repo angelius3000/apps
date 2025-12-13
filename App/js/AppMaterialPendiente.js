@@ -597,9 +597,16 @@ $(document).ready(function() {
     if ($selectVendedores.length) {
       if (mostrarCampo) {
         $selectVendedores.val(null).trigger('change');
-        $selectVendedores.prop('required', false).prop('disabled', true);
+        $selectVendedores
+          .prop('required', false)
+          .removeAttr('required')
+          .prop('disabled', true)
+          .attr('aria-required', 'false');
       } else {
-        $selectVendedores.prop('disabled', false).prop('required', true);
+        $selectVendedores
+          .prop('disabled', false)
+          .prop('required', true)
+          .attr('aria-required', 'true');
       }
     }
 
