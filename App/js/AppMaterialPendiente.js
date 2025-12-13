@@ -53,6 +53,7 @@ $(document).ready(function() {
   var $btnEntregarTodo = $('#EntregarDocumentoCompleto');
   var $btnReiniciarEntregas = $('#ReiniciarEntregas');
   var ADUANA_OTRO_ID = '4';
+  var ignorarCambioVendedor = false;
   var partidasPendientes = [];
 
   function desplazarASeccionEntrega() {
@@ -589,6 +590,10 @@ $(document).ready(function() {
       return;
     }
 
+    if (ignorarCambioVendedor) {
+      return;
+    }
+
     var mostrarCampo = esVendedorOtro();
 
     $vendedorPendienteOtroContainer.toggleClass('d-none', !mostrarCampo);
@@ -599,7 +604,14 @@ $(document).ready(function() {
 
     if ($selectVendedores.length) {
       if (mostrarCampo) {
-        $selectVendedores.val(null).trigger('change');
+        ignorarCambioVendedor = true;
+        $selectVendedores.val(null);
+
+        if ($selectVendedores.hasClass('select2-hidden-accessible')) {
+          $selectVendedores.trigger('change.select2');
+        }
+
+        ignorarCambioVendedor = false;
         $selectVendedores
           .prop('required', false)
           .removeAttr('required')
@@ -1133,6 +1145,10 @@ $(document).ready(function() {
   });
 
   $selectVendedores.on('change', function() {
+    if (ignorarCambioVendedor) {
+      return;
+    }
+
     actualizarCampoVendedorOtro();
     actualizarCampoSurtidor();
 
