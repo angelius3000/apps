@@ -612,7 +612,7 @@ $(document).ready(function() {
         .removeAttr('readonly')
         .removeAttr('aria-disabled');
     } else {
-      $inputVendedorPendienteOtro.prop('required', false).prop('disabled', true).val('');
+      $inputVendedorPendienteOtro.prop('required', false).prop('disabled', false).val('');
     }
   }
 
