@@ -14,6 +14,12 @@ $(document).ready(function() {
   var productosDisponibles = $container.data('productos-disponibles') === 1 || $container.data('productos-disponibles') === '1';
   var $selectClientes = $('.select-cliente');
   var $selectRazonSocial = $('#RazonSocialPendiente');
+  var $checkboxOtraRazonSocial = $('#OtraRazonSocialPendiente');
+  var $razonSocialSelectContainer = $('#RazonSocialPendienteSelectContainer');
+  var $numeroClientePendienteContainer = $('#NumeroClientePendienteContainer');
+  var $inputNumeroClientePendienteOtro = $('#NumeroClientePendienteOtro');
+  var $otraRazonSocialPendienteContainer = $('#OtraRazonSocialPendienteContainer');
+  var $inputRazonSocialPendienteOtra = $('#RazonSocialPendienteOtra');
   var $selectVendedores = $('.select-vendedor');
   var $selectAduana = $('#AduanaPendiente');
   var $inputSurtidor = $('#SurtidorPendiente');
@@ -418,6 +424,54 @@ $(document).ready(function() {
 
     if ($contenedor.length) {
       $contenedor.toggleClass('d-none', !debeMostrar);
+    }
+  }
+
+  function esOtraRazonSocial() {
+    return $checkboxOtraRazonSocial.length && $checkboxOtraRazonSocial.is(':checked');
+  }
+
+  function actualizarCamposOtraRazonSocial() {
+    if (!$checkboxOtraRazonSocial.length) {
+      return;
+    }
+
+    var activo = esOtraRazonSocial();
+
+    if ($razonSocialSelectContainer.length) {
+      $razonSocialSelectContainer.toggleClass('d-none', activo);
+    }
+
+    if ($selectRazonSocial.length) {
+      $selectRazonSocial.prop('required', !activo).prop('disabled', activo);
+
+      if (activo) {
+        $selectRazonSocial.val(null).trigger('change');
+      }
+    }
+
+    if ($numeroClientePendienteContainer.length) {
+      $numeroClientePendienteContainer.toggleClass('d-none', !activo);
+    }
+
+    if ($otraRazonSocialPendienteContainer.length) {
+      $otraRazonSocialPendienteContainer.toggleClass('d-none', !activo);
+    }
+
+    if ($inputNumeroClientePendienteOtro.length) {
+      $inputNumeroClientePendienteOtro.prop('disabled', !activo).prop('required', activo);
+
+      if (!activo) {
+        $inputNumeroClientePendienteOtro.val('');
+      }
+    }
+
+    if ($inputRazonSocialPendienteOtra.length) {
+      $inputRazonSocialPendienteOtra.prop('disabled', !activo).prop('required', activo);
+
+      if (!activo) {
+        $inputRazonSocialPendienteOtra.val('');
+      }
     }
   }
 
@@ -887,6 +941,7 @@ $(document).ready(function() {
     actualizarCampoSurtidor();
     actualizarCampoAduanaOtro();
     actualizarModoOtroProducto();
+    actualizarCamposOtraRazonSocial();
   });
 
   $('#AgregarPartidaPendiente').on('click', function() {
@@ -958,6 +1013,12 @@ $(document).ready(function() {
     if ($inputAduanaPendienteOtro.length) {
       $inputAduanaPendienteOtro.prop('required', false).val('');
     }
+
+    if ($checkboxOtraRazonSocial.length) {
+      $checkboxOtraRazonSocial.prop('checked', false);
+    }
+
+    actualizarCamposOtraRazonSocial();
   });
 
   if ($tablaMaterialPendiente.length) {
@@ -1198,6 +1259,17 @@ $(document).ready(function() {
 
   $selectRazonSocial.on('change select2:select', function() {
     enfocarCampo($selectVendedores);
+  });
+
+  $checkboxOtraRazonSocial.on('change', function() {
+    actualizarCamposOtraRazonSocial();
+
+    if (esOtraRazonSocial()) {
+      enfocarCampo($inputNumeroClientePendienteOtro);
+      return;
+    }
+
+    enfocarCampo($selectRazonSocial);
   });
 
   $selectAlmacenista.on('change select2:select', function() {
