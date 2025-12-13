@@ -109,6 +109,10 @@ $surtidorValor = normalizarTexto($_POST['SurtidorPendiente'] ?? '');
 $nombreCliente = normalizarTexto($_POST['NombreClientePendiente'] ?? '');
 $productos = $_POST['productos'] ?? [];
 
+if (!is_array($productos)) {
+    responderError('Los productos enviados no tienen el formato esperado.', 400);
+}
+
 if ($numeroFactura === '' || empty($productos)) {
     responderError('Captura el número de documento y al menos una partida pendiente.', 400);
 }
