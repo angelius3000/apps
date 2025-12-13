@@ -21,6 +21,8 @@ $(document).ready(function() {
   var $otraRazonSocialPendienteContainer = $('#OtraRazonSocialPendienteContainer');
   var $inputRazonSocialPendienteOtra = $('#RazonSocialPendienteOtra');
   var $selectVendedores = $('.select-vendedor');
+  var $vendedorPendienteSelectContainer = $('#VendedorPendienteSelectContainer');
+  var $checkboxOtroVendedor = $('#OtroVendedorPendiente');
   var $selectAduana = $('#AduanaPendiente');
   var $inputSurtidor = $('#SurtidorPendiente');
   var $selectAlmacenista = $('#SurtidorPendienteAlmacenista');
@@ -50,7 +52,6 @@ $(document).ready(function() {
   var $btnRegistrarEntrega = $('#BtnRegistrarEntrega');
   var $btnEntregarTodo = $('#EntregarDocumentoCompleto');
   var $btnReiniciarEntregas = $('#ReiniciarEntregas');
-  var VENDEDOR_OTRO_ID = '22';
   var ADUANA_OTRO_ID = '4';
   var partidasPendientes = [];
 
@@ -476,8 +477,7 @@ $(document).ready(function() {
   }
 
   function esVendedorOtro() {
-    var valorSeleccionado = ($selectVendedores.val() || '').toString();
-    return valorSeleccionado === VENDEDOR_OTRO_ID;
+    return $checkboxOtroVendedor.length ? $checkboxOtroVendedor.is(':checked') : false;
   }
 
   function obtenerNombreVendedor() {
@@ -587,12 +587,26 @@ $(document).ready(function() {
     }
 
     var mostrarCampo = esVendedorOtro();
+
     $vendedorPendienteOtroContainer.toggleClass('d-none', !mostrarCampo);
 
+    if ($vendedorPendienteSelectContainer.length) {
+      $vendedorPendienteSelectContainer.toggleClass('d-none', mostrarCampo);
+    }
+
+    if ($selectVendedores.length) {
+      if (mostrarCampo) {
+        $selectVendedores.val(null).trigger('change');
+        $selectVendedores.prop('required', false).prop('disabled', true);
+      } else {
+        $selectVendedores.prop('disabled', false).prop('required', true);
+      }
+    }
+
     if (mostrarCampo) {
-      $inputVendedorPendienteOtro.prop('required', true);
+      $inputVendedorPendienteOtro.prop('required', true).prop('disabled', false);
     } else {
-      $inputVendedorPendienteOtro.prop('required', false).val('');
+      $inputVendedorPendienteOtro.prop('required', false).prop('disabled', true).val('');
     }
   }
 
@@ -965,8 +979,20 @@ $(document).ready(function() {
       var $vendedor = $(this);
       if ($vendedor.hasClass('select2-hidden-accessible')) {
         $vendedor.val(null).trigger('change');
+      } else {
+        $vendedor.val('');
       }
+
+      $vendedor.prop('disabled', false).prop('required', true);
     });
+
+    if ($vendedorPendienteSelectContainer.length) {
+      $vendedorPendienteSelectContainer.removeClass('d-none');
+    }
+
+    if ($checkboxOtroVendedor.length) {
+      $checkboxOtroVendedor.prop('checked', false);
+    }
 
     partidasPendientes = [];
     renderizarPartidasPendientes();
@@ -999,7 +1025,7 @@ $(document).ready(function() {
     }
 
     if ($inputVendedorPendienteOtro.length) {
-      $inputVendedorPendienteOtro.prop('required', false).val('');
+      $inputVendedorPendienteOtro.prop('required', false).prop('disabled', true).val('');
     }
 
     if ($selectAduana.length) {
@@ -1019,6 +1045,7 @@ $(document).ready(function() {
     }
 
     actualizarCamposOtraRazonSocial();
+    actualizarCampoVendedorOtro();
   });
 
   if ($tablaMaterialPendiente.length) {
@@ -1075,6 +1102,18 @@ $(document).ready(function() {
     $selectProductoPendiente.val(partida.id).trigger('change');
     $inputCantidadPendiente.val(partida.cantidad);
     $inputCantidadPendiente.trigger('focus');
+  });
+
+  $checkboxOtroVendedor.on('change', function() {
+    actualizarCampoVendedorOtro();
+    actualizarCampoSurtidor();
+
+    if ($checkboxOtroVendedor.is(':checked')) {
+      enfocarCampo($inputVendedorPendienteOtro);
+      return;
+    }
+
+    enfocarCampo($selectVendedores);
   });
 
   $selectVendedores.on('change', function() {
