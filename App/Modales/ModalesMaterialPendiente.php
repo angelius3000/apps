@@ -41,12 +41,18 @@
                                         </div>
                                         <div class="col-lg-6 col-sm-12 mb-4">
                                             <label for="VendedorPendiente" class="form-label">Vendedor</label>
-                                            <select class="form-select select-vendedor" id="VendedorPendiente" name="VendedorPendiente" data-placeholder="Selecciona vendedor" <?php echo $hayVendedoresPendientes ? '' : 'disabled'; ?> required>
-                                                <?php echo $opcionesVendedoresPendientes; ?>
-                                            </select>
-                                            <?php if (!$hayVendedoresPendientes) : ?>
-                                                <small class="form-text text-muted">No hay vendedores disponibles para seleccionar.</small>
-                                            <?php endif; ?>
+                                            <div id="VendedorPendienteSelectContainer">
+                                                <select class="form-select select-vendedor" id="VendedorPendiente" name="VendedorPendiente" data-placeholder="Selecciona vendedor" <?php echo $hayVendedoresPendientes ? '' : 'disabled'; ?> required>
+                                                    <?php echo $opcionesVendedoresPendientes; ?>
+                                                </select>
+                                                <?php if (!$hayVendedoresPendientes) : ?>
+                                                    <small class="form-text text-muted">No hay vendedores disponibles para seleccionar.</small>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="form-check mt-2">
+                                                <input class="form-check-input" type="checkbox" id="OtroVendedorPendiente" name="OtroVendedorPendiente" value="1">
+                                                <label class="form-check-label" for="OtroVendedorPendiente">Otro Vendedor</label>
+                                            </div>
                                             <div id="VendedorPendienteOtroContainer" class="mt-2 d-none">
                                                 <label for="VendedorPendienteOtro" class="form-label">Nombre del vendedor</label>
                                                 <input type="text" class="form-control" id="VendedorPendienteOtro" name="VendedorPendienteOtro" autocomplete="off">
