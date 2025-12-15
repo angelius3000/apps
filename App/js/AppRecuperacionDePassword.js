@@ -59,13 +59,22 @@ $(document).ready(function() {
         data: dataString,
         dataType: "json",
         success: function(response) {
-          // Reescribe la Datatable y le da refresh
-
-          alert(
+          var msg =
+            response.Mensaje ||
             "Mandaste un correo a " +
               response.Email +
-              " para poder seleccionar una nueva contraseña"
-          );
+              " para poder seleccionar una nueva contraseña";
+
+          alert(msg);
+        },
+        error: function(xhr) {
+          var msg = "Hubo un problema al enviar el correo de recuperación.";
+
+          if (xhr.responseJSON && xhr.responseJSON.Mensaje) {
+            msg = xhr.responseJSON.Mensaje;
+          }
+
+          alert(msg);
         },
       }).done(function() {});
     }
