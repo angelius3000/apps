@@ -22,8 +22,16 @@ if (mysqli_affected_rows($conn) === 0) {
     die('Error: Usuario no encontrado');
 }
 
-RecuperaTuPassword($EmailDeUsuario, $resetHash);
+$mailSent = RecuperaTuPassword($EmailDeUsuario, $resetHash);
 
+if (!$mailSent) {
+    http_response_code(500);
+    echo json_encode(array(
+        'Ok' => 'Error',
+        'Mensaje' => 'No se pudo enviar el correo de recuperación. Inténtalo más tarde.',
+    ));
+    exit;
+}
 
 $msg = array(
     'Ok' => 'Ok',

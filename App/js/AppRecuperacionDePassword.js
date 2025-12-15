@@ -67,6 +67,15 @@ $(document).ready(function() {
               " para poder seleccionar una nueva contraseña"
           );
         },
+        error: function(xhr) {
+          var msg = "Hubo un problema al enviar el correo de recuperación.";
+
+          if (xhr.responseJSON && xhr.responseJSON.Mensaje) {
+            msg = xhr.responseJSON.Mensaje;
+          }
+
+          alert(msg);
+        },
       }).done(function() {});
     }
   });
