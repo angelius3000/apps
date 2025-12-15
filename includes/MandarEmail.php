@@ -20,14 +20,16 @@ function RecuperaTuPassword($email, $Hash)
         $mail->SMTPAuth   = true;
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
 
-        $mail->Username   = 'apps@edison.com.mx';
-        $mail->Password   = 'd@mfwYgX%qH4CtPDhqIJaE6ohc8A4CDDQgDLmy^E7!lbvKF0@Z';
+        $mail->Username   = getenv('SMTP_USER');
+        $mail->Password   = getenv('SMTP_PASS');
 
         // Habilitar debug a error_log (Plesk)
-        $mail->SMTPDebug = 2;
+        $mail->SMTPDebug = getenv('APP_DEBUG') === '1' ? 2 : 0;
         $mail->Debugoutput = function ($str, $level) {
             error_log("PHPMailer [$level]: $str");
         };
+
+        $mail->Timeout = 10;
 
         $mail->setFrom('apps@edison.com.mx', 'Edison Apps');
         $mail->AuthType = 'LOGIN';
