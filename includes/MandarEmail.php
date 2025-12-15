@@ -9,100 +9,61 @@ require '../../vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-//Prueba PHP Mailer
-
 function RecuperaTuPassword($email, $Hash)
 {
-  $mail = new PHPMailer(true);
+    $mail = new PHPMailer(true);
 
-  try {
-    // Configuración del servidor SMTP
-    $mail->isSMTP();
-    $mail->Host = 'mail.edison.com.mx'; // Reemplaza con la dirección del servidor SMTP
-    $mail->Port = 587; // Reemplaza con el puerto SMTP correspondiente
-    $mail->SMTPAuth = true;
-    $mail->Username = 'notificaciones@edison.com.mx'; // Reemplaza con tu nombre de usuario SMTP
-    $mail->Password = 'Ntfccns(2024)*'; // Reemplaza con tu contraseña SMTP
+    try {
+        $mail->isSMTP();
+        $mail->Host       = 'mail.edison.com.mx';
+        $mail->Port       = 587;
+        $mail->SMTPAuth   = true;
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
 
-    $mail->setFrom('notificaciones@edison.com.mx', 'Edison Reparto');
-    $mail->addAddress($email);
-    $mail->Subject = 'Recupera tu contraseña en el sistema Edison Reparto';
+        $mail->Username   = 'notificaciones@edison.com.mx';
+        $mail->Password   = 'Ntfccns(2024)*';
 
-    // El contenido dee de ser UTF-8 para que se vean los acentos correctamente
-    $mail->CharSet = 'UTF-8';
+        // Habilitar debug a error_log (Plesk)
+        $mail->SMTPDebug = 2;
+        $mail->Debugoutput = function ($str, $level) {
+            error_log("PHPMailer [$level]: $str");
+        };
 
-    // Contenido del mensaje en formato HTML
-    $mail->isHTML(true);
-    $mail->Body = '
+        $mail->setFrom('notificaciones@edison.com.mx', 'Edison Apps');
+        $mail->addAddress($email);
+        $mail->Subject = 'Recupera tu contraseña';
+
+        $mail->CharSet = 'UTF-8';
+        $mail->isHTML(true);
+
+        $resetUrl = 'https://apps.edison.com.mx/RecuperarTuPassword.php?HASH=' . urlencode($Hash);
+
+        $mail->Body = '
         <html>
-        <head>
-        <style>
-            /* Estilos CSS */
-        </style>
-        </head>
-        <BODY BGCOLOR="White">
         <body>
-       
-        <div style=" height="40" align="left">
-
-        <font size="3" color="#000000" style="text-decoration:none;">
-        <div class="info" Style="align:left;">
-
-        <table width="100%" cellspacing="4" cellpadding="4">
-       
-        <tr>
-        <td><img src="http://reparto.edison.com.mx/App/Graficos/Logo/LogoEdison.png" width="200" alt=""/></td>
-        </tr>
-        <tr>
-        <td align="center" valign="top"><table width="100%" border="0" align="left" cellpadding="0" cellspacing="0">
-
-          <tr>
-            <td align="left" valign="top" style="font-family:Arial, Helvetica, sans-serif; font-size:24px; font-weight:normal; color:#30332c; line-height:38px; padding:0px 0px 20px 0px;">Bienvenido</td>
-          </tr>
-          <tr>
-            <td align="left" valign="top" style="font-family:Arial, Helvetica, sans-serif; font-size:16px; font-weight:normal; color:#898989; line-height:30px;">
-            
-            Hola:
-            <br>
-
-            Para recuperar tu contraseña deberás crear una nueva pulsando el botón: 
-
-            </td>
-          </tr>
-         
-          <tr>
-            <td align="left" valign="top"><table width="250px" border="0" cellspacing="0" cellpadding="0">
-            <tr><td>&nbsp <br></td></tr>
-                <tr align="center" >
-                <td style="border-radius: 5px;" bgcolor="#0895ca">
-             
-                    <a href="http://reparto.edison.com.mx/RecuperarTuPassword.php?HASH=' . $Hash . '" target="_blank" style="padding: 8px 12px; border: 1px solid #0895ca;border-radius: 5px;font-family: Helvetica, Arial, sans-serif;font-size: 14px; color: #ffffff; text-decoration: none;font-weight:bold;display: inline-block;">
-                        Recupera tu contraseña           
-                    </a>
-                </td>
-                </tr>
-                <tr><td>&nbsp <br></td></tr>
-                <tr><td>&nbsp <br></td></tr>
-            </table></td>
-          </tr>
-          </table></td>
-      </tr>
-      </table>
-      </div>
-
-        </br>
-        <p>-----------------------------------------------------------------------------------------------------------------</p>
-        </br>
-        <p>(Este es un correo automático por favor no respondas a esta dirección. Cualquier duda contáctanos al correo sistemas@edison.com.mx)</p>
-        </font>
-        </div>
+            <p>Para recuperar tu contraseña, pulsa el botón:</p>
+            <p>
+                <a href="'.$resetUrl.'" target="_blank"
+                   style="padding:10px 14px;border-radius:6px;background:#0895ca;color:#fff;text-decoration:none;">
+                   Recuperar contraseña
+                </a>
+            </p>
+            <p style="font-size:12px;color:#666;">
+                Este es un correo automático, no respondas a este mensaje.
+            </p>
         </body>
-        </html>
-        ';
+        </html>';
 
-    $mail->send();
-  } catch (Exception $e) {
-  }
+        $mail->AltBody = "Recupera tu contraseña aquí: $resetUrl";
+
+        $mail->send();
+        return true;
+
+    } catch (Exception $e) {
+        error_log('PHPMailer ERROR: ' . $mail->ErrorInfo);
+        error_log('PHPMailer EXCEPTION: ' . $e->getMessage());
+        return false;
+    }
 }
 
 // RecuperaTuPassword('sistemas@edison.com.mx', '123123123');
