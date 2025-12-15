@@ -20,8 +20,8 @@ function RecuperaTuPassword($email, $Hash)
         $mail->SMTPAuth   = true;
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
 
-        $mail->Username   = 'notificaciones@edison.com.mx';
-        $mail->Password   = 'Ntfccns(2024)*';
+        $mail->Username   = 'apps@edison.com.mx';
+        $mail->Password   = 'd@mfwYgX%qH4CtPDhqIJaE6ohc8A4CDDQgDLmy^E7!lbvKF0@Z';
 
         // Habilitar debug a error_log (Plesk)
         $mail->SMTPDebug = 2;
@@ -29,7 +29,8 @@ function RecuperaTuPassword($email, $Hash)
             error_log("PHPMailer [$level]: $str");
         };
 
-        $mail->setFrom('notificaciones@edison.com.mx', 'Edison Apps');
+        $mail->setFrom('apps@edison.com.mx', 'Edison Apps');
+        $mail->AuthType = 'LOGIN';
         $mail->addAddress($email);
         $mail->Subject = 'Recupera tu contraseña';
 
