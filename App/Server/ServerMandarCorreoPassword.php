@@ -2,6 +2,8 @@
 
 include("../../Connections/ConDB.php");
 include("../../includes/MandarEmail.php");
+
+header('Content-Type: application/json; charset=utf-8');
 // Definir La table de la base de datos
 
 $EmailDeUsuario = mysqli_real_escape_string($conn, $_POST['email']);
@@ -15,28 +17,27 @@ $sql = "UPDATE usuarios SET
   WHERE email = '$EmailDeUsuario'";
 
 if (!mysqli_query($conn, $sql)) {
-    die('Error: ' . mysqli_error($conn));
-}
-
-if (mysqli_affected_rows($conn) === 0) {
-    die('Error: Usuario no encontrado');
+    http_response_code(500);
+    echo json_encode(array(
+        'Ok' => 'Error',
+        'Mensaje' => 'No se pudo procesar la solicitud de recuperación.',
+    ));
+    exit;
 }
 
 $mailSent = RecuperaTuPassword($EmailDeUsuario, $resetHash);
 
 if (!$mailSent) {
-    http_response_code(500);
     echo json_encode(array(
-        'Ok' => 'Error',
-        'Mensaje' => 'No se pudo enviar el correo de recuperación. Inténtalo más tarde.',
+        'Ok' => 'Advertencia',
+        'Email' => $EmailDeUsuario,
+        'Mensaje' => 'No se pudo enviar el correo de recuperación, pero tu solicitud fue registrada. Inténtalo más tarde.',
     ));
     exit;
 }
 
-$msg = array(
+echo json_encode(array(
     'Ok' => 'Ok',
     'Email' => $EmailDeUsuario,
-);
-
-// send data as json format
-echo json_encode($msg);
+    'Mensaje' => 'Mandaste un correo a ' . $EmailDeUsuario . ' para poder seleccionar una nueva contraseña',
+));
