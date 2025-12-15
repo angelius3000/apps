@@ -1,23 +1,27 @@
-<?php require_once('Connections/ConDB.php'); 
+<?php require_once('Connections/ConDB.php');
 
-$hashParam = isset($_GET['HASH']) ? mysqli_real_escape_string($conn, $_GET['HASH']) : '';
+$hashParam = isset($_GET['HASH']) ? $_GET['HASH'] : '';
 $resetError = '';
 
-if ($hashParam === '') {
+$erroresConexion = isset($connectionError) && $connectionError !== null;
+
+if ($erroresConexion) {
     $resetError = 'El link de recuperación es inválido o ha expirado.';
 } else {
-    $sql = "SELECT reset_used, reset_expires_at FROM usuarios WHERE reset_hash = '$hashParam' LIMIT 1";
-    $result = mysqli_query($conn, $sql);
+    $hashParam = mysqli_real_escape_string($conn, $hashParam);
 
-    if (!$result || mysqli_num_rows($result) === 0) {
+    if ($hashParam === '') {
         $resetError = 'El link de recuperación es inválido o ha expirado.';
     } else {
-        $resetData = mysqli_fetch_assoc($result);
-        $resetUsed = (int) $resetData['reset_used'] !== 0;
-        $resetExpired = empty($resetData['reset_expires_at']) || strtotime($resetData['reset_expires_at']) < time();
+        $sql = "SELECT 1 FROM usuarios WHERE reset_hash = '$hashParam' AND reset_used = 0 AND reset_expires_at >= NOW() LIMIT 1";
+        $result = mysqli_query($conn, $sql);
 
-        if ($resetUsed || $resetExpired) {
+        if (!$result || mysqli_num_rows($result) === 0) {
             $resetError = 'El link de recuperación es inválido o ha expirado.';
+        }
+
+        if ($result) {
+            mysqli_free_result($result);
         }
     }
 }
