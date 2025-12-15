@@ -537,13 +537,15 @@ $(document).ready(function() {
     }
 
     var usarAlmacenista = $checkboxAlmacenista.length && typeof $checkboxAlmacenista.is === 'function' ? $checkboxAlmacenista.is(':checked') : false;
+    var esOtroVendedorActivo = esVendedorOtro();
     var permitirEdicion =
-      esVendedorOtro() ||
+      esOtroVendedorActivo ||
       ($checkboxOtroSurtidor.length && typeof $checkboxOtroSurtidor.is === 'function' ? $checkboxOtroSurtidor.is(':checked') : false);
     var nombreVendedor = obtenerNombreVendedor();
     var escribiendoVendedorManual =
       $inputVendedorPendienteOtro.length &&
       document.activeElement === $inputVendedorPendienteOtro[0];
+    var debeEnfocarSurtidor = permitirEdicion && !esOtroVendedorActivo && !escribiendoVendedorManual;
 
     if (usarAlmacenista && $selectAlmacenista.length) {
       $checkboxOtroSurtidor.prop('checked', false).prop('disabled', true);
@@ -567,7 +569,7 @@ $(document).ready(function() {
     if (permitirEdicion) {
       $inputSurtidor.prop('readonly', false);
       $inputSurtidor.val(nombreVendedor);
-      if (!escribiendoVendedorManual) {
+      if (debeEnfocarSurtidor) {
         $inputSurtidor.trigger('focus');
       }
       return;
