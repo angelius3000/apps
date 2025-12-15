@@ -1,4 +1,27 @@
-<?php require_once('Connections/ConDB.php'); ?>
+<?php require_once('Connections/ConDB.php'); 
+
+$hashParam = isset($_GET['HASH']) ? mysqli_real_escape_string($conn, $_GET['HASH']) : '';
+$resetError = '';
+
+if ($hashParam === '') {
+    $resetError = 'El link de recuperación es inválido o ha expirado.';
+} else {
+    $sql = "SELECT reset_used, reset_expires_at FROM usuarios WHERE reset_hash = '$hashParam' LIMIT 1";
+    $result = mysqli_query($conn, $sql);
+
+    if (!$result || mysqli_num_rows($result) === 0) {
+        $resetError = 'El link de recuperación es inválido o ha expirado.';
+    } else {
+        $resetData = mysqli_fetch_assoc($result);
+        $resetUsed = (int) $resetData['reset_used'] !== 0;
+        $resetExpired = empty($resetData['reset_expires_at']) || strtotime($resetData['reset_expires_at']) < time();
+
+        if ($resetUsed || $resetExpired) {
+            $resetError = 'El link de recuperación es inválido o ha expirado.';
+        }
+    }
+}
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -50,26 +73,30 @@
                 <a href="main.php"> <img src="App/Graficos/Logo/LogoEdison.png" style="max-width :250px;"> </a>
             </div>
             <br>
-            <form data-parsley-validate class="forms-sample" id="ValidacionRecuperarPassword">
-                <div class="auth-credentials m-b-xxl">
+            <?php if ($resetError !== ''): ?>
+                <div class="alert alert-danger" role="alert"><?php echo $resetError; ?></div>
+            <?php else: ?>
+                <form data-parsley-validate class="forms-sample" id="ValidacionRecuperarPassword">
+                    <div class="auth-credentials m-b-xxl">
 
 
-                    <label for="Password" class="form-label">Escribe tu nueva contraseña</label>
+                        <label for="Password" class="form-label">Escribe tu nueva contraseña</label>
 
-                    <input type="password" class="form-control" id="Password" name="Password" aria-describedby="password" placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;">
+                        <input type="password" class="form-control" id="Password" name="Password" aria-describedby="password" placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;">
 
-                </div>
+                    </div>
 
-                <div class="auth-submit">
+                    <div class="auth-submit">
 
-                    <input type="hidden" class="form-control" id="HASH" name="HASH" value="<?php echo $_GET['HASH']; ?>">
+                        <input type="hidden" class="form-control" id="HASH" name="HASH" value="<?php echo htmlspecialchars($hashParam, ENT_QUOTES, 'UTF-8'); ?>">
 
-                    <button type="submit" href="#" class="btn btn-primary">Entrar</button>
-                    <a href="#" class="auth-forgot-password float-end">¿Olvidaste tu contraseña?</a>
-                </div>
+                        <button type="submit" href="#" class="btn btn-primary">Entrar</button>
+                        <a href="#" class="auth-forgot-password float-end">¿Olvidaste tu contraseña?</a>
+                    </div>
 
 
-            </form>
+                </form>
+            <?php endif; ?>
 
             <div class="divider"></div>
 
