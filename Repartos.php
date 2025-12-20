@@ -52,6 +52,9 @@ $tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string
 $tiposPermitidosCambioEstatus = ['administrador', 'supervisor', 'auditor'];
 $puedeCambiarEstatusRepartos = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $tiposPermitidosCambioEstatus, true);
 $mensajeRestriccionCambioEstatus = 'Solo un administrador, supervisor o auditor puede cambiar el estatus.';
+$tiposPermitidosAgregarReparto = ['administrador', 'supervisor'];
+$puedeAgregarReparto = in_array((string) ($_SESSION['TIPOUSUARIO'] ?? ''), ['1', '3'], true)
+    || ($tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $tiposPermitidosAgregarReparto, true));
 
 
 ?>
@@ -98,7 +101,7 @@ $mensajeRestriccionCambioEstatus = 'Solo un administrador, supervisor o auditor 
                             </div>
                         </div>
 
-                        <?php if ($_SESSION['TIPOUSUARIO'] == 1 || $_SESSION['TIPOUSUARIO'] == 3) { ?>
+                        <?php if ($puedeAgregarReparto) { ?>
 
                             <div class="row">
                                 <div class="col">
