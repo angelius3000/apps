@@ -97,7 +97,7 @@ if (empty($rows)) {
         echo '<td>' . ($surtidor !== '' ? $surtidor : '-') . '</td>';
         echo '<td>' . $cliente . '</td>';
         echo '<td>' . ($aduana !== '' ? $aduana : '-') . '</td>';
-        echo '<td>' . $sku . '</td>';
+        echo '<td style="mso-number-format:\'@\';">' . $sku . '</td>';
         echo '<td>' . $descripcion . '</td>';
         echo '<td>' . $cantidad . '</td>';
         echo '</tr>';
