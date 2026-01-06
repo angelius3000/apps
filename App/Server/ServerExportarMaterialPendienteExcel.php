@@ -25,6 +25,18 @@ function asegurarTablaFacturaMP(mysqli $conn): void
 asegurarTablaMaterialPendiente($conn);
 asegurarTablaFacturaMP($conn);
 
+$longitudSkuReferencia = 0;
+$queryLongitudSku = "SELECT MAX(CHAR_LENGTH(Sku)) AS MaxSkuLength FROM productos";
+$resultadoLongitud = mysqli_query($conn, $queryLongitudSku);
+
+if ($resultadoLongitud instanceof mysqli_result) {
+    $filaLongitud = mysqli_fetch_assoc($resultadoLongitud);
+    if (isset($filaLongitud['MaxSkuLength'])) {
+        $longitudSkuReferencia = (int) $filaLongitud['MaxSkuLength'];
+    }
+    mysqli_free_result($resultadoLongitud);
+}
+
 $query = "SELECT f.FacturaMPID, f.FechaFMP, mp.DocumentoMP, mp.RazonSocialMP, mp.VendedorMP, mp.SurtidorMP, mp.ClienteMP, mp.AduanaMP, mp.SkuMP, mp.DescripcionMP, mp.CantidadMP, mp.FechaMP "
     . "FROM materialpendiente mp "
     . "LEFT JOIN facturamp f ON f.DocumentoFMP = mp.DocumentoMP "
@@ -84,7 +96,15 @@ if (empty($rows)) {
         $surtidor = htmlspecialchars($fila['SurtidorMP'] ?? '', ENT_QUOTES, 'UTF-8');
         $cliente = htmlspecialchars($fila['ClienteMP'] ?? '', ENT_QUOTES, 'UTF-8');
         $aduana = htmlspecialchars($fila['AduanaMP'] ?? '', ENT_QUOTES, 'UTF-8');
-        $sku = htmlspecialchars($fila['SkuMP'] ?? '', ENT_QUOTES, 'UTF-8');
+        $skuNormalizado = $fila['SkuMP'] ?? '';
+        if ($longitudSkuReferencia > 0) {
+            $skuNormalizado = trim((string) $skuNormalizado);
+            if ($skuNormalizado !== '' && ctype_digit($skuNormalizado) && strlen($skuNormalizado) < $longitudSkuReferencia) {
+                $skuNormalizado = str_pad($skuNormalizado, $longitudSkuReferencia, '0', STR_PAD_LEFT);
+            }
+        }
+
+        $sku = htmlspecialchars($skuNormalizado, ENT_QUOTES, 'UTF-8');
         $descripcion = htmlspecialchars($fila['DescripcionMP'] ?? '', ENT_QUOTES, 'UTF-8');
         $cantidad = isset($fila['CantidadMP']) ? (int) $fila['CantidadMP'] : 0;
 
