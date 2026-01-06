@@ -735,6 +735,25 @@ $(document).ready(function() {
     $inputDocumentoEntrega.val(documento);
   }
 
+  function actualizarEstadoFilaMaterialPendiente(folio, tienePendientes) {
+    if (!$tablaMaterialPendiente.length || !folio) {
+      return;
+    }
+
+    var $fila = $tablaMaterialPendiente.find('.material-pendiente-row[data-folio="' + folio + '"]');
+
+    if (!$fila.length) {
+      return;
+    }
+
+    if (tienePendientes) {
+      $fila.addClass('text-danger').removeClass('text-body');
+      return;
+    }
+
+    $fila.removeClass('text-danger').addClass('text-body');
+  }
+
   function renderizarDetallePartidas(partidas) {
     if (!$detallePartidasBody.length) {
       return;
@@ -742,8 +761,11 @@ $(document).ready(function() {
 
     if (!partidas || !partidas.length) {
       $detallePartidasBody.html('<tr class="text-muted"><td colspan="4" class="text-center">El folio no tiene partidas pendientes registradas.</td></tr>');
+      actualizarEstadoFilaMaterialPendiente($inputFolioEntrega.val(), false);
       return;
     }
+
+    actualizarEstadoFilaMaterialPendiente($inputFolioEntrega.val(), true);
 
     var filas = partidas.map(function(partida) {
       var cantidad = partida && partida.cantidad ? partida.cantidad : 0;

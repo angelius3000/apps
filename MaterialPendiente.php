@@ -176,8 +176,9 @@ function asegurarTablaFacturaMPListado(mysqli $conn): void
 
 asegurarTablaFacturaMPListado($conn);
 
-$queryMaterialPendiente = "SELECT FacturaMPID, FechaFMP, DocumentoFMP, RazonSocialFMP, VendedorFMP, SurtidorFMP, ClienteFMP, AduanaFMP "
-    . "FROM facturamp ORDER BY FacturaMPID DESC";
+$queryMaterialPendiente = "SELECT f.FacturaMPID, f.FechaFMP, f.DocumentoFMP, f.RazonSocialFMP, f.VendedorFMP, f.SurtidorFMP, f.ClienteFMP, f.AduanaFMP, "
+    . "(SELECT COUNT(*) FROM materialpendiente mp WHERE mp.DocumentoMP = f.DocumentoFMP) AS PartidasPendientes "
+    . "FROM facturamp f ORDER BY f.FacturaMPID DESC";
 
 $resultadoMaterialPendiente = @mysqli_query($conn, $queryMaterialPendiente);
 
@@ -286,7 +287,13 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                                             $surtidor = htmlspecialchars($materialPendiente['SurtidorFMP'] ?? '', ENT_QUOTES, 'UTF-8');
                                                             $cliente = htmlspecialchars($materialPendiente['ClienteFMP'] ?? '', ENT_QUOTES, 'UTF-8');
                                                             $aduana = htmlspecialchars($materialPendiente['AduanaFMP'] ?? '', ENT_QUOTES, 'UTF-8');
+                                                            $partidasPendientes = isset($materialPendiente['PartidasPendientes']) ? (int) $materialPendiente['PartidasPendientes'] : 0;
                                                             $fechaRegistro = '';
+
+                                                            $clasesFila = 'material-pendiente-row text-body';
+                                                            if ($partidasPendientes > 0) {
+                                                                $clasesFila .= ' text-danger';
+                                                            }
 
                                                             if (!empty($materialPendiente['FechaFMP'])) {
                                                                 $marcaTemporal = strtotime((string) $materialPendiente['FechaFMP']);
@@ -295,7 +302,7 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                                                 }
                                                             }
                                                             ?>
-                                                            <tr class="material-pendiente-row" data-folio="<?php echo $folio; ?>" data-documento="<?php echo $numeroDocumento; ?>" style="cursor: pointer;" role="button">
+                                                            <tr class="<?php echo $clasesFila; ?>" data-folio="<?php echo $folio; ?>" data-documento="<?php echo $numeroDocumento; ?>" style="cursor: pointer;" role="button">
                                                                 <td><?php echo $folio !== '' ? $folio : '-'; ?></td>
                                                                 <td><?php echo $fechaRegistro !== '' ? $fechaRegistro : '-'; ?></td>
                                                                 <td class="fw-semibold"><?php echo $numeroDocumento; ?></td>
