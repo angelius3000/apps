@@ -245,6 +245,10 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                     <i class="material-icons-two-tone">add</i>
                                     Agregar Pendiente
                                 </button>
+                                <a href="App/Server/ServerExportarMaterialPendienteExcel.php" class="btn btn-sm btn-success waves-effect width-md waves-light ms-2">
+                                    <i class="material-icons-two-tone">file_download</i>
+                                    Exportar Excel
+                                </a>
                             </div>
                         </div>
 
