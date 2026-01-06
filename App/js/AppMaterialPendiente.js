@@ -1195,12 +1195,6 @@ $(document).ready(function() {
     }
   });
 
-  $inputVendedorPendienteOtro.on('input', function() {
-    if (esVendedorOtro()) {
-      actualizarCampoSurtidor();
-    }
-  });
-
   $checkboxOtroSurtidor.on('change', function() {
     actualizarCampoSurtidor();
 
