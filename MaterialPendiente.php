@@ -258,6 +258,12 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                                 Registra y gestiona el material pendiente de entrega para tus clientes.
                                             </div>
                                         </div>
+                                        <div class="row align-items-center mb-3">
+                                            <label for="BuscadorMaterialPendiente" class="col-sm-2 col-form-label">Buscar</label>
+                                            <div class="col-sm-10">
+                                                <input type="text" class="form-control" id="BuscadorMaterialPendiente" placeholder="Filtrar por folio, documento, cliente, razón social o aduana">
+                                            </div>
+                                        </div>
                                         <div class="table-responsive">
                                             <table class="table align-middle mb-0 table-hover" id="TablaMaterialPendiente">
                                                 <thead>
@@ -314,6 +320,9 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                                             </tr>
                                                         <?php endforeach; ?>
                                                     <?php endif; ?>
+                                                    <tr id="MaterialPendienteSinResultados" class="d-none">
+                                                        <td colspan="8" class="text-center text-muted">No se encontraron resultados para la búsqueda.</td>
+                                                    </tr>
                                                 </tbody>
                                             </table>
                                         </div>
