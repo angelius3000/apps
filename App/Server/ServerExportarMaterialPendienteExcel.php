@@ -56,28 +56,34 @@ $nombreArchivo = 'material_pendiente_' . date('Ymd_His') . '.xls';
 
 header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
 header('Content-Disposition: attachment; filename=' . $nombreArchivo);
-echo "\xEF\xBB\xBF"; // BOM para UTF-8
 
-echo '<table border="1">';
-echo '<thead>';
-echo '<tr>';
-echo '<th>Folio</th>';
-echo '<th>Fecha de registro</th>';
-echo '<th>Número de documento</th>';
-echo '<th>Razón social</th>';
-echo '<th>Vendedor</th>';
-echo '<th>Surtidor</th>';
-echo '<th>Cliente</th>';
-echo '<th>Aduana</th>';
-echo '<th>SKU</th>';
-echo '<th>Descripción</th>';
-echo '<th>Cantidad pendiente</th>';
-echo '</tr>';
-echo '</thead>';
-echo '<tbody>';
+$escapeXml = static function (string $value): string {
+    return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+};
+
+echo '<?xml version="1.0" encoding="UTF-8"?>';
+echo '<?mso-application progid="Excel.Sheet"?>';
+echo '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" '
+    . 'xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">';
+echo '<Worksheet ss:Name="Pendiente">';
+echo '<Table>';
+
+echo '<Row>';
+echo '<Cell><Data ss:Type="String">Folio</Data></Cell>';
+echo '<Cell><Data ss:Type="String">Fecha de registro</Data></Cell>';
+echo '<Cell><Data ss:Type="String">Número de documento</Data></Cell>';
+echo '<Cell><Data ss:Type="String">Razón social</Data></Cell>';
+echo '<Cell><Data ss:Type="String">Vendedor</Data></Cell>';
+echo '<Cell><Data ss:Type="String">Surtidor</Data></Cell>';
+echo '<Cell><Data ss:Type="String">Cliente</Data></Cell>';
+echo '<Cell><Data ss:Type="String">Aduana</Data></Cell>';
+echo '<Cell><Data ss:Type="String">SKU</Data></Cell>';
+echo '<Cell><Data ss:Type="String">Descripción</Data></Cell>';
+echo '<Cell><Data ss:Type="String">Cantidad pendiente</Data></Cell>';
+echo '</Row>';
 
 if (empty($rows)) {
-    echo '<tr><td colspan="11">No hay partidas pendientes registradas.</td></tr>';
+    echo '<Row><Cell ss:MergeAcross="10"><Data ss:Type="String">No hay partidas pendientes registradas.</Data></Cell></Row>';
 } else {
     foreach ($rows as $fila) {
         $folio = isset($fila['FacturaMPID']) ? (int) $fila['FacturaMPID'] : 0;
@@ -90,12 +96,12 @@ if (empty($rows)) {
             }
         }
 
-        $numeroDocumento = htmlspecialchars($fila['DocumentoMP'] ?? '', ENT_QUOTES, 'UTF-8');
-        $razonSocial = htmlspecialchars($fila['RazonSocialMP'] ?? '', ENT_QUOTES, 'UTF-8');
-        $vendedor = htmlspecialchars($fila['VendedorMP'] ?? '', ENT_QUOTES, 'UTF-8');
-        $surtidor = htmlspecialchars($fila['SurtidorMP'] ?? '', ENT_QUOTES, 'UTF-8');
-        $cliente = htmlspecialchars($fila['ClienteMP'] ?? '', ENT_QUOTES, 'UTF-8');
-        $aduana = htmlspecialchars($fila['AduanaMP'] ?? '', ENT_QUOTES, 'UTF-8');
+        $numeroDocumento = $escapeXml($fila['DocumentoMP'] ?? '');
+        $razonSocial = $escapeXml($fila['RazonSocialMP'] ?? '');
+        $vendedor = $escapeXml($fila['VendedorMP'] ?? '');
+        $surtidor = $escapeXml($fila['SurtidorMP'] ?? '');
+        $cliente = $escapeXml($fila['ClienteMP'] ?? '');
+        $aduana = $escapeXml($fila['AduanaMP'] ?? '');
         $skuNormalizado = $fila['SkuMP'] ?? '';
         if ($longitudSkuReferencia > 0) {
             $skuNormalizado = trim((string) $skuNormalizado);
@@ -104,28 +110,29 @@ if (empty($rows)) {
             }
         }
 
-        $sku = htmlspecialchars($skuNormalizado, ENT_QUOTES, 'UTF-8');
-        $descripcion = htmlspecialchars($fila['DescripcionMP'] ?? '', ENT_QUOTES, 'UTF-8');
+        $sku = $escapeXml((string) $skuNormalizado);
+        $descripcion = $escapeXml($fila['DescripcionMP'] ?? '');
         $cantidad = isset($fila['CantidadMP']) ? (int) $fila['CantidadMP'] : 0;
 
-        echo '<tr>';
-        echo '<td>' . ($folio > 0 ? $folio : '-') . '</td>';
-        echo '<td>' . ($fecha !== '' ? $fecha : '-') . '</td>';
-        echo '<td>' . $numeroDocumento . '</td>';
-        echo '<td>' . $razonSocial . '</td>';
-        echo '<td>' . ($vendedor !== '' ? $vendedor : '-') . '</td>';
-        echo '<td>' . ($surtidor !== '' ? $surtidor : '-') . '</td>';
-        echo '<td>' . $cliente . '</td>';
-        echo '<td>' . ($aduana !== '' ? $aduana : '-') . '</td>';
-        echo '<td style="mso-number-format:\'@\';">' . $sku . '</td>';
-        echo '<td>' . $descripcion . '</td>';
-        echo '<td>' . $cantidad . '</td>';
-        echo '</tr>';
+        echo '<Row>';
+        echo '<Cell><Data ss:Type="String">' . ($folio > 0 ? $folio : '-') . '</Data></Cell>';
+        echo '<Cell><Data ss:Type="String">' . ($fecha !== '' ? $fecha : '-') . '</Data></Cell>';
+        echo '<Cell><Data ss:Type="String">' . $numeroDocumento . '</Data></Cell>';
+        echo '<Cell><Data ss:Type="String">' . $razonSocial . '</Data></Cell>';
+        echo '<Cell><Data ss:Type="String">' . ($vendedor !== '' ? $vendedor : '-') . '</Data></Cell>';
+        echo '<Cell><Data ss:Type="String">' . ($surtidor !== '' ? $surtidor : '-') . '</Data></Cell>';
+        echo '<Cell><Data ss:Type="String">' . $cliente . '</Data></Cell>';
+        echo '<Cell><Data ss:Type="String">' . ($aduana !== '' ? $aduana : '-') . '</Data></Cell>';
+        echo '<Cell><Data ss:Type="String">' . $sku . '</Data></Cell>';
+        echo '<Cell><Data ss:Type="String">' . $descripcion . '</Data></Cell>';
+        echo '<Cell><Data ss:Type="Number">' . $cantidad . '</Data></Cell>';
+        echo '</Row>';
     }
 }
 
-echo '</tbody>';
-echo '</table>';
+echo '</Table>';
+echo '</Worksheet>';
+echo '</Workbook>';
 
 exit;
 
