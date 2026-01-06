@@ -35,6 +35,8 @@ $(document).ready(function() {
   var $inputNombreCliente = $('#NombreClientePendiente');
   var $formularioPendiente = $('#FormularioAgregarPendiente');
   var $tablaMaterialPendiente = $('#TablaMaterialPendiente');
+  var $buscadorMaterialPendiente = $('#BuscadorMaterialPendiente');
+  var $filaSinResultados = $('#MaterialPendienteSinResultados');
   var $panelDetalle = $('#PanelEntregaMaterialPendiente');
   var $detalleTitulo = $('#DetalleMaterialPendienteTitulo');
   var $detalleInfo = $('#DetalleMaterialPendienteInfo');
@@ -88,6 +90,14 @@ $(document).ready(function() {
     }
 
     return texto.substring(0, maximo - 1) + '…';
+  }
+
+  function normalizarTextoBuscador(texto) {
+    return (texto || '')
+      .toString()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
   }
 
   function escaparHtml(texto) {
@@ -226,6 +236,46 @@ $(document).ready(function() {
 
     if ($inputCantidadPendienteOtro.length) {
       $inputCantidadPendienteOtro.val('');
+    }
+  }
+
+  function filtrarMaterialPendiente() {
+    if (!$tablaMaterialPendiente.length) {
+      return;
+    }
+
+    var termino = normalizarTextoBuscador($buscadorMaterialPendiente.val());
+    var $filas = $tablaMaterialPendiente.find('.material-pendiente-row');
+
+    if (!$filas.length) {
+      if ($filaSinResultados.length) {
+        $filaSinResultados.addClass('d-none');
+      }
+      return;
+    }
+
+    var filasVisibles = 0;
+
+    $filas.each(function() {
+      var $fila = $(this);
+      var textoFila = normalizarTextoBuscador($fila.text());
+      var coincide = termino === '' || textoFila.indexOf(termino) !== -1;
+
+      $fila.toggle(coincide);
+
+      if (coincide) {
+        filasVisibles += 1;
+      }
+    });
+
+    if (!$filaSinResultados.length) {
+      return;
+    }
+
+    if (filasVisibles === 0) {
+      $filaSinResultados.removeClass('d-none');
+    } else {
+      $filaSinResultados.addClass('d-none');
     }
   }
 
@@ -987,6 +1037,11 @@ $(document).ready(function() {
     }).fail(function() {
       mostrarErrorDetalle('No se pudieron cargar las partidas.');
     });
+  }
+
+  if ($buscadorMaterialPendiente.length) {
+    $buscadorMaterialPendiente.on('input', filtrarMaterialPendiente);
+    filtrarMaterialPendiente();
   }
 
   inicializarSelectAduana($selectAduanaEntrega, { dropdownParent: $panelDetalle });
