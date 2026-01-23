@@ -15,6 +15,12 @@
                 'nombre' => 'Aplicaciones',
             ],
             [
+                'slug' => 'conteo',
+                'ruta' => 'Conteo.php',
+                'icono' => 'assessment',
+                'nombre' => 'Conteo',
+            ],
+            [
                 'slug' => 'charolas',
                 'ruta' => 'charolas.php',
                 'icono' => 'view_day',

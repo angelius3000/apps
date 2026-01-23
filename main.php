@@ -43,6 +43,14 @@ if (!usuarioTieneAccesoSeccion('aplicaciones')) {
                                     <h1>Aplicaciones</h1>
                                     <div class="row justify-content-center mt-4">
                                         <div class="col-auto mb-3">
+                                            <a href="Conteo.php" class="card app-card text-decoration-none text-dark bg-transparent border-0">
+                                                <div class="card-body">
+                                                    <i class="material-icons-two-tone" style="font-size:72px;">assessment</i>
+                                                    <h5 class="mt-1">Conteo</h5>
+                                                </div>
+                                            </a>
+                                        </div>
+                                        <div class="col-auto mb-3">
                                             <a href="Repartos.php" class="card app-card text-decoration-none text-dark bg-transparent border-0">
                                                 <div class="card-body">
                                                     <i class="material-icons-two-tone" style="font-size:72px;">local_shipping</i>
