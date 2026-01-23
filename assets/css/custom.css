@@ -83,14 +83,15 @@ tr.detalle-abierto .toggle-detalle-badge {
     white-space: nowrap;
 }
 
-#UsuariosDT thead {
-    background-color: var(--bs-table-bg, #ffffff) !important;
-}
-
 #UsuariosDT thead th {
     position: sticky;
     top: 90px;
     z-index: 1002;
-    background-color: var(--bs-table-bg, #ffffff) !important;
+    background-color: #ffffff !important;
+    background-image: linear-gradient(#ffffff, #ffffff);
     background-clip: padding-box;
+}
+
+#UsuariosDT thead tr {
+    background-color: #ffffff !important;
 }
