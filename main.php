@@ -42,38 +42,57 @@ if (!usuarioTieneAccesoSeccion('aplicaciones')) {
                                 <div class="page-description text-center">
                                     <h1>Aplicaciones</h1>
                                     <div class="row justify-content-center mt-4">
-                                        <div class="col-auto mb-3">
-                                            <a href="Conteo.php" class="card app-card text-decoration-none text-dark bg-transparent border-0">
-                                                <div class="card-body">
-                                                    <i class="material-icons-two-tone" style="font-size:72px;">assessment</i>
-                                                    <h5 class="mt-1">Conteo</h5>
-                                                </div>
-                                            </a>
-                                        </div>
-                                        <div class="col-auto mb-3">
-                                            <a href="Repartos.php" class="card app-card text-decoration-none text-dark bg-transparent border-0">
-                                                <div class="card-body">
-                                                    <i class="material-icons-two-tone" style="font-size:72px;">local_shipping</i>
-                                                    <h5 class="mt-1">Reparto</h5>
-                                                </div>
-                                            </a>
-                                        </div>
-                                        <div class="col-auto mb-3">
-                                            <a href="charolas.php" class="card app-card text-decoration-none text-dark bg-transparent border-0">
-                                                <div class="card-body">
-                                                    <i class="material-icons-two-tone" style="font-size:72px;">view_day</i>
-                                                    <h5 class="mt-1">Charolas</h5>
-                                                </div>
-                                            </a>
-                                        </div>
-                                        <div class="col-auto mb-3">
-                                            <a href="MaterialPendiente.php" class="card app-card text-decoration-none text-dark bg-transparent border-0">
-                                                <div class="card-body">
-                                                    <i class="material-icons-two-tone" style="font-size:72px;">pending_actions</i>
-                                                    <h5 class="mt-1">Material Pendiente</h5>
-                                                </div>
-                                            </a>
-                                        </div>
+                                        <?php
+                                        $permisosSecciones = $_SESSION['PermisosSecciones'] ?? [];
+                                        $seccionesVisibles = $_SESSION['SeccionesVisibles'] ?? [];
+                                        $apps = [
+                                            [
+                                                'slug' => 'conteo',
+                                                'ruta' => 'Conteo.php',
+                                                'icono' => 'assessment',
+                                                'nombre' => 'Conteo',
+                                            ],
+                                            [
+                                                'slug' => 'reparto',
+                                                'ruta' => 'Repartos.php',
+                                                'icono' => 'local_shipping',
+                                                'nombre' => 'Reparto',
+                                            ],
+                                            [
+                                                'slug' => 'charolas',
+                                                'ruta' => 'charolas.php',
+                                                'icono' => 'view_day',
+                                                'nombre' => 'Charolas',
+                                            ],
+                                            [
+                                                'slug' => 'materialpendiente',
+                                                'ruta' => 'MaterialPendiente.php',
+                                                'icono' => 'pending_actions',
+                                                'nombre' => 'Material Pendiente',
+                                            ],
+                                        ];
+
+                                        foreach ($apps as $app) {
+                                            $slug = $app['slug'];
+                                            $mostrar = !isset($permisosSecciones[$slug]) || (int)$permisosSecciones[$slug] === 1;
+
+                                            if (isset($seccionesVisibles[$slug]) && (int)$seccionesVisibles[$slug] !== 1) {
+                                                $mostrar = false;
+                                            }
+
+                                            if (!$mostrar) {
+                                                continue;
+                                            }
+                                            ?>
+                                            <div class="col-auto mb-3">
+                                                <a href="<?php echo htmlspecialchars($app['ruta'], ENT_QUOTES, 'UTF-8'); ?>" class="card app-card text-decoration-none text-dark bg-transparent border-0">
+                                                    <div class="card-body">
+                                                        <i class="material-icons-two-tone" style="font-size:72px;"><?php echo htmlspecialchars($app['icono'], ENT_QUOTES, 'UTF-8'); ?></i>
+                                                        <h5 class="mt-1"><?php echo htmlspecialchars($app['nombre'], ENT_QUOTES, 'UTF-8'); ?></h5>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        <?php } ?>
                                     </div>
                                 </div>
                             </div>
