@@ -339,11 +339,13 @@ $(document).ready(function() {
 
   function obtenerDatosProductoSeleccionado() {
     var $opcionSeleccionada = $selectProductoPendiente.find('option:selected');
+    var skuSeleccionado = $opcionSeleccionada.attr('data-sku');
+    var descripcionSeleccionada = $opcionSeleccionada.attr('data-descripcion');
 
     return {
       id: parseInt($selectProductoPendiente.val(), 10),
-      sku: ($opcionSeleccionada.data('sku') || $opcionSeleccionada.text() || '').toString().trim(),
-      descripcion: ($opcionSeleccionada.data('descripcion') || $opcionSeleccionada.text() || '').toString().trim()
+      sku: (skuSeleccionado || $opcionSeleccionada.text() || '').toString().trim(),
+      descripcion: (descripcionSeleccionada || $opcionSeleccionada.text() || '').toString().trim()
     };
   }
 
