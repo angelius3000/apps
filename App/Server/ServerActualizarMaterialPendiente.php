@@ -234,6 +234,26 @@ if (empty($productosValidos)) {
     responderError('Agrega al menos una partida pendiente válida.', 400);
 }
 
+$stmtDocumento = mysqli_prepare(
+    $conn,
+    'SELECT FacturaMPID FROM facturamp WHERE DocumentoFMP = ? AND FacturaMPID <> ? LIMIT 1'
+);
+
+if (!$stmtDocumento) {
+    responderError('No se pudo validar el número de documento.');
+}
+
+mysqli_stmt_bind_param($stmtDocumento, 'si', $numeroFactura, $folio);
+mysqli_stmt_execute($stmtDocumento);
+mysqli_stmt_bind_result($stmtDocumento, $folioExistente);
+
+if (mysqli_stmt_fetch($stmtDocumento)) {
+    mysqli_stmt_close($stmtDocumento);
+    responderError('El número de documento ya se encuentra registrado. Captura uno diferente.', 400);
+}
+
+mysqli_stmt_close($stmtDocumento);
+
 mysqli_begin_transaction($conn);
 
 $stmtActualizar = mysqli_prepare(
