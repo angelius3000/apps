@@ -280,12 +280,13 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                                         <th class="text-muted">Surtidor</th>
                                                         <th class="text-muted">Nombre del cliente</th>
                                                         <th class="text-muted">Aduana</th>
+                                                        <th class="text-muted text-end">Acciones</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     <?php if (empty($listaMaterialPendiente)) : ?>
                                                         <tr>
-                                                            <td colspan="8" class="text-center text-muted">No hay material pendiente registrado.</td>
+                                                            <td colspan="9" class="text-center text-muted">No hay material pendiente registrado.</td>
                                                         </tr>
                                                     <?php else : ?>
                                                         <?php foreach ($listaMaterialPendiente as $materialPendiente) : ?>
@@ -321,11 +322,19 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                                                 <td><?php echo $surtidor !== '' ? $surtidor : '-'; ?></td>
                                                                 <td><?php echo $cliente; ?></td>
                                                                 <td><?php echo $aduana !== '' ? $aduana : '-'; ?></td>
+                                                                <td class="text-end">
+                                                                    <button type="button" class="btn btn-outline-primary btn-sm editar-material-pendiente" data-folio="<?php echo $folio; ?>">
+                                                                        <i class="material-icons-two-tone">edit</i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-outline-danger btn-sm eliminar-material-pendiente" data-folio="<?php echo $folio; ?>" data-documento="<?php echo $numeroDocumento; ?>">
+                                                                        <i class="material-icons-two-tone">delete</i>
+                                                                    </button>
+                                                                </td>
                                                             </tr>
                                                         <?php endforeach; ?>
                                                     <?php endif; ?>
                                                     <tr id="MaterialPendienteSinResultados" class="d-none">
-                                                        <td colspan="8" class="text-center text-muted">No se encontraron resultados para la búsqueda.</td>
+                                                        <td colspan="9" class="text-center text-muted">No se encontraron resultados para la búsqueda.</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
