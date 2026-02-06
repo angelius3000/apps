@@ -1532,77 +1532,6 @@ $(document).ready(function() {
     });
   }
 
-    $tablaMaterialPendiente.on('click', '.editar-material-pendiente', function(evento) {
-      evento.preventDefault();
-      evento.stopPropagation();
-
-      var folio = parseInt($(this).data('folio'), 10);
-
-      if (isNaN(folio) || folio <= 0) {
-        return;
-      }
-
-      $.ajax({
-        url: 'App/Server/ServerObtenerPartidasMaterialPendiente.php',
-        method: 'GET',
-        dataType: 'json',
-        data: { folio: folio }
-      }).done(function(respuesta) {
-        if (!respuesta || !respuesta.success) {
-          var mensajeError = respuesta && respuesta.message ? respuesta.message : 'No se pudo cargar el folio seleccionado.';
-          mostrarMensajeError(mensajeError);
-          return;
-        }
-
-        reiniciarFormularioPendiente();
-        establecerModoEdicion(true);
-
-        $modal.one('shown.bs.modal', function() {
-          prepararFormularioEdicion(respuesta.factura || {}, respuesta.partidas || []);
-        });
-
-        $modal.modal('show');
-      }).fail(function() {
-        mostrarMensajeError('No se pudo cargar el folio seleccionado.');
-      });
-    });
-
-    $tablaMaterialPendiente.on('click', '.eliminar-material-pendiente', function(evento) {
-      evento.preventDefault();
-      evento.stopPropagation();
-
-      var folio = parseInt($(this).data('folio'), 10);
-      var documento = $(this).data('documento') || '';
-
-      if (isNaN(folio) || folio <= 0) {
-        return;
-      }
-
-      var mensaje = '¿Deseas eliminar este registro? Esta acción eliminará el folio' + (documento ? ' "' + documento + '"' : '') + '.';
-
-      if (!window.confirm(mensaje)) {
-        return;
-      }
-
-      $.ajax({
-        url: 'App/Server/ServerEliminarMaterialPendiente.php',
-        method: 'POST',
-        dataType: 'json',
-        data: { folio: folio }
-      }).done(function(respuesta) {
-        if (respuesta && respuesta.success) {
-          window.location.reload();
-          return;
-        }
-
-        var mensajeError = respuesta && respuesta.message ? respuesta.message : 'No se pudo eliminar el registro.';
-        mostrarMensajeError(mensajeError);
-      }).fail(function() {
-        mostrarMensajeError('No se pudo eliminar el registro.');
-      });
-    });
-  }
-
   $tablaBodyPartidas.on('click', '.editar-partida', function(evento) {
     evento.preventDefault();
 
@@ -1717,7 +1646,8 @@ $(document).ready(function() {
       return;
     }
 
-    enfocarCampo(obtenerCampoProductoDestino());
+    var $campoProductoDestino = obtenerCampoProductoDestino();
+    enfocarCampo($campoProductoDestino);
   });
 
   if ($inputNumeroFacturaPendiente.length) {
