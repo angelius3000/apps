@@ -19,6 +19,54 @@ if (!$conn) {
     responderError('No se pudo conectar a la base de datos.');
 }
 
+function obtenerNombreBaseDatos(mysqli $conn, ?string $actual): string
+{
+    if (!empty($actual)) {
+        return (string) $actual;
+    }
+
+    $resultado = mysqli_query($conn, 'SELECT DATABASE()');
+    if ($resultado instanceof mysqli_result) {
+        $fila = mysqli_fetch_row($resultado);
+        mysqli_free_result($resultado);
+        if ($fila && isset($fila[0])) {
+            return (string) $fila[0];
+        }
+    }
+
+    return '';
+}
+
+function asegurarColumnaActivo(mysqli $conn, string $baseDatos, string $tabla, string $columna, string $sqlAlter): void
+{
+    if ($baseDatos === '') {
+        return;
+    }
+
+    $stmtColumna = mysqli_prepare(
+        $conn,
+        'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1'
+    );
+
+    if (!$stmtColumna) {
+        return;
+    }
+
+    mysqli_stmt_bind_param($stmtColumna, 'sss', $baseDatos, $tabla, $columna);
+    mysqli_stmt_execute($stmtColumna);
+    mysqli_stmt_store_result($stmtColumna);
+
+    if (mysqli_stmt_num_rows($stmtColumna) === 0) {
+        @mysqli_query($conn, $sqlAlter);
+    }
+
+    mysqli_stmt_close($stmtColumna);
+}
+
+$nombreBaseDatos = obtenerNombreBaseDatos($conn, $dbname ?? '');
+asegurarColumnaActivo($conn, $nombreBaseDatos, 'facturamp', 'ActivoFMP', "ALTER TABLE facturamp ADD COLUMN ActivoFMP TINYINT(1) NOT NULL DEFAULT 1 AFTER AduanaFMP");
+asegurarColumnaActivo($conn, $nombreBaseDatos, 'materialpendiente', 'ActivoMP', "ALTER TABLE materialpendiente ADD COLUMN ActivoMP TINYINT(1) NOT NULL DEFAULT 1 AFTER FechaMP");
+
 $folio = isset($_POST['folio']) ? (int) $_POST['folio'] : 0;
 
 if ($folio <= 0) {
@@ -45,44 +93,37 @@ $documento = (string) $documento;
 
 mysqli_begin_transaction($conn);
 
-$stmtEliminarEntregas = mysqli_prepare($conn, 'DELETE FROM materialpendiente_entregas WHERE FolioID = ?');
-if ($stmtEliminarEntregas) {
-    mysqli_stmt_bind_param($stmtEliminarEntregas, 'i', $folio);
-    @mysqli_stmt_execute($stmtEliminarEntregas);
-    mysqli_stmt_close($stmtEliminarEntregas);
-}
-
-$stmtEliminarPartidas = mysqli_prepare($conn, 'DELETE FROM materialpendiente WHERE DocumentoMP = ?');
-if (!$stmtEliminarPartidas) {
+$stmtActualizarPartidas = mysqli_prepare($conn, 'UPDATE materialpendiente SET ActivoMP = 0 WHERE DocumentoMP = ?');
+if (!$stmtActualizarPartidas) {
     mysqli_rollback($conn);
-    responderError('No se pudo eliminar la información del folio.');
+    responderError('No se pudo inhabilitar la información del folio.');
 }
 
-mysqli_stmt_bind_param($stmtEliminarPartidas, 's', $documento);
+mysqli_stmt_bind_param($stmtActualizarPartidas, 's', $documento);
 
-if (!mysqli_stmt_execute($stmtEliminarPartidas)) {
-    mysqli_stmt_close($stmtEliminarPartidas);
+if (!mysqli_stmt_execute($stmtActualizarPartidas)) {
+    mysqli_stmt_close($stmtActualizarPartidas);
     mysqli_rollback($conn);
-    responderError('No se pudo eliminar la información del folio.');
+    responderError('No se pudo inhabilitar la información del folio.');
 }
 
-mysqli_stmt_close($stmtEliminarPartidas);
+mysqli_stmt_close($stmtActualizarPartidas);
 
-$stmtEliminarFactura = mysqli_prepare($conn, 'DELETE FROM facturamp WHERE FacturaMPID = ? LIMIT 1');
-if (!$stmtEliminarFactura) {
+$stmtActualizarFactura = mysqli_prepare($conn, 'UPDATE facturamp SET ActivoFMP = 0 WHERE FacturaMPID = ? LIMIT 1');
+if (!$stmtActualizarFactura) {
     mysqli_rollback($conn);
-    responderError('No se pudo eliminar el folio.');
+    responderError('No se pudo inhabilitar el folio.');
 }
 
-mysqli_stmt_bind_param($stmtEliminarFactura, 'i', $folio);
+mysqli_stmt_bind_param($stmtActualizarFactura, 'i', $folio);
 
-if (!mysqli_stmt_execute($stmtEliminarFactura)) {
-    mysqli_stmt_close($stmtEliminarFactura);
+if (!mysqli_stmt_execute($stmtActualizarFactura)) {
+    mysqli_stmt_close($stmtActualizarFactura);
     mysqli_rollback($conn);
-    responderError('No se pudo eliminar el folio.');
+    responderError('No se pudo inhabilitar el folio.');
 }
 
-mysqli_stmt_close($stmtEliminarFactura);
+mysqli_stmt_close($stmtActualizarFactura);
 
 mysqli_commit($conn);
 

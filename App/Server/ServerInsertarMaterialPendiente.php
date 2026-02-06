@@ -19,7 +19,7 @@ if (!$conn) {
     responderError('No se pudo conectar a la base de datos.');
 }
 
-function asegurarTablaMaterialPendiente(mysqli $conn): bool
+function asegurarTablaMaterialPendiente(mysqli $conn, string $baseDatos): bool
 {
     $sqlCrearTabla = "CREATE TABLE IF NOT EXISTS materialpendiente (
         MaterialPendienteID INT NOT NULL AUTO_INCREMENT,
@@ -33,15 +33,43 @@ function asegurarTablaMaterialPendiente(mysqli $conn): bool
         DescripcionMP VARCHAR(255) NOT NULL,
         CantidadMP INT NOT NULL DEFAULT 0,
         FechaMP TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        ActivoMP TINYINT(1) NOT NULL DEFAULT 1,
         PRIMARY KEY (MaterialPendienteID),
         INDEX idx_materialpendiente_documento (DocumentoMP),
         INDEX idx_materialpendiente_sku (SkuMP)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 
-    return @mysqli_query($conn, $sqlCrearTabla) === true;
+    $resultado = @mysqli_query($conn, $sqlCrearTabla) === true;
+
+    if ($baseDatos === '') {
+        return $resultado;
+    }
+
+    $stmtColumna = mysqli_prepare(
+        $conn,
+        'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1'
+    );
+
+    if (!$stmtColumna) {
+        return $resultado;
+    }
+
+    $tabla = 'materialpendiente';
+    $columna = 'ActivoMP';
+    mysqli_stmt_bind_param($stmtColumna, 'sss', $baseDatos, $tabla, $columna);
+    mysqli_stmt_execute($stmtColumna);
+    mysqli_stmt_store_result($stmtColumna);
+
+    if (mysqli_stmt_num_rows($stmtColumna) === 0) {
+        @mysqli_query($conn, "ALTER TABLE materialpendiente ADD COLUMN ActivoMP TINYINT(1) NOT NULL DEFAULT 1 AFTER FechaMP");
+    }
+
+    mysqli_stmt_close($stmtColumna);
+
+    return $resultado;
 }
 
-function asegurarTablaFacturaMP(mysqli $conn): bool
+function asegurarTablaFacturaMP(mysqli $conn, string $baseDatos): bool
 {
     $sqlCrearTablaFactura = "CREATE TABLE IF NOT EXISTS facturamp (
         FacturaMPID INT NOT NULL AUTO_INCREMENT,
@@ -52,18 +80,48 @@ function asegurarTablaFacturaMP(mysqli $conn): bool
         SurtidorFMP VARCHAR(255) DEFAULT NULL,
         ClienteFMP VARCHAR(255) NOT NULL,
         AduanaFMP VARCHAR(255) DEFAULT NULL,
+        ActivoFMP TINYINT(1) NOT NULL DEFAULT 1,
         PRIMARY KEY (FacturaMPID),
         INDEX idx_facturamp_documento (DocumentoFMP)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 
-    return @mysqli_query($conn, $sqlCrearTablaFactura) === true;
+    $resultado = @mysqli_query($conn, $sqlCrearTablaFactura) === true;
+
+    if ($baseDatos === '') {
+        return $resultado;
+    }
+
+    $stmtColumna = mysqli_prepare(
+        $conn,
+        'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1'
+    );
+
+    if (!$stmtColumna) {
+        return $resultado;
+    }
+
+    $tabla = 'facturamp';
+    $columna = 'ActivoFMP';
+    mysqli_stmt_bind_param($stmtColumna, 'sss', $baseDatos, $tabla, $columna);
+    mysqli_stmt_execute($stmtColumna);
+    mysqli_stmt_store_result($stmtColumna);
+
+    if (mysqli_stmt_num_rows($stmtColumna) === 0) {
+        @mysqli_query($conn, "ALTER TABLE facturamp ADD COLUMN ActivoFMP TINYINT(1) NOT NULL DEFAULT 1 AFTER AduanaFMP");
+    }
+
+    mysqli_stmt_close($stmtColumna);
+
+    return $resultado;
 }
 
-if (!asegurarTablaMaterialPendiente($conn)) {
+$nombreBaseDatos = $dbname ?? '';
+
+if (!asegurarTablaMaterialPendiente($conn, $nombreBaseDatos)) {
     responderError('No se pudo preparar la tabla de material pendiente. Intenta nuevamente.');
 }
 
-if (!asegurarTablaFacturaMP($conn)) {
+if (!asegurarTablaFacturaMP($conn, $nombreBaseDatos)) {
     responderError('No se pudo preparar la tabla de facturas de material pendiente. Intenta nuevamente.');
 }
 
@@ -231,8 +289,8 @@ mysqli_begin_transaction($conn);
 
 $stmtFactura = mysqli_prepare(
     $conn,
-    'INSERT INTO facturamp (DocumentoFMP, RazonSocialFMP, VendedorFMP, SurtidorFMP, ClienteFMP, AduanaFMP) '
-        . 'VALUES (?, ?, ?, ?, ?, ?)'
+    'INSERT INTO facturamp (DocumentoFMP, RazonSocialFMP, VendedorFMP, SurtidorFMP, ClienteFMP, AduanaFMP, ActivoFMP) '
+        . 'VALUES (?, ?, ?, ?, ?, ?, 1)'
 );
 
 if (!$stmtFactura) {
@@ -262,8 +320,8 @@ mysqli_stmt_close($stmtFactura);
 
 $stmt = mysqli_prepare(
     $conn,
-    'INSERT INTO materialpendiente (DocumentoMP, RazonSocialMP, VendedorMP, SurtidorMP, ClienteMP, AduanaMP, SkuMP, DescripcionMP, CantidadMP) '
-        . 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO materialpendiente (DocumentoMP, RazonSocialMP, VendedorMP, SurtidorMP, ClienteMP, AduanaMP, SkuMP, DescripcionMP, CantidadMP, ActivoMP) '
+        . 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)'
 );
 
 if (!$stmt) {

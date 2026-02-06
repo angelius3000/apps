@@ -156,7 +156,55 @@ $hayAduanasPendientes = count($listaAduanasPendientes) > 0;
 
 $listaMaterialPendiente = [];
 
-function asegurarTablaFacturaMPListado(mysqli $conn): void
+function asegurarTablaMaterialPendienteListado(mysqli $conn, string $baseDatos): void
+{
+    $sqlCrearTabla = "CREATE TABLE IF NOT EXISTS materialpendiente (
+        MaterialPendienteID INT NOT NULL AUTO_INCREMENT,
+        DocumentoMP VARCHAR(100) NOT NULL,
+        RazonSocialMP VARCHAR(255) NOT NULL,
+        VendedorMP VARCHAR(255) DEFAULT NULL,
+        SurtidorMP VARCHAR(255) DEFAULT NULL,
+        ClienteMP VARCHAR(255) NOT NULL,
+        AduanaMP VARCHAR(255) DEFAULT NULL,
+        SkuMP VARCHAR(100) NOT NULL,
+        DescripcionMP VARCHAR(255) NOT NULL,
+        CantidadMP INT NOT NULL DEFAULT 0,
+        FechaMP TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        ActivoMP TINYINT(1) NOT NULL DEFAULT 1,
+        PRIMARY KEY (MaterialPendienteID),
+        INDEX idx_materialpendiente_documento (DocumentoMP),
+        INDEX idx_materialpendiente_sku (SkuMP)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+    @mysqli_query($conn, $sqlCrearTabla);
+
+    if ($baseDatos === '') {
+        return;
+    }
+
+    $stmtColumna = mysqli_prepare(
+        $conn,
+        'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1'
+    );
+
+    if (!$stmtColumna) {
+        return;
+    }
+
+    $tabla = 'materialpendiente';
+    $columna = 'ActivoMP';
+    mysqli_stmt_bind_param($stmtColumna, 'sss', $baseDatos, $tabla, $columna);
+    mysqli_stmt_execute($stmtColumna);
+    mysqli_stmt_store_result($stmtColumna);
+
+    if (mysqli_stmt_num_rows($stmtColumna) === 0) {
+        @mysqli_query($conn, "ALTER TABLE materialpendiente ADD COLUMN ActivoMP TINYINT(1) NOT NULL DEFAULT 1 AFTER FechaMP");
+    }
+
+    mysqli_stmt_close($stmtColumna);
+}
+
+function asegurarTablaFacturaMPListado(mysqli $conn, string $baseDatos): void
 {
     $sql = "CREATE TABLE IF NOT EXISTS facturamp (
         FacturaMPID INT NOT NULL AUTO_INCREMENT,
@@ -167,18 +215,46 @@ function asegurarTablaFacturaMPListado(mysqli $conn): void
         SurtidorFMP VARCHAR(255) DEFAULT NULL,
         ClienteFMP VARCHAR(255) NOT NULL,
         AduanaFMP VARCHAR(255) DEFAULT NULL,
+        ActivoFMP TINYINT(1) NOT NULL DEFAULT 1,
         PRIMARY KEY (FacturaMPID),
         INDEX idx_facturamp_documento (DocumentoFMP)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 
     @mysqli_query($conn, $sql);
+
+    if ($baseDatos === '') {
+        return;
+    }
+
+    $stmtColumna = mysqli_prepare(
+        $conn,
+        'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1'
+    );
+
+    if (!$stmtColumna) {
+        return;
+    }
+
+    $tabla = 'facturamp';
+    $columna = 'ActivoFMP';
+    mysqli_stmt_bind_param($stmtColumna, 'sss', $baseDatos, $tabla, $columna);
+    mysqli_stmt_execute($stmtColumna);
+    mysqli_stmt_store_result($stmtColumna);
+
+    if (mysqli_stmt_num_rows($stmtColumna) === 0) {
+        @mysqli_query($conn, "ALTER TABLE facturamp ADD COLUMN ActivoFMP TINYINT(1) NOT NULL DEFAULT 1 AFTER AduanaFMP");
+    }
+
+    mysqli_stmt_close($stmtColumna);
 }
 
-asegurarTablaFacturaMPListado($conn);
+$nombreBaseDatos = $dbname ?? '';
+asegurarTablaMaterialPendienteListado($conn, $nombreBaseDatos);
+asegurarTablaFacturaMPListado($conn, $nombreBaseDatos);
 
 $queryMaterialPendiente = "SELECT f.FacturaMPID, f.FechaFMP, f.DocumentoFMP, f.RazonSocialFMP, f.VendedorFMP, f.SurtidorFMP, f.ClienteFMP, f.AduanaFMP, "
-    . "(SELECT COUNT(*) FROM materialpendiente mp WHERE mp.DocumentoMP = f.DocumentoFMP) AS PartidasPendientes "
-    . "FROM facturamp f ORDER BY f.FacturaMPID DESC";
+    . "(SELECT COUNT(*) FROM materialpendiente mp WHERE mp.DocumentoMP = f.DocumentoFMP AND mp.ActivoMP = 1) AS PartidasPendientes "
+    . "FROM facturamp f WHERE f.ActivoFMP = 1 ORDER BY f.FacturaMPID DESC";
 
 $resultadoMaterialPendiente = @mysqli_query($conn, $queryMaterialPendiente);
 

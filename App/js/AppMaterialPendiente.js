@@ -37,10 +37,6 @@ $(document).ready(function() {
   var $inputAduanaPendienteOtro = $('#AduanaPendienteOtro');
   var $inputNombreCliente = $('#NombreClientePendiente');
   var $inputNumeroFacturaPendiente = $('#NumeroFacturaPendiente');
-  var $modalDocumentoDuplicado = $('#ModalDocumentoPendienteDuplicado');
-  var $documentoDuplicadoTexto = $('#DocumentoPendienteDuplicadoTexto');
-  var $btnCambiarDocumentoPendiente = $('#BtnCambiarDocumentoPendiente');
-  var $btnCerrarDocumentoPendiente = $('#BtnCerrarDocumentoPendiente');
   var $formularioPendiente = $('#FormularioAgregarPendiente');
   var $tablaMaterialPendiente = $('#TablaMaterialPendiente');
   var $buscadorMaterialPendiente = $('#BuscadorMaterialPendiente');
@@ -66,8 +62,6 @@ $(document).ready(function() {
   var ignorarCambioVendedor = false;
   var partidasPendientes = [];
   var modoEdicion = false;
-  var accionModalDocumento = 'cambiar';
-  var documentoDuplicadoDetectado = false;
 
   function desplazarASeccionEntrega() {
     if (!$panelDetalle.length) {
@@ -663,12 +657,6 @@ $(document).ready(function() {
       $inputNombreCliente.val('');
     }
 
-    if ($inputNumeroFacturaPendiente.length) {
-      $inputNumeroFacturaPendiente.val('').removeData('documento-original');
-    }
-
-    documentoDuplicadoDetectado = false;
-
     actualizarCamposOtraRazonSocial();
     actualizarCampoVendedorOtro();
     actualizarCampoSurtidor();
@@ -1223,7 +1211,6 @@ $(document).ready(function() {
 
     if ($inputNumeroFacturaPendiente.length) {
       $inputNumeroFacturaPendiente.val(factura.documento || '');
-      $inputNumeroFacturaPendiente.data('documento-original', factura.documento || '');
     }
 
     var razonSocial = factura.razonSocial || '';
@@ -1454,44 +1441,6 @@ $(document).ready(function() {
     actualizarCamposOtraRazonSocial();
   });
 
-  if ($btnCambiarDocumentoPendiente.length) {
-    $btnCambiarDocumentoPendiente.on('click', function() {
-      accionModalDocumento = 'cambiar';
-      if ($modalDocumentoDuplicado.length) {
-        $modalDocumentoDuplicado.modal('hide');
-      }
-    });
-  }
-
-  if ($btnCerrarDocumentoPendiente.length) {
-    $btnCerrarDocumentoPendiente.on('click', function() {
-      accionModalDocumento = 'cerrar';
-      if ($modalDocumentoDuplicado.length) {
-        $modalDocumentoDuplicado.modal('hide');
-      }
-    });
-  }
-
-  if ($modalDocumentoDuplicado.length) {
-    $modalDocumentoDuplicado.on('hidden.bs.modal', function() {
-      if (accionModalDocumento === 'cambiar') {
-        if ($inputNumeroFacturaPendiente.length) {
-          $inputNumeroFacturaPendiente.val('');
-        }
-
-        documentoDuplicadoDetectado = false;
-
-        if ($modal.length) {
-          $modal.modal('show');
-        }
-
-        enfocarCampo($inputNumeroFacturaPendiente);
-      }
-
-      accionModalDocumento = 'cambiar';
-    });
-  }
-
   $('#AgregarPartidaPendiente').on('click', function() {
     agregarPartidaPendiente();
   });
@@ -1511,6 +1460,7 @@ $(document).ready(function() {
 
       cargarDetallePartidas(documento, folio);
     });
+  }
 
     $tablaMaterialPendiente.on('click', '.editar-material-pendiente', function(evento) {
       evento.preventDefault();
