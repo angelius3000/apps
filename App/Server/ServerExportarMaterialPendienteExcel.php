@@ -8,22 +8,73 @@ if (!$conn) {
     exit;
 }
 
-function asegurarTablaMaterialPendiente(mysqli $conn): void
+function asegurarTablaMaterialPendiente(mysqli $conn, string $baseDatos): void
 {
-    $sqlCrearTabla = "CREATE TABLE IF NOT EXISTS materialpendiente (\n        MaterialPendienteID INT NOT NULL AUTO_INCREMENT,\n        DocumentoMP VARCHAR(100) NOT NULL,\n        RazonSocialMP VARCHAR(255) NOT NULL,\n        VendedorMP VARCHAR(255) DEFAULT NULL,\n        SurtidorMP VARCHAR(255) DEFAULT NULL,\n        ClienteMP VARCHAR(255) NOT NULL,\n        AduanaMP VARCHAR(255) DEFAULT NULL,\n        SkuMP VARCHAR(100) NOT NULL,\n        DescripcionMP VARCHAR(255) NOT NULL,\n        CantidadMP INT NOT NULL DEFAULT 0,\n        FechaMP TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n        PRIMARY KEY (MaterialPendienteID),\n        INDEX idx_materialpendiente_documento (DocumentoMP),\n        INDEX idx_materialpendiente_sku (SkuMP)\n    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    $sqlCrearTabla = "CREATE TABLE IF NOT EXISTS materialpendiente (\n        MaterialPendienteID INT NOT NULL AUTO_INCREMENT,\n        DocumentoMP VARCHAR(100) NOT NULL,\n        RazonSocialMP VARCHAR(255) NOT NULL,\n        VendedorMP VARCHAR(255) DEFAULT NULL,\n        SurtidorMP VARCHAR(255) DEFAULT NULL,\n        ClienteMP VARCHAR(255) NOT NULL,\n        AduanaMP VARCHAR(255) DEFAULT NULL,\n        SkuMP VARCHAR(100) NOT NULL,\n        DescripcionMP VARCHAR(255) NOT NULL,\n        CantidadMP INT NOT NULL DEFAULT 0,\n        FechaMP TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n        ActivoMP TINYINT(1) NOT NULL DEFAULT 1,\n        PRIMARY KEY (MaterialPendienteID),\n        INDEX idx_materialpendiente_documento (DocumentoMP),\n        INDEX idx_materialpendiente_sku (SkuMP)\n    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 
     @mysqli_query($conn, $sqlCrearTabla);
+
+    if ($baseDatos === '') {
+        return;
+    }
+
+    $stmtColumna = mysqli_prepare(
+        $conn,
+        'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1'
+    );
+
+    if (!$stmtColumna) {
+        return;
+    }
+
+    $tabla = 'materialpendiente';
+    $columna = 'ActivoMP';
+    mysqli_stmt_bind_param($stmtColumna, 'sss', $baseDatos, $tabla, $columna);
+    mysqli_stmt_execute($stmtColumna);
+    mysqli_stmt_store_result($stmtColumna);
+
+    if (mysqli_stmt_num_rows($stmtColumna) === 0) {
+        @mysqli_query($conn, "ALTER TABLE materialpendiente ADD COLUMN ActivoMP TINYINT(1) NOT NULL DEFAULT 1 AFTER FechaMP");
+    }
+
+    mysqli_stmt_close($stmtColumna);
 }
 
-function asegurarTablaFacturaMP(mysqli $conn): void
+function asegurarTablaFacturaMP(mysqli $conn, string $baseDatos): void
 {
-    $sqlCrearTablaFactura = "CREATE TABLE IF NOT EXISTS facturamp (\n        FacturaMPID INT NOT NULL AUTO_INCREMENT,\n        FechaFMP TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n        DocumentoFMP VARCHAR(100) NOT NULL,\n        RazonSocialFMP VARCHAR(255) NOT NULL,\n        VendedorFMP VARCHAR(255) DEFAULT NULL,\n        SurtidorFMP VARCHAR(255) DEFAULT NULL,\n        ClienteFMP VARCHAR(255) NOT NULL,\n        AduanaFMP VARCHAR(255) DEFAULT NULL,\n        PRIMARY KEY (FacturaMPID),\n        INDEX idx_facturamp_documento (DocumentoFMP)\n    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    $sqlCrearTablaFactura = "CREATE TABLE IF NOT EXISTS facturamp (\n        FacturaMPID INT NOT NULL AUTO_INCREMENT,\n        FechaFMP TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n        DocumentoFMP VARCHAR(100) NOT NULL,\n        RazonSocialFMP VARCHAR(255) NOT NULL,\n        VendedorFMP VARCHAR(255) DEFAULT NULL,\n        SurtidorFMP VARCHAR(255) DEFAULT NULL,\n        ClienteFMP VARCHAR(255) NOT NULL,\n        AduanaFMP VARCHAR(255) DEFAULT NULL,\n        ActivoFMP TINYINT(1) NOT NULL DEFAULT 1,\n        PRIMARY KEY (FacturaMPID),\n        INDEX idx_facturamp_documento (DocumentoFMP)\n    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 
     @mysqli_query($conn, $sqlCrearTablaFactura);
+
+    if ($baseDatos === '') {
+        return;
+    }
+
+    $stmtColumna = mysqli_prepare(
+        $conn,
+        'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1'
+    );
+
+    if (!$stmtColumna) {
+        return;
+    }
+
+    $tabla = 'facturamp';
+    $columna = 'ActivoFMP';
+    mysqli_stmt_bind_param($stmtColumna, 'sss', $baseDatos, $tabla, $columna);
+    mysqli_stmt_execute($stmtColumna);
+    mysqli_stmt_store_result($stmtColumna);
+
+    if (mysqli_stmt_num_rows($stmtColumna) === 0) {
+        @mysqli_query($conn, "ALTER TABLE facturamp ADD COLUMN ActivoFMP TINYINT(1) NOT NULL DEFAULT 1 AFTER AduanaFMP");
+    }
+
+    mysqli_stmt_close($stmtColumna);
 }
 
-asegurarTablaMaterialPendiente($conn);
-asegurarTablaFacturaMP($conn);
+$nombreBaseDatos = $dbname ?? '';
+asegurarTablaMaterialPendiente($conn, $nombreBaseDatos);
+asegurarTablaFacturaMP($conn, $nombreBaseDatos);
 
 $longitudSkuReferencia = 0;
 $queryLongitudSku = "SELECT MAX(CHAR_LENGTH(Sku)) AS MaxSkuLength FROM productos";
@@ -39,7 +90,8 @@ if ($resultadoLongitud instanceof mysqli_result) {
 
 $query = "SELECT f.FacturaMPID, f.FechaFMP, mp.DocumentoMP, mp.RazonSocialMP, mp.VendedorMP, mp.SurtidorMP, mp.ClienteMP, mp.AduanaMP, mp.SkuMP, mp.DescripcionMP, mp.CantidadMP, mp.FechaMP "
     . "FROM materialpendiente mp "
-    . "LEFT JOIN facturamp f ON f.DocumentoFMP = mp.DocumentoMP "
+    . "LEFT JOIN facturamp f ON f.DocumentoFMP = mp.DocumentoMP AND f.ActivoFMP = 1 "
+    . "WHERE mp.ActivoMP = 1 "
     . "ORDER BY f.FacturaMPID DESC, mp.MaterialPendienteID ASC";
 
 $resultado = mysqli_query($conn, $query);
@@ -135,4 +187,3 @@ echo '</Worksheet>';
 echo '</Workbook>';
 
 exit;
-

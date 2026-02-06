@@ -2,10 +2,11 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Agregar material pendiente</h5>
+                <h5 class="modal-title" id="ModalTituloPendiente">Agregar material pendiente</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="btn-close"></button>
             </div>
             <form class="forms-sample" id="FormularioAgregarPendiente">
+                <input type="hidden" id="FolioPendiente" name="FolioPendiente" value="">
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-sm-12">
@@ -157,11 +158,12 @@
                                                                 <th>SKU</th>
                                                                 <th>Descripción</th>
                                                                 <th class="text-end">Cantidad</th>
+                                                                <th class="text-end">Acciones</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody id="ProductosPendientesTablaBody">
                                                             <tr class="text-muted">
-                                                                <td colspan="3" class="text-center">Agrega partidas para mostrarlas aquí.</td>
+                                                                <td colspan="4" class="text-center">Agrega partidas para mostrarlas aquí.</td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
@@ -176,7 +178,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="submit" class="btn btn-primary" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?>>Guardar</button>
+                    <button type="submit" class="btn btn-primary" id="BtnGuardarPendiente" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?>>Guardar</button>
                 </div>
             </form>
         </div>
@@ -216,4 +218,3 @@
         </div>
     </div>
 </div>
-

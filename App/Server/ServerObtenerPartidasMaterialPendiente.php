@@ -53,6 +53,41 @@ if (!$conn) {
 
 $nombreBaseDatos = $dbname ?? '';
 asegurarTablaEntregas($conn, $nombreBaseDatos);
+if ($nombreBaseDatos !== '') {
+    $stmtColumna = mysqli_prepare(
+        $conn,
+        'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1'
+    );
+
+    if ($stmtColumna) {
+        $tabla = 'facturamp';
+        $columna = 'ActivoFMP';
+        mysqli_stmt_bind_param($stmtColumna, 'sss', $nombreBaseDatos, $tabla, $columna);
+        mysqli_stmt_execute($stmtColumna);
+        mysqli_stmt_store_result($stmtColumna);
+        if (mysqli_stmt_num_rows($stmtColumna) === 0) {
+            @mysqli_query($conn, "ALTER TABLE facturamp ADD COLUMN ActivoFMP TINYINT(1) NOT NULL DEFAULT 1 AFTER AduanaFMP");
+        }
+        mysqli_stmt_close($stmtColumna);
+    }
+
+    $stmtColumna = mysqli_prepare(
+        $conn,
+        'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1'
+    );
+
+    if ($stmtColumna) {
+        $tabla = 'materialpendiente';
+        $columna = 'ActivoMP';
+        mysqli_stmt_bind_param($stmtColumna, 'sss', $nombreBaseDatos, $tabla, $columna);
+        mysqli_stmt_execute($stmtColumna);
+        mysqli_stmt_store_result($stmtColumna);
+        if (mysqli_stmt_num_rows($stmtColumna) === 0) {
+            @mysqli_query($conn, "ALTER TABLE materialpendiente ADD COLUMN ActivoMP TINYINT(1) NOT NULL DEFAULT 1 AFTER FechaMP");
+        }
+        mysqli_stmt_close($stmtColumna);
+    }
+}
 
 $folio = isset($_GET['folio']) ? (int) $_GET['folio'] : 0;
 
@@ -63,7 +98,7 @@ if ($folio <= 0) {
 $stmtFactura = mysqli_prepare(
     $conn,
     'SELECT FacturaMPID, FechaFMP, DocumentoFMP, RazonSocialFMP, VendedorFMP, SurtidorFMP, ClienteFMP, AduanaFMP ' .
-        'FROM facturamp WHERE FacturaMPID = ? LIMIT 1'
+        'FROM facturamp WHERE FacturaMPID = ? AND ActivoFMP = 1 LIMIT 1'
 );
 
 if (!$stmtFactura) {
@@ -101,7 +136,7 @@ if (!empty($fechaFolio)) {
 
 $stmtPartidas = mysqli_prepare(
     $conn,
-    'SELECT MaterialPendienteID, SkuMP, DescripcionMP, CantidadMP FROM materialpendiente WHERE DocumentoMP = ? ORDER BY MaterialPendienteID ASC'
+    'SELECT MaterialPendienteID, SkuMP, DescripcionMP, CantidadMP FROM materialpendiente WHERE DocumentoMP = ? AND ActivoMP = 1 ORDER BY MaterialPendienteID ASC'
 );
 
 if (!$stmtPartidas) {
@@ -175,4 +210,3 @@ echo json_encode([
     'partidas' => $partidas,
     'entregas' => $entregas,
 ]);
-
