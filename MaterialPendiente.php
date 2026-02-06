@@ -156,7 +156,55 @@ $hayAduanasPendientes = count($listaAduanasPendientes) > 0;
 
 $listaMaterialPendiente = [];
 
-function asegurarTablaFacturaMPListado(mysqli $conn): void
+function asegurarTablaMaterialPendienteListado(mysqli $conn, string $baseDatos): void
+{
+    $sqlCrearTabla = "CREATE TABLE IF NOT EXISTS materialpendiente (
+        MaterialPendienteID INT NOT NULL AUTO_INCREMENT,
+        DocumentoMP VARCHAR(100) NOT NULL,
+        RazonSocialMP VARCHAR(255) NOT NULL,
+        VendedorMP VARCHAR(255) DEFAULT NULL,
+        SurtidorMP VARCHAR(255) DEFAULT NULL,
+        ClienteMP VARCHAR(255) NOT NULL,
+        AduanaMP VARCHAR(255) DEFAULT NULL,
+        SkuMP VARCHAR(100) NOT NULL,
+        DescripcionMP VARCHAR(255) NOT NULL,
+        CantidadMP INT NOT NULL DEFAULT 0,
+        FechaMP TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        ActivoMP TINYINT(1) NOT NULL DEFAULT 1,
+        PRIMARY KEY (MaterialPendienteID),
+        INDEX idx_materialpendiente_documento (DocumentoMP),
+        INDEX idx_materialpendiente_sku (SkuMP)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+    @mysqli_query($conn, $sqlCrearTabla);
+
+    if ($baseDatos === '') {
+        return;
+    }
+
+    $stmtColumna = mysqli_prepare(
+        $conn,
+        'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1'
+    );
+
+    if (!$stmtColumna) {
+        return;
+    }
+
+    $tabla = 'materialpendiente';
+    $columna = 'ActivoMP';
+    mysqli_stmt_bind_param($stmtColumna, 'sss', $baseDatos, $tabla, $columna);
+    mysqli_stmt_execute($stmtColumna);
+    mysqli_stmt_store_result($stmtColumna);
+
+    if (mysqli_stmt_num_rows($stmtColumna) === 0) {
+        @mysqli_query($conn, "ALTER TABLE materialpendiente ADD COLUMN ActivoMP TINYINT(1) NOT NULL DEFAULT 1 AFTER FechaMP");
+    }
+
+    mysqli_stmt_close($stmtColumna);
+}
+
+function asegurarTablaFacturaMPListado(mysqli $conn, string $baseDatos): void
 {
     $sql = "CREATE TABLE IF NOT EXISTS facturamp (
         FacturaMPID INT NOT NULL AUTO_INCREMENT,
@@ -167,18 +215,46 @@ function asegurarTablaFacturaMPListado(mysqli $conn): void
         SurtidorFMP VARCHAR(255) DEFAULT NULL,
         ClienteFMP VARCHAR(255) NOT NULL,
         AduanaFMP VARCHAR(255) DEFAULT NULL,
+        ActivoFMP TINYINT(1) NOT NULL DEFAULT 1,
         PRIMARY KEY (FacturaMPID),
         INDEX idx_facturamp_documento (DocumentoFMP)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 
     @mysqli_query($conn, $sql);
+
+    if ($baseDatos === '') {
+        return;
+    }
+
+    $stmtColumna = mysqli_prepare(
+        $conn,
+        'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1'
+    );
+
+    if (!$stmtColumna) {
+        return;
+    }
+
+    $tabla = 'facturamp';
+    $columna = 'ActivoFMP';
+    mysqli_stmt_bind_param($stmtColumna, 'sss', $baseDatos, $tabla, $columna);
+    mysqli_stmt_execute($stmtColumna);
+    mysqli_stmt_store_result($stmtColumna);
+
+    if (mysqli_stmt_num_rows($stmtColumna) === 0) {
+        @mysqli_query($conn, "ALTER TABLE facturamp ADD COLUMN ActivoFMP TINYINT(1) NOT NULL DEFAULT 1 AFTER AduanaFMP");
+    }
+
+    mysqli_stmt_close($stmtColumna);
 }
 
-asegurarTablaFacturaMPListado($conn);
+$nombreBaseDatos = $dbname ?? '';
+asegurarTablaMaterialPendienteListado($conn, $nombreBaseDatos);
+asegurarTablaFacturaMPListado($conn, $nombreBaseDatos);
 
 $queryMaterialPendiente = "SELECT f.FacturaMPID, f.FechaFMP, f.DocumentoFMP, f.RazonSocialFMP, f.VendedorFMP, f.SurtidorFMP, f.ClienteFMP, f.AduanaFMP, "
-    . "(SELECT COUNT(*) FROM materialpendiente mp WHERE mp.DocumentoMP = f.DocumentoFMP) AS PartidasPendientes "
-    . "FROM facturamp f ORDER BY f.FacturaMPID DESC";
+    . "(SELECT COUNT(*) FROM materialpendiente mp WHERE mp.DocumentoMP = f.DocumentoFMP AND mp.ActivoMP = 1) AS PartidasPendientes "
+    . "FROM facturamp f WHERE f.ActivoFMP = 1 ORDER BY f.FacturaMPID DESC";
 
 $resultadoMaterialPendiente = @mysqli_query($conn, $queryMaterialPendiente);
 
@@ -192,6 +268,11 @@ if ($resultadoMaterialPendiente instanceof mysqli_result) {
 $claseBody = '';
 $claseLogo = '';
 $iconoFlecha = 'first_page';
+$versionAppMaterialPendiente = @filemtime(__DIR__ . '/App/js/AppMaterialPendiente.js');
+
+if ($versionAppMaterialPendiente === false) {
+    $versionAppMaterialPendiente = time();
+}
 
 if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
     $claseBody = 'sidebar-hidden';
@@ -280,12 +361,13 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                                         <th class="text-muted">Surtidor</th>
                                                         <th class="text-muted">Nombre del cliente</th>
                                                         <th class="text-muted">Aduana</th>
+                                                        <th class="text-muted text-end">Acciones</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     <?php if (empty($listaMaterialPendiente)) : ?>
                                                         <tr>
-                                                            <td colspan="8" class="text-center text-muted">No hay material pendiente registrado.</td>
+                                                            <td colspan="9" class="text-center text-muted">No hay material pendiente registrado.</td>
                                                         </tr>
                                                     <?php else : ?>
                                                         <?php foreach ($listaMaterialPendiente as $materialPendiente) : ?>
@@ -321,11 +403,19 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                                                 <td><?php echo $surtidor !== '' ? $surtidor : '-'; ?></td>
                                                                 <td><?php echo $cliente; ?></td>
                                                                 <td><?php echo $aduana !== '' ? $aduana : '-'; ?></td>
+                                                                <td class="text-end">
+                                                                    <button type="button" class="btn btn-outline-primary btn-sm editar-material-pendiente" data-folio="<?php echo $folio; ?>">
+                                                                        <i class="material-icons-two-tone">edit</i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-outline-danger btn-sm eliminar-material-pendiente" data-folio="<?php echo $folio; ?>" data-documento="<?php echo $numeroDocumento; ?>">
+                                                                        <i class="material-icons-two-tone">delete</i>
+                                                                    </button>
+                                                                </td>
                                                             </tr>
                                                         <?php endforeach; ?>
                                                     <?php endif; ?>
                                                     <tr id="MaterialPendienteSinResultados" class="d-none">
-                                                        <td colspan="8" class="text-center text-muted">No se encontraron resultados para la búsqueda.</td>
+                                                        <td colspan="9" class="text-center text-muted">No se encontraron resultados para la búsqueda.</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
@@ -453,7 +543,7 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
     <script src="assets/js/main.min.js"></script>
     <script src="assets/js/custom.js"></script>
     <script src="assets/js/select2.min.js" integrity="sha512-9p/L4acAjbjIaaGXmZf0Q2bV42HetlCLbv8EP0z3rLbQED2TAFUlDvAezy7kumYqg5T8jHtDdlm1fgIsr5QzKg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="App/js/AppMaterialPendiente.js"></script>
+    <script src="App/js/AppMaterialPendiente.js?v=<?php echo (int) $versionAppMaterialPendiente; ?>"></script>
     <script src="App/js/AppCambiarContrasena.js"></script>
 
 </body>

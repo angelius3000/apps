@@ -153,6 +153,33 @@ function normalizarTexto(?string $valor): string
     return trim((string) $valor);
 }
 
+$folio = isset($_POST['FolioPendiente']) ? (int) $_POST['FolioPendiente'] : 0;
+
+if ($folio <= 0) {
+    responderError('No se identificó el folio a editar.', 400);
+}
+
+$stmtFacturaActual = mysqli_prepare(
+    $conn,
+    'SELECT DocumentoFMP FROM facturamp WHERE FacturaMPID = ? AND ActivoFMP = 1 LIMIT 1'
+);
+
+if (!$stmtFacturaActual) {
+    responderError('No se pudo obtener el folio solicitado.');
+}
+
+mysqli_stmt_bind_param($stmtFacturaActual, 'i', $folio);
+mysqli_stmt_execute($stmtFacturaActual);
+mysqli_stmt_bind_result($stmtFacturaActual, $documentoAnterior);
+
+if (!mysqli_stmt_fetch($stmtFacturaActual)) {
+    mysqli_stmt_close($stmtFacturaActual);
+    responderError('No se encontró el folio solicitado.', 404);
+}
+
+mysqli_stmt_close($stmtFacturaActual);
+$documentoAnterior = (string) $documentoAnterior;
+
 $numeroFactura = normalizarTexto($_POST['NumeroFacturaPendiente'] ?? '');
 $usarOtraRazonSocial = isset($_POST['OtraRazonSocialPendiente']) && $_POST['OtraRazonSocialPendiente'] === '1';
 $clienteId = $usarOtraRazonSocial ? 0 : (isset($_POST['RazonSocialPendiente']) ? (int) $_POST['RazonSocialPendiente'] : 0);
@@ -267,53 +294,69 @@ if (empty($productosValidos)) {
 
 mysqli_begin_transaction($conn);
 
-$stmtFactura = mysqli_prepare(
+$stmtActualizar = mysqli_prepare(
     $conn,
-    'INSERT INTO facturamp (DocumentoFMP, RazonSocialFMP, VendedorFMP, SurtidorFMP, ClienteFMP, AduanaFMP, ActivoFMP) '
-        . 'VALUES (?, ?, ?, ?, ?, ?, 1)'
+    'UPDATE facturamp SET DocumentoFMP = ?, RazonSocialFMP = ?, VendedorFMP = ?, SurtidorFMP = ?, ClienteFMP = ?, AduanaFMP = ?, ActivoFMP = 1 WHERE FacturaMPID = ? LIMIT 1'
 );
 
-if (!$stmtFactura) {
+if (!$stmtActualizar) {
     mysqli_rollback($conn);
-    responderError('No se pudo preparar la inserción del folio.');
+    responderError('No se pudo preparar la actualización del folio.');
 }
 
 mysqli_stmt_bind_param(
-    $stmtFactura,
-    'ssssss',
+    $stmtActualizar,
+    'ssssssi',
     $numeroFactura,
     $razonSocial,
     $vendedorNombre,
     $surtidorValor,
     $clienteParaGuardar,
-    $aduanaNombre
+    $aduanaNombre,
+    $folio
 );
 
-if (!mysqli_stmt_execute($stmtFactura)) {
-    mysqli_stmt_close($stmtFactura);
+if (!mysqli_stmt_execute($stmtActualizar)) {
+    mysqli_stmt_close($stmtActualizar);
     mysqli_rollback($conn);
-    responderError('No se pudo guardar el folio de la factura.');
+    responderError('No se pudo actualizar el folio.');
 }
 
-$folioInsertado = mysqli_insert_id($conn);
-mysqli_stmt_close($stmtFactura);
+mysqli_stmt_close($stmtActualizar);
 
-$stmt = mysqli_prepare(
+$stmtEliminar = mysqli_prepare($conn, 'DELETE FROM materialpendiente WHERE DocumentoMP = ?');
+
+if (!$stmtEliminar) {
+    mysqli_rollback($conn);
+    responderError('No se pudo preparar la limpieza de partidas.');
+}
+
+mysqli_stmt_bind_param($stmtEliminar, 's', $documentoAnterior);
+
+if (!mysqli_stmt_execute($stmtEliminar)) {
+    mysqli_stmt_close($stmtEliminar);
+    mysqli_rollback($conn);
+    responderError('No se pudo actualizar la información capturada.');
+}
+
+mysqli_stmt_close($stmtEliminar);
+
+$stmtInsertar = mysqli_prepare(
     $conn,
     'INSERT INTO materialpendiente (DocumentoMP, RazonSocialMP, VendedorMP, SurtidorMP, ClienteMP, AduanaMP, SkuMP, DescripcionMP, CantidadMP, ActivoMP) '
         . 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)'
 );
 
-if (!$stmt) {
+if (!$stmtInsertar) {
     mysqli_rollback($conn);
     responderError('No se pudo preparar la inserción de material pendiente.');
 }
 
-$insertados = 0;
+$actualizados = 0;
 
 foreach ($productosValidos as $producto) {
     mysqli_stmt_bind_param(
-        $stmt,
+        $stmtInsertar,
         'ssssssssi',
         $numeroFactura,
         $razonSocial,
@@ -326,20 +369,34 @@ foreach ($productosValidos as $producto) {
         $producto['cantidad']
     );
 
-    if (!mysqli_stmt_execute($stmt)) {
-        mysqli_stmt_close($stmt);
+    if (!mysqli_stmt_execute($stmtInsertar)) {
+        mysqli_stmt_close($stmtInsertar);
         mysqli_rollback($conn);
-        responderError('No se pudo guardar la información capturada.');
+        responderError('No se pudo actualizar la información capturada.');
     }
 
-    $insertados++;
+    $actualizados++;
 }
 
-mysqli_stmt_close($stmt);
+mysqli_stmt_close($stmtInsertar);
+
+if ($documentoAnterior !== $numeroFactura) {
+    $stmtActualizarDocumento = mysqli_prepare(
+        $conn,
+        'UPDATE materialpendiente_entregas SET Documento = ? WHERE FolioID = ?'
+    );
+
+    if ($stmtActualizarDocumento) {
+        mysqli_stmt_bind_param($stmtActualizarDocumento, 'si', $numeroFactura, $folio);
+        @mysqli_stmt_execute($stmtActualizarDocumento);
+        mysqli_stmt_close($stmtActualizarDocumento);
+    }
+}
+
 mysqli_commit($conn);
 
 echo json_encode([
     'success' => true,
-    'inserted' => $insertados,
-    'folio' => $folioInsertado
+    'updated' => $actualizados,
+    'folio' => $folio
 ]);
