@@ -268,6 +268,11 @@ if ($resultadoMaterialPendiente instanceof mysqli_result) {
 $claseBody = '';
 $claseLogo = '';
 $iconoFlecha = 'first_page';
+$versionAppMaterialPendiente = @filemtime(__DIR__ . '/App/js/AppMaterialPendiente.js');
+
+if ($versionAppMaterialPendiente === false) {
+    $versionAppMaterialPendiente = time();
+}
 
 if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
     $claseBody = 'sidebar-hidden';
@@ -538,7 +543,7 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
     <script src="assets/js/main.min.js"></script>
     <script src="assets/js/custom.js"></script>
     <script src="assets/js/select2.min.js" integrity="sha512-9p/L4acAjbjIaaGXmZf0Q2bV42HetlCLbv8EP0z3rLbQED2TAFUlDvAezy7kumYqg5T8jHtDdlm1fgIsr5QzKg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="App/js/AppMaterialPendiente.js"></script>
+    <script src="App/js/AppMaterialPendiente.js?v=<?php echo (int) $versionAppMaterialPendiente; ?>"></script>
     <script src="App/js/AppCambiarContrasena.js"></script>
 
 </body>
