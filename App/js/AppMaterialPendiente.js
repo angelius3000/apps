@@ -1,5 +1,8 @@
 $(document).ready(function() {
   var $modal = $('#ModalAgregarPendiente');
+  var $modalTitle = $('#ModalTituloPendiente');
+  var $btnGuardarPendiente = $('#BtnGuardarPendiente');
+  var $inputFolioPendiente = $('#FolioPendiente');
   var $container = $('#ProductosPendientesContainer');
   var $selectProductoPendiente = $('#ProductoPendienteSelect');
   var $inputCantidadPendiente = $('#CantidadPendiente');
@@ -33,6 +36,7 @@ $(document).ready(function() {
   var $aduanaPendienteOtroContainer = $('#AduanaPendienteOtroContainer');
   var $inputAduanaPendienteOtro = $('#AduanaPendienteOtro');
   var $inputNombreCliente = $('#NombreClientePendiente');
+  var $inputNumeroFacturaPendiente = $('#NumeroFacturaPendiente');
   var $formularioPendiente = $('#FormularioAgregarPendiente');
   var $tablaMaterialPendiente = $('#TablaMaterialPendiente');
   var $buscadorMaterialPendiente = $('#BuscadorMaterialPendiente');
@@ -57,6 +61,7 @@ $(document).ready(function() {
   var ADUANA_OTRO_ID = '4';
   var ignorarCambioVendedor = false;
   var partidasPendientes = [];
+  var modoEdicion = false;
 
   function desplazarASeccionEntrega() {
     if (!$panelDetalle.length) {
@@ -98,6 +103,37 @@ $(document).ready(function() {
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function normalizarTextoSimple(texto) {
+    return (texto || '')
+      .toString()
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function encontrarOpcionPorTexto($select, texto) {
+    if (!$select.length || !texto) {
+      return '';
+    }
+
+    var textoNormalizado = normalizarTextoSimple(texto);
+    var valorEncontrado = '';
+
+    $select.find('option').each(function() {
+      var $opcion = $(this);
+      var textoOpcion = normalizarTextoSimple($opcion.text());
+
+      if (textoOpcion === textoNormalizado || textoOpcion.indexOf(textoNormalizado) !== -1 || textoNormalizado.indexOf(textoOpcion) !== -1) {
+        valorEncontrado = $opcion.val();
+        return false;
+      }
+
+      return true;
+    });
+
+    return valorEncontrado;
   }
 
   function escaparHtml(texto) {
@@ -324,6 +360,10 @@ $(document).ready(function() {
       var $enlaceEditar = $('<a href="#" class="editar-partida"></a>').attr('data-index', indice).text(partida.sku || '');
       var $celdaDescripcion = $('<td class="text-truncate" style="max-width: 420px;"></td>').attr('title', partida.descripcion).text(acortarDescripcion(partida.descripcion));
       var $celdaCantidad = $('<td class="text-end"></td>').text(partida.cantidad);
+      var $celdaAcciones = $('<td class="text-end"></td>');
+      var $botonEliminar = $('<button type="button" class="btn btn-outline-danger btn-sm eliminar-partida"></button>')
+        .attr('data-index', indice)
+        .html('<i class="material-icons-two-tone">delete</i>');
 
       $celdaSku.append($enlaceEditar);
       $celdaSku.append($('<input>', { type: 'hidden', name: 'productos[' + indice + '][id]', value: partida.id || '' }));
@@ -332,7 +372,8 @@ $(document).ready(function() {
       $celdaSku.append($('<input>', { type: 'hidden', name: 'productos[' + indice + '][cantidad]', value: partida.cantidad }));
       $celdaSku.append($('<input>', { type: 'hidden', name: 'productos[' + indice + '][otro]', value: partida.esOtro ? '1' : '0' }));
 
-      $fila.append($celdaSku, $celdaDescripcion, $celdaCantidad);
+      $celdaAcciones.append($botonEliminar);
+      $fila.append($celdaSku, $celdaDescripcion, $celdaCantidad, $celdaAcciones);
       $tablaBodyPartidas.append($fila);
     });
   }
@@ -347,6 +388,40 @@ $(document).ready(function() {
       sku: (skuSeleccionado || $opcionSeleccionada.text() || '').toString().trim(),
       descripcion: (descripcionSeleccionada || $opcionSeleccionada.text() || '').toString().trim()
     };
+  }
+
+  function encontrarProductoPorSku(sku, descripcion) {
+    if (!$selectProductoPendiente.length || !sku) {
+      return null;
+    }
+
+    var skuNormalizado = normalizarTextoSimple(sku);
+    var descripcionNormalizada = normalizarTextoSimple(descripcion || '');
+    var encontrado = null;
+
+    $selectProductoPendiente.find('option').each(function() {
+      var $opcion = $(this);
+      var skuOpcion = normalizarTextoSimple($opcion.attr('data-sku') || '');
+      var descripcionOpcion = normalizarTextoSimple($opcion.attr('data-descripcion') || '');
+      var textoOpcion = normalizarTextoSimple($opcion.text());
+
+      var coincideSku = skuOpcion !== '' && skuOpcion === skuNormalizado;
+      var coincideTexto = textoOpcion !== '' && textoOpcion.indexOf(skuNormalizado) !== -1;
+      var coincideDescripcion = descripcionNormalizada !== '' && descripcionOpcion === descripcionNormalizada;
+
+      if (coincideSku || coincideTexto || coincideDescripcion) {
+        encontrado = {
+          id: parseInt($opcion.val(), 10) || null,
+          sku: $opcion.attr('data-sku') || sku,
+          descripcion: $opcion.attr('data-descripcion') || descripcion || $opcion.text()
+        };
+        return false;
+      }
+
+      return true;
+    });
+
+    return encontrado;
   }
 
   function obtenerContenedorSelectAlmacenista() {
@@ -471,6 +546,123 @@ $(document).ready(function() {
     }
 
     renderizarPartidasPendientes();
+  }
+
+  function establecerModoEdicion(activo) {
+    modoEdicion = activo;
+
+    if ($modalTitle.length) {
+      $modalTitle.text(activo ? 'Editar material pendiente' : 'Agregar material pendiente');
+    }
+
+    if ($btnGuardarPendiente.length) {
+      $btnGuardarPendiente.text(activo ? 'Guardar cambios' : 'Guardar');
+    }
+
+    if (!activo && $inputFolioPendiente.length) {
+      $inputFolioPendiente.val('');
+    }
+  }
+
+  function reiniciarFormularioPendiente() {
+    if ($formularioPendiente.length) {
+      $formularioPendiente[0].reset();
+    }
+
+    $selectClientes.each(function() {
+      var $cliente = $(this);
+      if ($cliente.hasClass('select2-hidden-accessible')) {
+        $cliente.val(null).trigger('change');
+      }
+    });
+
+    $selectVendedores.each(function() {
+      var $vendedor = $(this);
+      if ($vendedor.hasClass('select2-hidden-accessible')) {
+        $vendedor.val(null).trigger('change');
+      } else {
+        $vendedor.val('');
+      }
+
+      $vendedor.prop('disabled', false).prop('required', true);
+    });
+
+    if ($vendedorPendienteSelectContainer.length) {
+      $vendedorPendienteSelectContainer.removeClass('d-none');
+    }
+
+    if ($checkboxOtroVendedor.length) {
+      $checkboxOtroVendedor.prop('checked', false);
+    }
+
+    partidasPendientes = [];
+    renderizarPartidasPendientes();
+    limpiarCamposPartidaPendiente();
+
+    if ($checkboxOtroProducto.length) {
+      $checkboxOtroProducto.prop('checked', false);
+    }
+
+    if ($checkboxOtroSurtidor.length) {
+      $checkboxOtroSurtidor.prop('checked', false).prop('disabled', false);
+    }
+
+    if ($inputSurtidor.length) {
+      $inputSurtidor.prop('readonly', true).val('').removeClass('d-none').attr('name', 'SurtidorPendiente').prop('required', true);
+    }
+
+    if ($selectAlmacenista.length) {
+      $selectAlmacenista.val(null).trigger('change');
+      $selectAlmacenista.prop('required', false).attr('name', '').addClass('d-none');
+      mostrarContenedorAlmacenista(false);
+    }
+
+    if ($checkboxAlmacenista.length) {
+      $checkboxAlmacenista.prop('checked', false);
+    }
+
+    if ($vendedorPendienteOtroContainer.length) {
+      $vendedorPendienteOtroContainer.addClass('d-none');
+    }
+
+    if ($inputVendedorPendienteOtro.length) {
+      $inputVendedorPendienteOtro.prop('required', false).prop('disabled', true).val('');
+    }
+
+    if ($selectAduana.length) {
+      $selectAduana.val(null).trigger('change');
+    }
+
+    if ($aduanaPendienteOtroContainer.length) {
+      $aduanaPendienteOtroContainer.addClass('d-none');
+    }
+
+    if ($inputAduanaPendienteOtro.length) {
+      $inputAduanaPendienteOtro.prop('required', false).val('');
+    }
+
+    if ($checkboxOtraRazonSocial.length) {
+      $checkboxOtraRazonSocial.prop('checked', false);
+    }
+
+    if ($inputNumeroClientePendienteOtro.length) {
+      $inputNumeroClientePendienteOtro.val('');
+    }
+
+    if ($inputRazonSocialPendienteOtra.length) {
+      $inputRazonSocialPendienteOtra.val('');
+    }
+
+    if ($inputNombreCliente.length) {
+      $inputNombreCliente.val('');
+    }
+
+    actualizarCamposOtraRazonSocial();
+    actualizarCampoVendedorOtro();
+    actualizarCampoSurtidor();
+    actualizarCampoAduanaOtro();
+    actualizarModoOtroProducto();
+    establecerModoEdicion(false);
   }
 
   function mostrarContenedorAlmacenista(debeMostrar) {
@@ -961,6 +1153,138 @@ $(document).ready(function() {
     }
   }
 
+  function prepararFormularioEdicion(factura, partidas) {
+    if (!factura) {
+      return;
+    }
+
+    establecerModoEdicion(true);
+
+    if ($inputFolioPendiente.length) {
+      $inputFolioPendiente.val(factura.folio || '');
+    }
+
+    if ($inputNumeroFacturaPendiente.length) {
+      $inputNumeroFacturaPendiente.val(factura.documento || '');
+    }
+
+    var razonSocial = factura.razonSocial || '';
+    var razonSocialSeleccion = encontrarOpcionPorTexto($selectRazonSocial, razonSocial);
+
+    if (razonSocialSeleccion) {
+      if ($checkboxOtraRazonSocial.length) {
+        $checkboxOtraRazonSocial.prop('checked', false);
+      }
+      $selectRazonSocial.val(razonSocialSeleccion).trigger('change');
+    } else {
+      if ($checkboxOtraRazonSocial.length) {
+        $checkboxOtraRazonSocial.prop('checked', true);
+      }
+      if ($inputRazonSocialPendienteOtra.length) {
+        $inputRazonSocialPendienteOtra.val(razonSocial);
+      }
+
+      if ($inputNumeroClientePendienteOtro.length) {
+        var coincidenciaNumero = razonSocial.match(/#\s*(\d+)/);
+        $inputNumeroClientePendienteOtro.val(coincidenciaNumero ? coincidenciaNumero[1] : 'N/A');
+      }
+    }
+
+    var vendedor = factura.vendedor || '';
+    var vendedorSeleccion = encontrarOpcionPorTexto($selectVendedores, vendedor);
+
+    if (vendedorSeleccion) {
+      if ($checkboxOtroVendedor.length) {
+        $checkboxOtroVendedor.prop('checked', false);
+      }
+      $selectVendedores.val(vendedorSeleccion).trigger('change');
+      if ($inputVendedorPendienteOtro.length) {
+        $inputVendedorPendienteOtro.val('');
+      }
+    } else {
+      if ($checkboxOtroVendedor.length) {
+        $checkboxOtroVendedor.prop('checked', true);
+      }
+      if ($inputVendedorPendienteOtro.length) {
+        $inputVendedorPendienteOtro.val(vendedor);
+      }
+    }
+
+    var surtidor = factura.surtidor || '';
+    var almacenistaSeleccion = encontrarOpcionPorTexto($selectAlmacenista, surtidor);
+
+    if (almacenistaSeleccion) {
+      if ($checkboxAlmacenista.length) {
+        $checkboxAlmacenista.prop('checked', true);
+      }
+      $selectAlmacenista.val(almacenistaSeleccion).trigger('change');
+    } else {
+      if ($checkboxAlmacenista.length) {
+        $checkboxAlmacenista.prop('checked', false);
+      }
+
+      if ($inputSurtidor.length) {
+        $inputSurtidor.val(surtidor);
+      }
+
+      if ($checkboxOtroSurtidor.length) {
+        var habilitarOtroSurtidor = surtidor !== '' && vendedor !== '' && surtidor !== vendedor;
+        $checkboxOtroSurtidor.prop('checked', habilitarOtroSurtidor);
+      }
+    }
+
+    if ($inputNombreCliente.length) {
+      $inputNombreCliente.val(factura.cliente || '');
+    }
+
+    var aduana = factura.aduana || '';
+    var aduanaSeleccion = encontrarOpcionPorTexto($selectAduana, aduana);
+
+    if (aduanaSeleccion) {
+      $selectAduana.val(aduanaSeleccion).trigger('change');
+      if ($inputAduanaPendienteOtro.length) {
+        $inputAduanaPendienteOtro.val('');
+      }
+    } else {
+      $selectAduana.val(ADUANA_OTRO_ID).trigger('change');
+      if ($inputAduanaPendienteOtro.length) {
+        $inputAduanaPendienteOtro.val(aduana);
+      }
+    }
+
+    if ($checkboxOtroProducto.length) {
+      $checkboxOtroProducto.prop('checked', false);
+    }
+
+    partidasPendientes = (partidas || []).map(function(partida) {
+      var sku = partida && partida.sku ? partida.sku : '';
+      var descripcion = partida && partida.descripcion ? partida.descripcion : '';
+      var cantidad = partida && partida.cantidad ? partida.cantidad : 0;
+      var productoEncontrado = productosDisponibles ? encontrarProductoPorSku(sku, descripcion) : null;
+      var esOtro = !productoEncontrado;
+
+      return {
+        id: productoEncontrado && productoEncontrado.id ? productoEncontrado.id : null,
+        sku: productoEncontrado && productoEncontrado.sku ? productoEncontrado.sku : sku,
+        descripcion: productoEncontrado && productoEncontrado.descripcion ? productoEncontrado.descripcion : descripcion,
+        cantidad: cantidad,
+        esOtro: esOtro
+      };
+    });
+
+    actualizarCamposOtraRazonSocial();
+    actualizarCampoVendedorOtro();
+    actualizarCampoSurtidor();
+    actualizarCampoAduanaOtro();
+    actualizarModoOtroProducto();
+
+    if (!almacenistaSeleccion && surtidor && $inputSurtidor.length) {
+      $inputSurtidor.val(surtidor);
+    }
+
+    renderizarPartidasPendientes();
+  }
+
   function actualizarHabilitadoEntrega() {
     if (!$detallePartidasBody.length || !$btnRegistrarEntrega.length) {
       return;
@@ -1077,89 +1401,7 @@ $(document).ready(function() {
   });
 
   $modal.on('hidden.bs.modal', function() {
-    var $formulario = $('#FormularioAgregarPendiente');
-    if ($formulario.length) {
-      $formulario[0].reset();
-    }
-
-    $selectClientes.each(function() {
-      var $cliente = $(this);
-      if ($cliente.hasClass('select2-hidden-accessible')) {
-        $cliente.val(null).trigger('change');
-      }
-    });
-
-    $selectVendedores.each(function() {
-      var $vendedor = $(this);
-      if ($vendedor.hasClass('select2-hidden-accessible')) {
-        $vendedor.val(null).trigger('change');
-      } else {
-        $vendedor.val('');
-      }
-
-      $vendedor.prop('disabled', false).prop('required', true);
-    });
-
-    if ($vendedorPendienteSelectContainer.length) {
-      $vendedorPendienteSelectContainer.removeClass('d-none');
-    }
-
-    if ($checkboxOtroVendedor.length) {
-      $checkboxOtroVendedor.prop('checked', false);
-    }
-
-    partidasPendientes = [];
-    renderizarPartidasPendientes();
-    limpiarCamposPartidaPendiente();
-
-    if ($checkboxOtroProducto.length) {
-      $checkboxOtroProducto.prop('checked', false);
-    }
-
-    if ($checkboxOtroSurtidor.length) {
-      $checkboxOtroSurtidor.prop('checked', false).prop('disabled', false);
-    }
-
-    if ($inputSurtidor.length) {
-      $inputSurtidor.prop('readonly', true).val('').removeClass('d-none').attr('name', 'SurtidorPendiente').prop('required', true);
-    }
-
-    if ($selectAlmacenista.length) {
-      $selectAlmacenista.val(null).trigger('change');
-      $selectAlmacenista.prop('required', false).attr('name', '').addClass('d-none');
-      mostrarContenedorAlmacenista(false);
-    }
-
-    if ($checkboxAlmacenista.length) {
-      $checkboxAlmacenista.prop('checked', false);
-    }
-
-    if ($vendedorPendienteOtroContainer.length) {
-      $vendedorPendienteOtroContainer.addClass('d-none');
-    }
-
-    if ($inputVendedorPendienteOtro.length) {
-      $inputVendedorPendienteOtro.prop('required', false).prop('disabled', true).val('');
-    }
-
-    if ($selectAduana.length) {
-      $selectAduana.val(null).trigger('change');
-    }
-
-    if ($aduanaPendienteOtroContainer.length) {
-      $aduanaPendienteOtroContainer.addClass('d-none');
-    }
-
-    if ($inputAduanaPendienteOtro.length) {
-      $inputAduanaPendienteOtro.prop('required', false).val('');
-    }
-
-    if ($checkboxOtraRazonSocial.length) {
-      $checkboxOtraRazonSocial.prop('checked', false);
-    }
-
-    actualizarCamposOtraRazonSocial();
-    actualizarCampoVendedorOtro();
+    reiniciarFormularioPendiente();
   });
 
   if ($tablaMaterialPendiente.length) {
@@ -1172,6 +1414,76 @@ $(document).ready(function() {
       }
 
       cargarDetallePartidas(documento, folio);
+    });
+
+    $tablaMaterialPendiente.on('click', '.editar-material-pendiente', function(evento) {
+      evento.preventDefault();
+      evento.stopPropagation();
+
+      var folio = parseInt($(this).data('folio'), 10);
+
+      if (isNaN(folio) || folio <= 0) {
+        return;
+      }
+
+      $.ajax({
+        url: 'App/Server/ServerObtenerPartidasMaterialPendiente.php',
+        method: 'GET',
+        dataType: 'json',
+        data: { folio: folio }
+      }).done(function(respuesta) {
+        if (!respuesta || !respuesta.success) {
+          var mensajeError = respuesta && respuesta.message ? respuesta.message : 'No se pudo cargar el folio seleccionado.';
+          mostrarMensajeError(mensajeError);
+          return;
+        }
+
+        reiniciarFormularioPendiente();
+        establecerModoEdicion(true);
+
+        $modal.one('shown.bs.modal', function() {
+          prepararFormularioEdicion(respuesta.factura || {}, respuesta.partidas || []);
+        });
+
+        $modal.modal('show');
+      }).fail(function() {
+        mostrarMensajeError('No se pudo cargar el folio seleccionado.');
+      });
+    });
+
+    $tablaMaterialPendiente.on('click', '.eliminar-material-pendiente', function(evento) {
+      evento.preventDefault();
+      evento.stopPropagation();
+
+      var folio = parseInt($(this).data('folio'), 10);
+      var documento = $(this).data('documento') || '';
+
+      if (isNaN(folio) || folio <= 0) {
+        return;
+      }
+
+      var mensaje = '¿Deseas eliminar este registro? Esta acción eliminará el folio' + (documento ? ' "' + documento + '"' : '') + '.';
+
+      if (!window.confirm(mensaje)) {
+        return;
+      }
+
+      $.ajax({
+        url: 'App/Server/ServerEliminarMaterialPendiente.php',
+        method: 'POST',
+        dataType: 'json',
+        data: { folio: folio }
+      }).done(function(respuesta) {
+        if (respuesta && respuesta.success) {
+          window.location.reload();
+          return;
+        }
+
+        var mensajeError = respuesta && respuesta.message ? respuesta.message : 'No se pudo eliminar el registro.';
+        mostrarMensajeError(mensajeError);
+      }).fail(function() {
+        mostrarMensajeError('No se pudo eliminar el registro.');
+      });
     });
   }
 
@@ -1216,6 +1528,19 @@ $(document).ready(function() {
     $selectProductoPendiente.val(partida.id).trigger('change');
     $inputCantidadPendiente.val(partida.cantidad);
     $inputCantidadPendiente.trigger('focus');
+  });
+
+  $tablaBodyPartidas.on('click', '.eliminar-partida', function(evento) {
+    evento.preventDefault();
+
+    var indice = parseInt($(this).attr('data-index'), 10);
+
+    if (isNaN(indice)) {
+      return;
+    }
+
+    partidasPendientes.splice(indice, 1);
+    renderizarPartidasPendientes();
   });
 
   $checkboxOtroVendedor.on('change', function() {
@@ -1276,7 +1601,8 @@ $(document).ready(function() {
       return;
     }
 
-    enfocarCampo(obtenerCampoProductoDestino());
+    var $campoProductoDestino = obtenerCampoProductoDestino();
+    enfocarCampo($campoProductoDestino);
   });
 
   $selectAduanaEntrega.on('change select2:select', function() {
@@ -1466,10 +1792,11 @@ $(document).ready(function() {
       }
 
       var dataString = $formularioPendiente.serialize();
+      var urlDestino = modoEdicion ? 'App/Server/ServerActualizarMaterialPendiente.php' : 'App/Server/ServerInsertarMaterialPendiente.php';
 
       $.ajax({
         type: 'POST',
-        url: 'App/Server/ServerInsertarMaterialPendiente.php',
+        url: urlDestino,
         data: dataString,
         dataType: 'json'
       }).done(function(respuesta) {

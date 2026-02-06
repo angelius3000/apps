@@ -64,7 +64,28 @@ if (!$conn) {
     responderError('No se pudo conectar a la base de datos.');
 }
 
-asegurarTablaEntregas($conn, $dbname ?? '');
+$nombreBaseDatos = $dbname ?? '';
+asegurarTablaEntregas($conn, $nombreBaseDatos);
+if ($nombreBaseDatos !== '') {
+    $stmtColumna = mysqli_prepare(
+        $conn,
+        'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1'
+    );
+
+    if ($stmtColumna) {
+        $tabla = 'materialpendiente';
+        $columna = 'ActivoMP';
+        mysqli_stmt_bind_param($stmtColumna, 'sss', $nombreBaseDatos, $tabla, $columna);
+        mysqli_stmt_execute($stmtColumna);
+        mysqli_stmt_store_result($stmtColumna);
+
+        if (mysqli_stmt_num_rows($stmtColumna) === 0) {
+            @mysqli_query($conn, "ALTER TABLE materialpendiente ADD COLUMN ActivoMP TINYINT(1) NOT NULL DEFAULT 1 AFTER FechaMP");
+        }
+
+        mysqli_stmt_close($stmtColumna);
+    }
+}
 
 $folio = isset($_POST['folio']) ? (int) $_POST['folio'] : 0;
 $documento = isset($_POST['documento']) ? trim((string) $_POST['documento']) : '';
@@ -105,7 +126,7 @@ foreach ($partidas as $partida) {
 $idsPlaceholders = implode(',', array_fill(0, count($idsPartidas), '?'));
 $tipos = str_repeat('i', count($idsPartidas));
 
-$consulta = "SELECT MaterialPendienteID, CantidadMP, SkuMP, DescripcionMP FROM materialpendiente WHERE MaterialPendienteID IN ($idsPlaceholders) AND DocumentoMP = ?";
+$consulta = "SELECT MaterialPendienteID, CantidadMP, SkuMP, DescripcionMP FROM materialpendiente WHERE MaterialPendienteID IN ($idsPlaceholders) AND DocumentoMP = ? AND ActivoMP = 1";
 $stmt = mysqli_prepare($conn, $consulta);
 if (!$stmt) {
     responderError('No se pudieron validar las partidas.');
@@ -148,14 +169,14 @@ foreach ($partidas as $partida) {
     $restante = $pendienteActual - $cantidadEntregada;
 
     if ($restante > 0) {
-        $stmtUpdate = mysqli_prepare($conn, 'UPDATE materialpendiente SET CantidadMP = ? WHERE MaterialPendienteID = ? LIMIT 1');
+        $stmtUpdate = mysqli_prepare($conn, 'UPDATE materialpendiente SET CantidadMP = ? WHERE MaterialPendienteID = ? AND ActivoMP = 1 LIMIT 1');
         if ($stmtUpdate) {
             mysqli_stmt_bind_param($stmtUpdate, 'ii', $restante, $partidaId);
             mysqli_stmt_execute($stmtUpdate);
             mysqli_stmt_close($stmtUpdate);
         }
     } else {
-        $stmtDelete = mysqli_prepare($conn, 'DELETE FROM materialpendiente WHERE MaterialPendienteID = ? LIMIT 1');
+        $stmtDelete = mysqli_prepare($conn, 'DELETE FROM materialpendiente WHERE MaterialPendienteID = ? AND ActivoMP = 1 LIMIT 1');
         if ($stmtDelete) {
             mysqli_stmt_bind_param($stmtDelete, 'i', $partidaId);
             mysqli_stmt_execute($stmtDelete);
