@@ -906,6 +906,51 @@ $(document).ready(function() {
     window.alert(texto);
   }
 
+  function mostrarAdvertenciaDocumentoDuplicado(documento) {
+    documentoDuplicadoDetectado = true;
+
+    if ($documentoDuplicadoTexto.length) {
+      $documentoDuplicadoTexto.text(documento || '');
+    }
+
+    if ($modalDocumentoDuplicado.length) {
+      accionModalDocumento = 'cambiar';
+      $modalDocumentoDuplicado.modal('show');
+      if ($modal.length) {
+        $modal.modal('hide');
+      }
+      return;
+    }
+
+    mostrarMensajeError('El número de documento ya se encuentra registrado. Captura uno diferente.');
+  }
+
+  function validarDocumentoDuplicado(documento) {
+    if (!documento) {
+      documentoDuplicadoDetectado = false;
+      return;
+    }
+
+    var folio = parseInt($inputFolioPendiente.val(), 10);
+
+    $.ajax({
+      type: 'POST',
+      url: 'App/Server/ServerInfoMaterialPendienteChecarDocumentoSiExiste.php',
+      dataType: 'json',
+      data: {
+        DocumentoFMP: documento,
+        FolioPendiente: isNaN(folio) ? '' : folio
+      }
+    }).done(function(respuesta) {
+      if (respuesta && respuesta.success && respuesta.exists) {
+        mostrarAdvertenciaDocumentoDuplicado(documento);
+        return;
+      }
+
+      documentoDuplicadoDetectado = false;
+    });
+  }
+
   function prepararModalDetalle(documento, folio) {
     var titulo = 'Entrega de material pendiente';
 
@@ -1415,6 +1460,7 @@ $(document).ready(function() {
 
       cargarDetallePartidas(documento, folio);
     });
+  }
 
     $tablaMaterialPendiente.on('click', '.editar-material-pendiente', function(evento) {
       evento.preventDefault();
@@ -1604,6 +1650,24 @@ $(document).ready(function() {
     enfocarCampo(obtenerCampoProductoDestino());
   });
 
+  if ($inputNumeroFacturaPendiente.length) {
+    $inputNumeroFacturaPendiente.on('input', function() {
+      documentoDuplicadoDetectado = false;
+    });
+
+    $inputNumeroFacturaPendiente.on('blur', function() {
+      var documento = ($inputNumeroFacturaPendiente.val() || '').trim();
+      var documentoOriginal = ($inputNumeroFacturaPendiente.data('documento-original') || '').toString().trim();
+
+      if (documento === '' || (documentoOriginal !== '' && documentoOriginal === documento)) {
+        documentoDuplicadoDetectado = false;
+        return;
+      }
+
+      validarDocumentoDuplicado(documento);
+    });
+  }
+
   $selectAduanaEntrega.on('change select2:select', function() {
     actualizarCampoAduanaEntregaOtro();
     actualizarHabilitadoEntrega();
@@ -1775,6 +1839,23 @@ $(document).ready(function() {
   if ($formularioPendiente.length) {
     $formularioPendiente.on('submit', function(evento) {
       evento.preventDefault();
+
+      var numeroFactura = ($inputNumeroFacturaPendiente.val() || '').trim();
+
+      if (numeroFactura === '') {
+        if (typeof this.reportValidity === 'function') {
+          this.reportValidity();
+        }
+        mostrarMensajeError('Captura el número de documento antes de guardar.');
+        enfocarCampo($inputNumeroFacturaPendiente);
+        return;
+      }
+
+      if (documentoDuplicadoDetectado) {
+        mostrarMensajeError('El número de documento ya se encuentra registrado. Captura uno diferente.');
+        enfocarCampo($inputNumeroFacturaPendiente);
+        return;
+      }
 
       if (typeof this.checkValidity === 'function' && !this.checkValidity()) {
         if (typeof this.reportValidity === 'function') {

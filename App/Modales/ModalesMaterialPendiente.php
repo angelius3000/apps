@@ -185,6 +185,27 @@
     </div>
 </div>
 
+<div class="modal fade" id="ModalDocumentoPendienteDuplicado" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Documento ya registrado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="btn-close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">
+                    El número de documento <strong id="DocumentoPendienteDuplicadoTexto"></strong> ya se encuentra registrado en material pendiente.
+                    Debes capturar un número distinto o cerrar el formulario.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" id="BtnCambiarDocumentoPendiente">Cambiar número</button>
+                <button type="button" class="btn btn-secondary" id="BtnCerrarDocumentoPendiente">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="ModalPartidasMaterialPendiente" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
