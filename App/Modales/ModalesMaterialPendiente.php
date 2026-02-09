@@ -1,5 +1,5 @@
 <div class="modal" id="ModalAgregarPendiente">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="ModalTituloPendiente">Agregar material pendiente</h5>
@@ -12,7 +12,9 @@
                         <div class="col-sm-12">
                             <div class="card">
                                 <div class="card-body">
-                                    <div class="row">
+                                    <div class="row g-4">
+                                        <div class="col-12 col-xl-6">
+                                            <div class="row">
                                         <div class="col-lg-6 col-sm-12 mb-4">
                                             <label for="NumeroFacturaPendiente" class="form-label">Numero de documento</label>
                                             <input type="text" class="form-control" id="NumeroFacturaPendiente" name="NumeroFacturaPendiente" autocomplete="off" required>
@@ -96,8 +98,10 @@
                                                 <input type="text" class="form-control" id="AduanaPendienteOtro" name="AduanaPendienteOtro" autocomplete="off">
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="row">
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-xl-6">
+                                            <div class="row">
                                         <div class="col-12">
                                             <h6 class="mb-3">Partidas pendientes</h6>
                                         </div>
@@ -168,6 +172,8 @@
                                                         </tbody>
                                                     </table>
                                                 </div>
+                                            </div>
+                                        </div>
                                             </div>
                                         </div>
                                     </div>
