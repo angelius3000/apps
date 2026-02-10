@@ -481,9 +481,9 @@ $(document).ready(function() {
     limpiarCamposPartidaPendiente();
 
     if (esOtroProducto && $inputSkuPendienteOtro.length) {
-      $inputSkuPendienteOtro.trigger('focus');
+      enfocarCampo($inputSkuPendienteOtro);
     } else if ($selectProductoPendiente.length) {
-      $selectProductoPendiente.trigger('focus');
+      enfocarCampo($selectProductoPendiente);
     }
   }
 
