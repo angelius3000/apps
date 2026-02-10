@@ -50,9 +50,9 @@
                 <h5 class="modal-title" id="ModalTituloPendiente">Agregar material pendiente</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="btn-close"></button>
             </div>
-            <form class="forms-sample" id="FormularioAgregarPendiente">
+            <form class="forms-sample d-flex flex-column h-100 modal-pendiente-form" id="FormularioAgregarPendiente">
                 <input type="hidden" id="FolioPendiente" name="FolioPendiente" value="">
-                <div class="modal-body">
+                <div class="modal-body modal-pendiente-body">
                     <div class="row">
                         <div class="col-sm-12">
                             <div class="card">
@@ -162,7 +162,7 @@
                                                 <div class="row align-items-end">
                                                     <div class="col-lg-8 col-sm-12 mb-4" id="ProductoPendienteSelectContainer">
                                                         <label for="ProductoPendienteSelect" class="form-label">Producto pendiente</label>
-                                                        <select class="form-select select2-producto" id="ProductoPendienteSelect" data-placeholder="Selecciona producto" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?> required>
+                                                        <select class="form-select select2-producto" id="ProductoPendienteSelect" data-placeholder="Selecciona producto" data-search-url="App/Server/ServerBuscarProductosMaterialPendiente.php" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?> required>
                                                             <?php echo $opcionesProductosPendientes; ?>
                                                         </select>
                                                     </div>
@@ -228,7 +228,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer modal-pendiente-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                     <button type="submit" class="btn btn-primary" id="BtnGuardarPendiente" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?>>Guardar</button>
                 </div>
