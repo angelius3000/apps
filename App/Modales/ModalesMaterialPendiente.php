@@ -1,29 +1,25 @@
 <style id="ModalAgregarPendienteStyles">
-    #ModalAgregarPendiente .modal-content {
-        max-height: calc(100vh - 3.5rem);
-    }
-
-    #ModalAgregarPendiente .modal-pendiente-form {
-        min-height: 0;
-        flex: 1 1 auto;
-    }
-
-    #ModalAgregarPendiente .modal-pendiente-body {
-        min-height: 0;
+    #ModalAgregarPendiente .partidas-pendientes-scroll {
+        max-height: 320px;
         overflow-y: auto;
+        border: 1px solid #e8ebf1;
+        border-radius: 0.5rem;
+        background-color: #fff;
     }
 
-    #ModalAgregarPendiente .modal-pendiente-footer {
-        flex-shrink: 0;
-        position: sticky;
-        bottom: 0;
-        z-index: 2;
-        background-color: #fff;
+    #ModalAgregarPendiente .partidas-pendientes-scroll .table {
+        margin-bottom: 0;
+    }
+
+    @media (max-width: 1199.98px) {
+        #ModalAgregarPendiente .partidas-pendientes-scroll {
+            max-height: 260px;
+        }
     }
 </style>
 
 <div class="modal" id="ModalAgregarPendiente">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="ModalTituloPendiente">Agregar material pendiente</h5>
@@ -179,8 +175,9 @@
                                                     </div>
                                                 </div>
 
-                                                <div class="table-responsive mt-3">
-                                                    <table class="table table-sm" id="ProductosPendientesTabla">
+                                                <div class="partidas-pendientes-scroll mt-3">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm" id="ProductosPendientesTabla">
                                                         <thead>
                                                             <tr>
                                                                 <th>SKU</th>
