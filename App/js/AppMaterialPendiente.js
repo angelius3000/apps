@@ -350,7 +350,7 @@ $(document).ready(function() {
     $tablaBodyPartidas.empty();
 
     if (!partidasPendientes.length) {
-      $tablaBodyPartidas.append('<tr class="text-muted"><td colspan="3" class="text-center">Agrega partidas para mostrarlas aquí.</td></tr>');
+      $tablaBodyPartidas.append('<tr class="text-muted"><td colspan="4" class="text-center">Agrega partidas para mostrarlas aquí.</td></tr>');
       return;
     }
 
@@ -373,7 +373,7 @@ $(document).ready(function() {
       $celdaSku.append($('<input>', { type: 'hidden', name: 'productos[' + indice + '][otro]', value: partida.esOtro ? '1' : '0' }));
 
       $celdaAcciones.append($botonEliminar);
-      $fila.append($celdaSku, $celdaDescripcion, $celdaCantidad, $celdaAcciones);
+      $fila.append($celdaSku, $celdaCantidad, $celdaAcciones, $celdaDescripcion);
       $tablaBodyPartidas.append($fila);
     });
   }
