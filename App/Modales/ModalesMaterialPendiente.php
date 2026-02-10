@@ -23,17 +23,17 @@
         white-space: nowrap;
     }
 
-    #ModalAgregarPendiente #ProductosPendientesTabla th:nth-child(2),
-    #ModalAgregarPendiente #ProductosPendientesTabla td:nth-child(2) {
-        min-width: 420px;
-    }
-
     #ModalAgregarPendiente #ProductosPendientesTabla th:nth-child(3),
     #ModalAgregarPendiente #ProductosPendientesTabla td:nth-child(3),
     #ModalAgregarPendiente #ProductosPendientesTabla th:nth-child(4),
     #ModalAgregarPendiente #ProductosPendientesTabla td:nth-child(4) {
         min-width: 140px;
         white-space: nowrap;
+    }
+
+    #ModalAgregarPendiente #ProductosPendientesTabla th:nth-child(4),
+    #ModalAgregarPendiente #ProductosPendientesTabla td:nth-child(4) {
+        min-width: 420px;
     }
 
     @media (max-width: 1199.98px) {
@@ -206,9 +206,9 @@
                                                         <thead>
                                                             <tr>
                                                                 <th>SKU</th>
-                                                                <th>Descripción</th>
                                                                 <th class="text-end">Cantidad</th>
                                                                 <th class="text-end">Acciones</th>
+                                                                <th>Descripción</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody id="ProductosPendientesTablaBody">
