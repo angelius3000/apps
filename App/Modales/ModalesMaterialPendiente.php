@@ -137,7 +137,7 @@
                                                 <div class="row align-items-end">
                                                     <div class="col-lg-8 col-sm-12 mb-4" id="ProductoPendienteSelectContainer">
                                                         <label for="ProductoPendienteSelect" class="form-label">Producto pendiente</label>
-                                                        <select class="form-select select2-producto" id="ProductoPendienteSelect" data-placeholder="Selecciona producto" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?> required>
+                                                        <select class="form-select select2-producto" id="ProductoPendienteSelect" data-placeholder="Selecciona producto" data-search-url="App/Server/ServerBuscarProductosMaterialPendiente.php" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?> required>
                                                             <?php echo $opcionesProductosPendientes; ?>
                                                         </select>
                                                     </div>
