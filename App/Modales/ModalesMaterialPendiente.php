@@ -1,14 +1,39 @@
 <style id="ModalAgregarPendienteStyles">
     #ModalAgregarPendiente .partidas-pendientes-scroll {
         max-height: 320px;
-        overflow-y: auto;
+        overflow: auto;
         border: 1px solid #e8ebf1;
         border-radius: 0.5rem;
         background-color: #fff;
     }
 
-    #ModalAgregarPendiente .partidas-pendientes-scroll .table {
+    #ModalAgregarPendiente .partidas-pendientes-scroll .table-responsive {
+        overflow-x: auto;
+        overflow-y: visible;
+    }
+
+    #ModalAgregarPendiente #ProductosPendientesTabla {
+        min-width: 860px;
         margin-bottom: 0;
+    }
+
+    #ModalAgregarPendiente #ProductosPendientesTabla th:nth-child(1),
+    #ModalAgregarPendiente #ProductosPendientesTabla td:nth-child(1) {
+        min-width: 120px;
+        white-space: nowrap;
+    }
+
+    #ModalAgregarPendiente #ProductosPendientesTabla th:nth-child(2),
+    #ModalAgregarPendiente #ProductosPendientesTabla td:nth-child(2) {
+        min-width: 420px;
+    }
+
+    #ModalAgregarPendiente #ProductosPendientesTabla th:nth-child(3),
+    #ModalAgregarPendiente #ProductosPendientesTabla td:nth-child(3),
+    #ModalAgregarPendiente #ProductosPendientesTabla th:nth-child(4),
+    #ModalAgregarPendiente #ProductosPendientesTabla td:nth-child(4) {
+        min-width: 140px;
+        white-space: nowrap;
     }
 
     @media (max-width: 1199.98px) {
