@@ -1,15 +1,15 @@
 <style id="ModalAgregarPendienteStyles">
     #ModalAgregarPendiente .partidas-pendientes-scroll {
         max-height: 320px;
-        overflow: auto;
+        overflow-x: auto;
+        overflow-y: auto;
         border: 1px solid #e8ebf1;
         border-radius: 0.5rem;
         background-color: #fff;
     }
 
     #ModalAgregarPendiente .partidas-pendientes-scroll .table-responsive {
-        overflow-x: auto;
-        overflow-y: visible;
+        overflow: visible;
     }
 
     #ModalAgregarPendiente #ProductosPendientesTabla {
