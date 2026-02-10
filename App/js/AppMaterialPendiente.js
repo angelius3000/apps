@@ -38,6 +38,10 @@ $(document).ready(function() {
   var $inputNombreCliente = $('#NombreClientePendiente');
   var $inputNumeroFacturaPendiente = $('#NumeroFacturaPendiente');
   var $formularioPendiente = $('#FormularioAgregarPendiente');
+  var $modalDocumentoDuplicado = $('#ModalDocumentoPendienteDuplicado');
+  var $documentoDuplicadoTexto = $('#DocumentoPendienteDuplicadoTexto');
+  var $btnCambiarDocumentoPendiente = $('#BtnCambiarDocumentoPendiente');
+  var $btnCerrarDocumentoPendiente = $('#BtnCerrarDocumentoPendiente');
   var $tablaMaterialPendiente = $('#TablaMaterialPendiente');
   var $buscadorMaterialPendiente = $('#BuscadorMaterialPendiente');
   var $filaSinResultados = $('#MaterialPendienteSinResultados');
@@ -60,6 +64,8 @@ $(document).ready(function() {
   var $btnReiniciarEntregas = $('#ReiniciarEntregas');
   var ADUANA_OTRO_ID = '4';
   var ignorarCambioVendedor = false;
+  var documentoDuplicadoDetectado = false;
+  var accionModalDocumento = '';
   var partidasPendientes = [];
   var modoEdicion = false;
 
@@ -1741,6 +1747,42 @@ $(document).ready(function() {
       }
 
       validarDocumentoDuplicado(documento);
+    });
+  }
+
+  if ($modalDocumentoDuplicado.length) {
+    $modalDocumentoDuplicado.on('hidden.bs.modal', function() {
+      if (accionModalDocumento === 'cambiar') {
+        accionModalDocumento = '';
+        if ($modal.length) {
+          $modal.modal('show');
+        }
+      }
+    });
+  }
+
+  if ($btnCambiarDocumentoPendiente.length) {
+    $btnCambiarDocumentoPendiente.on('click', function() {
+      accionModalDocumento = 'cambiar';
+      if ($modalDocumentoDuplicado.length) {
+        $modalDocumentoDuplicado.modal('hide');
+      }
+
+      setTimeout(function() {
+        enfocarCampo($inputNumeroFacturaPendiente);
+      }, 250);
+    });
+  }
+
+  if ($btnCerrarDocumentoPendiente.length) {
+    $btnCerrarDocumentoPendiente.on('click', function() {
+      accionModalDocumento = '';
+      if ($modalDocumentoDuplicado.length) {
+        $modalDocumentoDuplicado.modal('hide');
+      }
+      if ($modal.length) {
+        $modal.modal('hide');
+      }
     });
   }
 
