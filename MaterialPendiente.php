@@ -7,14 +7,11 @@ if (!usuarioTieneAccesoSeccion('materialpendiente')) {
     exit;
 }
 
-$queryProductosPendientes = "SELECT PRODUCTOSID, Sku, Descripcion FROM productos ORDER BY Sku ASC, Descripcion ASC";
+$hayProductosPendientes = false;
+$queryProductosPendientes = "SELECT PRODUCTOSID FROM productos LIMIT 1";
 $resultadoProductosPendientes = mysqli_query($conn, $queryProductosPendientes);
-
-$listaProductosPendientes = [];
 if ($resultadoProductosPendientes instanceof mysqli_result) {
-    while ($rowProductoPendiente = mysqli_fetch_assoc($resultadoProductosPendientes)) {
-        $listaProductosPendientes[] = $rowProductoPendiente;
-    }
+    $hayProductosPendientes = mysqli_num_rows($resultadoProductosPendientes) > 0;
     mysqli_free_result($resultadoProductosPendientes);
 }
 
@@ -63,22 +60,6 @@ if ($resultadoAduanasPendientes instanceof mysqli_result) {
 }
 
 $opcionesProductosPendientes = '<option value="">Selecciona producto</option>';
-foreach ($listaProductosPendientes as $productoPendiente) {
-    $productoId = isset($productoPendiente['PRODUCTOSID']) ? (int) $productoPendiente['PRODUCTOSID'] : 0;
-    $skuProducto = isset($productoPendiente['Sku']) ? trim((string) $productoPendiente['Sku']) : '';
-    $descripcionProducto = isset($productoPendiente['Descripcion']) ? trim((string) $productoPendiente['Descripcion']) : '';
-
-    $skuProductoEscapado = htmlspecialchars($skuProducto, ENT_QUOTES, 'UTF-8');
-    $descripcionProductoEscapada = htmlspecialchars($descripcionProducto, ENT_QUOTES, 'UTF-8');
-
-    if ($skuProductoEscapado !== '') {
-        $textoOpcion = $skuProductoEscapado . ' - ' . $descripcionProductoEscapada;
-    } else {
-        $textoOpcion = $descripcionProductoEscapada;
-    }
-
-    $opcionesProductosPendientes .= '<option value="' . $productoId . '" data-sku="' . $skuProductoEscapado . '" data-descripcion="' . $descripcionProductoEscapada . '">' . $textoOpcion . '</option>';
-}
 
 $opcionesClientesPendientes = '<option value="">Selecciona cliente</option>';
 foreach ($listaClientesPendientes as $clientePendiente) {
@@ -148,7 +129,6 @@ foreach ($listaAduanasPendientes as $aduanaPendiente) {
     $opcionesAduanasPendientes .= '<option value="' . $aduanaId . '">' . $textoAduana . '</option>';
 }
 
-$hayProductosPendientes = count($listaProductosPendientes) > 0;
 $hayClientesPendientes = count($listaClientesPendientes) > 0;
 $hayVendedoresPendientes = count($listaVendedoresPendientes) > 0;
 $hayAlmacenistasPendientes = count($listaAlmacenistasPendientes) > 0;
