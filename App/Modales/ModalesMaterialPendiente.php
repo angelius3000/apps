@@ -1,18 +1,44 @@
+<style id="ModalAgregarPendienteStyles">
+    #ModalAgregarPendiente .modal-content {
+        max-height: calc(100vh - 3.5rem);
+    }
+
+    #ModalAgregarPendiente .modal-pendiente-form {
+        min-height: 0;
+        flex: 1 1 auto;
+    }
+
+    #ModalAgregarPendiente .modal-pendiente-body {
+        min-height: 0;
+        overflow-y: auto;
+    }
+
+    #ModalAgregarPendiente .modal-pendiente-footer {
+        flex-shrink: 0;
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
+        background-color: #fff;
+    }
+</style>
+
 <div class="modal" id="ModalAgregarPendiente">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="ModalTituloPendiente">Agregar material pendiente</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="btn-close"></button>
             </div>
-            <form class="forms-sample" id="FormularioAgregarPendiente">
+            <form class="forms-sample d-flex flex-column h-100 modal-pendiente-form" id="FormularioAgregarPendiente">
                 <input type="hidden" id="FolioPendiente" name="FolioPendiente" value="">
-                <div class="modal-body">
+                <div class="modal-body modal-pendiente-body">
                     <div class="row">
                         <div class="col-sm-12">
                             <div class="card">
                                 <div class="card-body">
-                                    <div class="row">
+                                    <div class="row g-4">
+                                        <div class="col-12 col-xl-6">
+                                            <div class="row">
                                         <div class="col-lg-6 col-sm-12 mb-4">
                                             <label for="NumeroFacturaPendiente" class="form-label">Numero de documento</label>
                                             <input type="text" class="form-control" id="NumeroFacturaPendiente" name="NumeroFacturaPendiente" autocomplete="off" required>
@@ -96,8 +122,10 @@
                                                 <input type="text" class="form-control" id="AduanaPendienteOtro" name="AduanaPendienteOtro" autocomplete="off">
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="row">
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-xl-6">
+                                            <div class="row">
                                         <div class="col-12">
                                             <h6 class="mb-3">Partidas pendientes</h6>
                                         </div>
@@ -170,13 +198,15 @@
                                                 </div>
                                             </div>
                                         </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer modal-pendiente-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                     <button type="submit" class="btn btn-primary" id="BtnGuardarPendiente" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?>>Guardar</button>
                 </div>
