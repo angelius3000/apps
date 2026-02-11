@@ -80,6 +80,49 @@
     $('.conteo-btn').prop('disabled', deshabilitar);
   }
 
+  function mostrarMensajeHistorico(texto, tipo) {
+    var $mensaje = $('#conteoHistoricoMensaje');
+    if (!$mensaje.length) {
+      return;
+    }
+    $mensaje.removeClass('alert-info alert-danger alert-success');
+    $mensaje.addClass('alert-' + (tipo || 'info'));
+    $mensaje.text(texto);
+    $mensaje.show();
+  }
+
+  function ocultarMensajeHistorico() {
+    var $mensaje = $('#conteoHistoricoMensaje');
+    if ($mensaje.length) {
+      $mensaje.hide();
+    }
+  }
+
+  function renderizarTablaHistorica(registros) {
+    var $tbody = $('#conteoHistoricoTablaBody');
+    var $contenedor = $('#contenedorTablaConteoHistorico');
+    if (!$tbody.length || !$contenedor.length) {
+      return;
+    }
+
+    $tbody.empty();
+
+    registros.forEach(function (registro) {
+      var fila = '<tr>' +
+        '<td class="text-center fw-semibold">' + registro.etiqueta + '</td>' +
+        '<td class="text-center">' + registro.hombre + '</td>' +
+        '<td class="text-center">' + registro.mujer + '</td>' +
+        '<td class="text-center">' + registro.pareja + '</td>' +
+        '<td class="text-center">' + registro.familia + '</td>' +
+        '<td class="text-center">' + registro.cuadrilla + '</td>' +
+        '<td class="text-center fw-bold">' + registro.total + '</td>' +
+        '</tr>';
+      $tbody.append(fila);
+    });
+
+    $contenedor.show();
+  }
+
   $(function () {
     actualizarFechaHora();
     setInterval(actualizarFechaHora, 1000);
@@ -122,6 +165,48 @@
         })
         .always(function () {
           desactivarBotones(false);
+        });
+    });
+
+    $('#formConteoHistorico').on('submit', function (event) {
+      event.preventDefault();
+
+      var $fechaInput = $('#fechaConteoConsulta');
+      var $botonConsultar = $('#btnConsultarConteoHistorico');
+      var fecha = $fechaInput.val();
+
+      if (!fecha) {
+        mostrarMensajeHistorico('Selecciona una fecha para consultar.', 'danger');
+        return;
+      }
+
+      ocultarMensajeHistorico();
+      $botonConsultar.prop('disabled', true);
+
+      $.ajax({
+        url: 'App/Server/ServerConteoConsultarFecha.php',
+        method: 'GET',
+        dataType: 'json',
+        data: {
+          fecha: fecha
+        }
+      })
+        .done(function (respuesta) {
+          if (!respuesta || !respuesta.success || !respuesta.data || !respuesta.data.registros) {
+            mostrarMensajeHistorico(respuesta && respuesta.message ? respuesta.message : 'No se pudo consultar el conteo histórico.', 'danger');
+            $('#contenedorTablaConteoHistorico').hide();
+            return;
+          }
+
+          renderizarTablaHistorica(respuesta.data.registros);
+          mostrarMensajeHistorico('Mostrando conteo del día ' + respuesta.data.fecha + '.', 'success');
+        })
+        .fail(function () {
+          mostrarMensajeHistorico('No se pudo conectar con el servidor para consultar el histórico.', 'danger');
+          $('#contenedorTablaConteoHistorico').hide();
+        })
+        .always(function () {
+          $botonConsultar.prop('disabled', false);
         });
     });
   });
