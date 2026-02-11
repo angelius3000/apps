@@ -1,4 +1,6 @@
 (function ($) {
+  var temporizadorIndicadorExito = null;
+
   function mostrarMensaje(texto, tipo) {
     var $mensaje = $('#conteoMensaje');
     if (!$mensaje.length) {
@@ -15,6 +17,25 @@
     if ($mensaje.length) {
       $mensaje.hide();
     }
+  }
+
+  function mostrarIndicadorExito() {
+    var $indicador = $('#conteoIndicadorExito');
+    if (!$indicador.length) {
+      return;
+    }
+
+    if (temporizadorIndicadorExito) {
+      clearTimeout(temporizadorIndicadorExito);
+      temporizadorIndicadorExito = null;
+    }
+
+    $indicador.removeClass('d-none').addClass('d-flex');
+
+    temporizadorIndicadorExito = setTimeout(function () {
+      $indicador.removeClass('d-flex').addClass('d-none');
+      temporizadorIndicadorExito = null;
+    }, 2000);
   }
 
   function actualizarFechaHora() {
@@ -94,9 +115,7 @@
             actualizarFila(respuesta.data.horaInicio, respuesta.data);
           }
 
-          if (respuesta.message) {
-            mostrarMensaje(respuesta.message, 'success');
-          }
+          mostrarIndicadorExito();
         })
         .fail(function () {
           mostrarMensaje('No se pudo conectar con el servidor.', 'danger');

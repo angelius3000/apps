@@ -92,7 +92,7 @@ $puedeExportarConteo = in_array($tipoUsuarioId, $perfilesConExportacion, true);
                                         <?php endif; ?>
                                         <div class="row g-3">
                                             <div class="col-12">
-                                                <div class="d-flex flex-column flex-lg-row gap-3">
+                                                <div class="d-flex flex-column flex-lg-row gap-3 align-items-lg-start">
                                                     <div class="d-flex flex-column align-items-start gap-2">
                                                         <button class="btn btn-primary conteo-btn" data-tipo="hombre" data-accion="sumar">+ Hombre</button>
                                                         <button class="btn btn-outline-primary conteo-btn" data-tipo="hombre" data-accion="restar">- Hombre</button>
@@ -112,6 +112,10 @@ $puedeExportarConteo = in_array($tipoUsuarioId, $perfilesConExportacion, true);
                                                     <div class="d-flex flex-column align-items-start gap-2">
                                                         <button class="btn btn-warning conteo-btn" data-tipo="cuadrilla" data-accion="sumar">+ Cuadrilla</button>
                                                         <button class="btn btn-outline-warning conteo-btn" data-tipo="cuadrilla" data-accion="restar">- Cuadrilla</button>
+                                                    </div>
+                                                    <div id="conteoIndicadorExito" class="d-none text-success fw-semibold align-items-center gap-1 ms-lg-2 mt-2 mt-lg-0" aria-live="polite">
+                                                        <span class="fs-5" aria-hidden="true">✓</span>
+                                                        <span>Actualizado</span>
                                                     </div>
                                                 </div>
                                             </div>
