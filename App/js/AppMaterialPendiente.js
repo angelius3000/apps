@@ -45,6 +45,11 @@ $(document).ready(function() {
   var $tablaMaterialPendiente = $('#TablaMaterialPendiente');
   var $buscadorMaterialPendiente = $('#BuscadorMaterialPendiente');
   var $filaSinResultados = $('#MaterialPendienteSinResultados');
+  var $resumenPaginacionMaterialPendiente = $('#ResumenPaginacionMaterialPendiente');
+  var $btnPaginaAnterior = $('#MaterialPendientePaginaAnterior');
+  var $btnPaginaSiguiente = $('#MaterialPendientePaginaSiguiente');
+  var REGISTROS_POR_PAGINA = 5;
+  var paginaActualMaterialPendiente = 1;
   var $panelDetalle = $('#PanelEntregaMaterialPendiente');
   var $detalleTitulo = $('#DetalleMaterialPendienteTitulo');
   var $detalleInfo = $('#DetalleMaterialPendienteInfo');
@@ -348,6 +353,23 @@ $(document).ready(function() {
     }
   }
 
+  function actualizarControlesPaginacion(totalRegistros, totalPaginas, inicio, fin) {
+    if (!$resumenPaginacionMaterialPendiente.length) {
+      return;
+    }
+
+    if (totalRegistros <= 0 || totalPaginas <= 0) {
+      $resumenPaginacionMaterialPendiente.text('Mostrando 0 de 0 registros');
+      $btnPaginaAnterior.prop('disabled', true);
+      $btnPaginaSiguiente.prop('disabled', true);
+      return;
+    }
+
+    $resumenPaginacionMaterialPendiente.text('Mostrando ' + inicio + ' a ' + fin + ' de ' + totalRegistros + ' registros');
+    $btnPaginaAnterior.prop('disabled', paginaActualMaterialPendiente <= 1);
+    $btnPaginaSiguiente.prop('disabled', paginaActualMaterialPendiente >= totalPaginas);
+  }
+
   function filtrarMaterialPendiente() {
     if (!$tablaMaterialPendiente.length) {
       return;
@@ -360,33 +382,58 @@ $(document).ready(function() {
       if ($filaSinResultados.length) {
         $filaSinResultados.addClass('d-none');
       }
+      actualizarControlesPaginacion(0, 0, 0, 0);
       return;
     }
 
-    var filasVisibles = 0;
+    var filasCoincidentes = [];
 
     $filas.each(function() {
       var $fila = $(this);
       var textoFila = normalizarTextoBuscador($fila.text());
       var coincide = termino === '' || textoFila.indexOf(termino) !== -1;
 
-      $fila.toggle(coincide);
-
       if (coincide) {
-        filasVisibles += 1;
+        filasCoincidentes.push($fila);
       }
     });
 
-    if (!$filaSinResultados.length) {
-      return;
+    var totalCoincidentes = filasCoincidentes.length;
+    var totalPaginas = totalCoincidentes > 0 ? Math.ceil(totalCoincidentes / REGISTROS_POR_PAGINA) : 0;
+
+    if (paginaActualMaterialPendiente > totalPaginas && totalPaginas > 0) {
+      paginaActualMaterialPendiente = totalPaginas;
     }
 
-    if (filasVisibles === 0) {
-      $filaSinResultados.removeClass('d-none');
-    } else {
-      $filaSinResultados.addClass('d-none');
+    if (paginaActualMaterialPendiente < 1) {
+      paginaActualMaterialPendiente = 1;
     }
+
+    var inicioIndice = (paginaActualMaterialPendiente - 1) * REGISTROS_POR_PAGINA;
+    var finIndice = inicioIndice + REGISTROS_POR_PAGINA;
+
+    $filas.each(function() {
+      $(this).addClass('d-none');
+    });
+
+    filasCoincidentes.slice(inicioIndice, finIndice).forEach(function($fila) {
+      $fila.removeClass('d-none');
+    });
+
+    if ($filaSinResultados.length) {
+      if (totalCoincidentes === 0) {
+        $filaSinResultados.removeClass('d-none');
+      } else {
+        $filaSinResultados.addClass('d-none');
+      }
+    }
+
+    var inicioMostrado = totalCoincidentes === 0 ? 0 : inicioIndice + 1;
+    var finMostrado = totalCoincidentes === 0 ? 0 : Math.min(finIndice, totalCoincidentes);
+
+    actualizarControlesPaginacion(totalCoincidentes, totalPaginas, inicioMostrado, finMostrado);
   }
+
 
   function actualizarRequerimientosPartida() {
     var requierePartida = partidasPendientes.length === 0;
@@ -1493,9 +1540,31 @@ $(document).ready(function() {
   }
 
   if ($buscadorMaterialPendiente.length) {
-    $buscadorMaterialPendiente.on('input', filtrarMaterialPendiente);
-    filtrarMaterialPendiente();
+    $buscadorMaterialPendiente.on('input', function() {
+      paginaActualMaterialPendiente = 1;
+      filtrarMaterialPendiente();
+    });
   }
+
+  if ($btnPaginaAnterior.length) {
+    $btnPaginaAnterior.on('click', function() {
+      if (paginaActualMaterialPendiente <= 1) {
+        return;
+      }
+
+      paginaActualMaterialPendiente -= 1;
+      filtrarMaterialPendiente();
+    });
+  }
+
+  if ($btnPaginaSiguiente.length) {
+    $btnPaginaSiguiente.on('click', function() {
+      paginaActualMaterialPendiente += 1;
+      filtrarMaterialPendiente();
+    });
+  }
+
+  filtrarMaterialPendiente();
 
   inicializarSelectAduana($selectAduanaEntrega, { dropdownParent: $panelDetalle });
 
