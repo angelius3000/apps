@@ -53,10 +53,17 @@ if (!function_exists('obtenerDefinicionSeccionesBase')) {
                 'MostrarEnMenu' => 1,
             ],
             [
+                'Nombre' => 'Personal',
+                'Slug' => 'personal',
+                'Ruta' => 'Personal.php',
+                'Orden' => 8,
+                'MostrarEnMenu' => 1,
+            ],
+            [
                 'Nombre' => 'Administración',
                 'Slug' => 'administracion',
                 'Ruta' => 'Administracion.php',
-                'Orden' => 8,
+                'Orden' => 9,
                 'MostrarEnMenu' => 1,
             ],
         ];
