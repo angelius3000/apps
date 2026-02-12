@@ -51,6 +51,12 @@
                 'nombre' => 'Usuarios',
             ],
             [
+                'slug' => 'personal',
+                'ruta' => 'Personal.php',
+                'icono' => 'badge',
+                'nombre' => 'Personal',
+            ],
+            [
                 'slug' => 'administracion',
                 'ruta' => 'Administracion.php',
                 'icono' => 'settings',
