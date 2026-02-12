@@ -104,6 +104,7 @@ $(document).ready(function() {
       dataType: 'json',
       data: {
         action: 'get',
+        tipo: tipo,
         id: id
       },
       success: function(response) {

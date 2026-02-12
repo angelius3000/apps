@@ -3,87 +3,218 @@ include('../../Connections/ConDB.php');
 
 header('Content-Type: application/json; charset=utf-8');
 
-function asegurarTablaPersonal($conn)
-{
-    mysqli_query(
-        $conn,
-        "CREATE TABLE IF NOT EXISTS personal (" .
-        " PERSONALID INT NOT NULL AUTO_INCREMENT," .
-        " TipoPersonal VARCHAR(30) NOT NULL," .
-        " Nombre VARCHAR(150) NOT NULL," .
-        " Deshabilitado TINYINT(1) NOT NULL DEFAULT 0," .
-        " FechaRegistro TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," .
-        " PRIMARY KEY (PERSONALID)," .
-        " KEY idx_tipopersonal (TipoPersonal)," .
-        " KEY idx_deshabilitado (Deshabilitado)" .
-        ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-    );
-}
-
 function responder($payload)
 {
     echo json_encode($payload);
     exit;
 }
 
-asegurarTablaPersonal($conn);
+function obtenerTablaPorTipo($tipo)
+{
+    $mapa = [
+        'aduanas' => 'aduana',
+        'vendedor' => 'vendedor',
+        'surtidor' => 'Surtidor',
+        'almacenista' => 'almacenista',
+    ];
+
+    return $mapa[$tipo] ?? '';
+}
+
+function cargarColumnasTabla($conn, $tabla)
+{
+    $columnas = [];
+    $resultado = @mysqli_query($conn, 'SHOW COLUMNS FROM `' . str_replace('`', '``', $tabla) . '`');
+
+    if ($resultado instanceof mysqli_result) {
+        while ($fila = mysqli_fetch_assoc($resultado)) {
+            $nombre = (string)($fila['Field'] ?? '');
+            if ($nombre !== '') {
+                $columnas[] = $nombre;
+            }
+        }
+        mysqli_free_result($resultado);
+    }
+
+    return $columnas;
+}
+
+function primerMatch(array $columnas, array $candidatas)
+{
+    foreach ($candidatas as $candidata) {
+        foreach ($columnas as $columna) {
+            if (strcasecmp($columna, $candidata) === 0) {
+                return $columna;
+            }
+        }
+    }
+
+    return '';
+}
+
+function resolverConfiguracionTabla($conn, $tipo)
+{
+    $tabla = obtenerTablaPorTipo($tipo);
+    if ($tabla === '') {
+        return null;
+    }
+
+    $columnas = cargarColumnasTabla($conn, $tabla);
+    if (empty($columnas)) {
+        return null;
+    }
+
+    $columnaId = primerMatch($columnas, [
+        'AduanaID',
+        'vendedorID',
+        'VendedorID',
+        'SurtidorID',
+        'AlmacenistaID',
+        'ID',
+    ]);
+
+    if ($columnaId === '') {
+        foreach ($columnas as $columna) {
+            if (preg_match('/id$/i', $columna)) {
+                $columnaId = $columna;
+                break;
+            }
+        }
+    }
+
+    $columnaNombre = primerMatch($columnas, [
+        'NombreAduana',
+        'NombreVendedor',
+        'NombreSurtidor',
+        'NombreAlmacenista',
+        'Nombre',
+    ]);
+
+    if ($columnaNombre === '') {
+        foreach ($columnas as $columna) {
+            if (stripos($columna, 'nombre') !== false) {
+                $columnaNombre = $columna;
+                break;
+            }
+        }
+    }
+
+    $columnaEstatus = primerMatch($columnas, [
+        'Deshabilitado',
+        'Inhabilitado',
+        'Habilitado',
+        'Activo',
+    ]);
+
+    if ($columnaId === '' || $columnaNombre === '') {
+        return null;
+    }
+
+    return [
+        'tabla' => $tabla,
+        'id' => $columnaId,
+        'nombre' => $columnaNombre,
+        'estatus' => $columnaEstatus,
+    ];
+}
+
+function estaActivo($valor, $columnaEstatus)
+{
+    if ($columnaEstatus === '') {
+        return true;
+    }
+
+    $valorEntero = (int)$valor;
+    if (strcasecmp($columnaEstatus, 'Habilitado') === 0 || strcasecmp($columnaEstatus, 'Activo') === 0) {
+        return $valorEntero === 1;
+    }
+
+    return $valorEntero === 0;
+}
+
+function valorToggle($valorActual, $columnaEstatus)
+{
+    $actual = (int)$valorActual;
+
+    if (strcasecmp($columnaEstatus, 'Habilitado') === 0 || strcasecmp($columnaEstatus, 'Activo') === 0) {
+        return $actual === 1 ? 0 : 1;
+    }
+
+    return $actual === 1 ? 0 : 1;
+}
 
 $action = isset($_POST['action']) ? trim((string)$_POST['action']) : '';
 $tipo = isset($_POST['tipo']) ? trim((string)$_POST['tipo']) : '';
 $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 $nombre = isset($_POST['nombre']) ? trim((string)$_POST['nombre']) : '';
 
-$tiposPermitidos = ['aduanas', 'vendedor', 'surtidor', 'almacenista'];
+$config = $tipo !== '' ? resolverConfiguracionTabla($conn, $tipo) : null;
 
 if ($action === 'list') {
-    if (!in_array($tipo, $tiposPermitidos, true)) {
+    if (!$config) {
         responder(['data' => []]);
     }
 
-    $stmt = mysqli_prepare($conn, 'SELECT PERSONALID, TipoPersonal, Nombre, Deshabilitado FROM personal WHERE TipoPersonal = ? ORDER BY Nombre ASC');
-    mysqli_stmt_bind_param($stmt, 's', $tipo);
-    mysqli_stmt_execute($stmt);
-    $resultado = mysqli_stmt_get_result($stmt);
+    $sql = 'SELECT `' . $config['id'] . '` AS RegistroID, `' . $config['nombre'] . '` AS NombreRegistro';
+    if ($config['estatus'] !== '') {
+        $sql .= ', `' . $config['estatus'] . '` AS EstatusRegistro';
+    }
+    $sql .= ' FROM `' . $config['tabla'] . '` ORDER BY `' . $config['nombre'] . '` ASC';
+
+    $resultado = mysqli_query($conn, $sql);
+    if (!$resultado) {
+        responder(['data' => []]);
+    }
 
     $data = [];
     while ($fila = mysqli_fetch_assoc($resultado)) {
-        $deshabilitado = (int)$fila['Deshabilitado'] === 1;
-        $badge = $deshabilitado
-            ? '<span class="badge badge-danger">Inhabilitado</span>'
-            : '<span class="badge badge-success">Activo</span>';
+        $valorEstatus = $config['estatus'] !== '' ? (int)($fila['EstatusRegistro'] ?? 0) : 0;
+        $activo = estaActivo($valorEstatus, $config['estatus']);
 
-        $idFila = (int)$fila['PERSONALID'];
-        $nombreSeguro = htmlspecialchars((string)$fila['Nombre'], ENT_QUOTES, 'UTF-8');
-        $tipoSeguro = htmlspecialchars((string)$fila['TipoPersonal'], ENT_QUOTES, 'UTF-8');
+        $badge = $activo
+            ? '<span class="badge badge-success">Activo</span>'
+            : '<span class="badge badge-danger">Inhabilitado</span>';
 
-        $botonEstadoClase = $deshabilitado ? 'btn-success' : 'btn-warning';
-        $botonEstadoTexto = $deshabilitado ? 'Habilitar' : 'Inhabilitar';
+        $idFila = (int)$fila['RegistroID'];
+        $nombreSeguro = htmlspecialchars((string)$fila['NombreRegistro'], ENT_QUOTES, 'UTF-8');
+        $tipoSeguro = htmlspecialchars($tipo, ENT_QUOTES, 'UTF-8');
+
+        $botonEstadoClase = $activo ? 'btn-warning' : 'btn-success';
+        $botonEstadoTexto = $activo ? 'Inhabilitar' : 'Habilitar';
 
         $acciones = '';
         $acciones .= '<button type="button" class="btn btn-sm btn-primary waves-effect width-md waves-light btn-editar-personal" data-id="' . $idFila . '" data-tipo="' . $tipoSeguro . '"><i class="mdi mdi-pencil"></i>Editar</button> ';
-        $acciones .= '<button type="button" class="btn btn-sm ' . $botonEstadoClase . ' waves-effect width-md waves-light btn-estado-personal" data-id="' . $idFila . '" data-tipo="' . $tipoSeguro . '" data-nombre="' . $nombreSeguro . '" data-deshabilitado="' . ($deshabilitado ? '1' : '0') . '">' . $botonEstadoTexto . '</button> ';
+
+        if ($config['estatus'] !== '') {
+            $acciones .= '<button type="button" class="btn btn-sm ' . $botonEstadoClase . ' waves-effect width-md waves-light btn-estado-personal" data-id="' . $idFila . '" data-tipo="' . $tipoSeguro . '" data-nombre="' . $nombreSeguro . '" data-deshabilitado="' . ($activo ? '0' : '1') . '">' . $botonEstadoTexto . '</button> ';
+        }
+
         $acciones .= '<button type="button" class="btn btn-sm btn-outline-danger waves-effect width-md waves-light btn-eliminar-personal" data-id="' . $idFila . '" data-tipo="' . $tipoSeguro . '" data-nombre="' . $nombreSeguro . '"><i class="mdi mdi-delete"></i>Eliminar</button>';
 
         $data[] = [
             'PERSONALID' => $idFila,
-            'Nombre' => (string)$fila['Nombre'],
+            'Nombre' => (string)$fila['NombreRegistro'],
             'Badge' => $badge,
             'Acciones' => $acciones,
         ];
     }
 
-    mysqli_stmt_close($stmt);
-
+    mysqli_free_result($resultado);
     responder(['data' => $data]);
 }
 
 if ($action === 'add') {
-    if (!in_array($tipo, $tiposPermitidos, true) || $nombre === '') {
+    if (!$config || $nombre === '') {
         responder(['success' => false]);
     }
 
-    $stmt = mysqli_prepare($conn, 'INSERT INTO personal (TipoPersonal, Nombre, Deshabilitado) VALUES (?, ?, 0)');
-    mysqli_stmt_bind_param($stmt, 'ss', $tipo, $nombre);
+    $sql = 'INSERT INTO `' . $config['tabla'] . '` (`' . $config['nombre'] . '`) VALUES (?)';
+    $stmt = mysqli_prepare($conn, $sql);
+    if (!$stmt) {
+        responder(['success' => false]);
+    }
+
+    mysqli_stmt_bind_param($stmt, 's', $nombre);
     $ok = mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
 
@@ -91,11 +222,16 @@ if ($action === 'add') {
 }
 
 if ($action === 'get') {
-    if ($id <= 0) {
+    if ($id <= 0 || !$config) {
         responder(['success' => false]);
     }
 
-    $stmt = mysqli_prepare($conn, 'SELECT PERSONALID, TipoPersonal, Nombre, Deshabilitado FROM personal WHERE PERSONALID = ? LIMIT 1');
+    $sql = 'SELECT `' . $config['id'] . '` AS RegistroID, `' . $config['nombre'] . '` AS NombreRegistro FROM `' . $config['tabla'] . '` WHERE `' . $config['id'] . '` = ? LIMIT 1';
+    $stmt = mysqli_prepare($conn, $sql);
+    if (!$stmt) {
+        responder(['success' => false]);
+    }
+
     mysqli_stmt_bind_param($stmt, 'i', $id);
     mysqli_stmt_execute($stmt);
     $resultado = mysqli_stmt_get_result($stmt);
@@ -106,15 +242,26 @@ if ($action === 'get') {
         responder(['success' => false]);
     }
 
-    responder(['success' => true, 'item' => $fila]);
+    responder([
+        'success' => true,
+        'item' => [
+            'PERSONALID' => (int)$fila['RegistroID'],
+            'Nombre' => (string)$fila['NombreRegistro'],
+        ],
+    ]);
 }
 
 if ($action === 'update') {
-    if ($id <= 0 || $nombre === '') {
+    if ($id <= 0 || !$config || $nombre === '') {
         responder(['success' => false]);
     }
 
-    $stmt = mysqli_prepare($conn, 'UPDATE personal SET Nombre = ? WHERE PERSONALID = ?');
+    $sql = 'UPDATE `' . $config['tabla'] . '` SET `' . $config['nombre'] . '` = ? WHERE `' . $config['id'] . '` = ?';
+    $stmt = mysqli_prepare($conn, $sql);
+    if (!$stmt) {
+        responder(['success' => false]);
+    }
+
     mysqli_stmt_bind_param($stmt, 'si', $nombre, $id);
     $ok = mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
@@ -123,12 +270,34 @@ if ($action === 'update') {
 }
 
 if ($action === 'toggle') {
-    if ($id <= 0) {
+    if ($id <= 0 || !$config || $config['estatus'] === '') {
         responder(['success' => false]);
     }
 
-    $stmt = mysqli_prepare($conn, 'UPDATE personal SET Deshabilitado = CASE WHEN Deshabilitado = 1 THEN 0 ELSE 1 END WHERE PERSONALID = ?');
-    mysqli_stmt_bind_param($stmt, 'i', $id);
+    $sqlActual = 'SELECT `' . $config['estatus'] . '` FROM `' . $config['tabla'] . '` WHERE `' . $config['id'] . '` = ? LIMIT 1';
+    $stmtActual = mysqli_prepare($conn, $sqlActual);
+    if (!$stmtActual) {
+        responder(['success' => false]);
+    }
+
+    mysqli_stmt_bind_param($stmtActual, 'i', $id);
+    mysqli_stmt_execute($stmtActual);
+    $resultadoActual = mysqli_stmt_get_result($stmtActual);
+    $filaActual = mysqli_fetch_row($resultadoActual);
+    mysqli_stmt_close($stmtActual);
+
+    if (!$filaActual) {
+        responder(['success' => false]);
+    }
+
+    $nuevoValor = valorToggle((int)$filaActual[0], $config['estatus']);
+    $sql = 'UPDATE `' . $config['tabla'] . '` SET `' . $config['estatus'] . '` = ? WHERE `' . $config['id'] . '` = ?';
+    $stmt = mysqli_prepare($conn, $sql);
+    if (!$stmt) {
+        responder(['success' => false]);
+    }
+
+    mysqli_stmt_bind_param($stmt, 'ii', $nuevoValor, $id);
     $ok = mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
 
@@ -136,11 +305,16 @@ if ($action === 'toggle') {
 }
 
 if ($action === 'delete') {
-    if ($id <= 0) {
+    if ($id <= 0 || !$config) {
         responder(['success' => false]);
     }
 
-    $stmt = mysqli_prepare($conn, 'DELETE FROM personal WHERE PERSONALID = ?');
+    $sql = 'DELETE FROM `' . $config['tabla'] . '` WHERE `' . $config['id'] . '` = ?';
+    $stmt = mysqli_prepare($conn, $sql);
+    if (!$stmt) {
+        responder(['success' => false]);
+    }
+
     mysqli_stmt_bind_param($stmt, 'i', $id);
     $ok = mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
