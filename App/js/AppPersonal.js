@@ -89,6 +89,8 @@ $(document).ready(function() {
         if (response.success) {
           $('#ModalAgregarPersonal').modal('hide');
           recargarTabla($('#TipoPersonalAgregar').val());
+        } else {
+          console.error('No se pudo agregar el registro.', response);
         }
       }
     });
@@ -130,6 +132,7 @@ $(document).ready(function() {
       dataType: 'json',
       data: {
         action: 'update',
+        tipo: $('#TipoPersonalEditar').val(),
         id: $('#PersonalIDEditar').val(),
         nombre: $('#NombrePersonalEditar').val()
       },
@@ -137,6 +140,8 @@ $(document).ready(function() {
         if (response.success) {
           $('#ModalEditarPersonal').modal('hide');
           recargarTabla($('#TipoPersonalEditar').val());
+        } else {
+          console.error('No se pudo editar el registro.', response);
         }
       }
     });
@@ -164,12 +169,15 @@ $(document).ready(function() {
       dataType: 'json',
       data: {
         action: 'toggle',
+        tipo: tipo,
         id: $('#PersonalIDEstado').val()
       },
       success: function(response) {
         if (response.success) {
           $('#ModalCambiarEstadoPersonal').modal('hide');
           recargarTabla(tipo);
+        } else {
+          console.error('No se pudo cambiar el estatus del registro.', response);
         }
       }
     });
@@ -195,12 +203,15 @@ $(document).ready(function() {
       dataType: 'json',
       data: {
         action: 'delete',
+        tipo: tipo,
         id: $('#PersonalIDEliminar').val()
       },
       success: function(response) {
         if (response.success) {
           $('#ModalEliminarPersonal').modal('hide');
           recargarTabla(tipo);
+        } else {
+          console.error('No se pudo eliminar el registro.', response);
         }
       }
     });
