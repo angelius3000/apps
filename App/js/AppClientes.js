@@ -218,46 +218,6 @@ $(document).ready(function() {
     }
   });
 
-  // Para que los clientes no se puedan clonar , mandamos el pedido para ver si existen
-
-  $("#EmailCliente, #EmailClienteEditar").on("keyup", function() {
-    var ValorEmail = $(this).val();
-
-    // ajax
-    $.ajax({
-      //async: false,
-      type: "POST",
-      url: "App/Server/ServerInfoClientesChecarEmailSiExiste.php",
-      data: "EmailCliente=" + ValorEmail,
-      dataType: "json",
-      success: function(response) {
-        // Reescribe la Datatable y le da refresh
-
-        if (response.NombreCliente != null) {
-          // Mandar el modal de que ya existe el email
-
-          $("#ModalYaExiste").modal("show");
-
-          // Quitamos el modal que genero el email
-
-          $("#ModalAgregarClientes").modal("hide");
-
-          // Mandamos la informacion al nuevo modal
-
-          $("#NumeroDeClienteSIANYaExiste").text(response.CLIENTESIAN);
-          $("#NombreClienteYaExiste").text(response.NombreCliente);
-          $("#EmailClienteYaExiste").text(response.EmailCliente);
-          $("#TelefonoClienteYaExiste").text(response.TelefonoCliente);
-          $("#NombreContactoYaExiste").text(response.NombreContacto);
-          $("#DireccionClienteYaExiste").text(response.DireccionCliente);
-          $("#ColoniaClienteYaExiste").text(response.ColoniaCliente);
-          $("#CiudadClienteYaExiste").text(response.CiudadCliente);
-          $("#EstadoClienteYaExiste").text(response.EstadoCliente);
-        }
-      },
-    }).done(function() {});
-  });
-
   // Para que los clientes no se puedan clonar , en SIAN
 
   var typingTimer; // Timer identifier
