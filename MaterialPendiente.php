@@ -400,6 +400,13 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                                 </tbody>
                                             </table>
                                         </div>
+                                        <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2" id="PaginacionMaterialPendiente">
+                                            <small class="text-muted" id="ResumenPaginacionMaterialPendiente">Mostrando 0 de 0 registros</small>
+                                            <div class="btn-group btn-group-sm" role="group" aria-label="Controles de paginación de material pendiente">
+                                                <button type="button" class="btn btn-outline-secondary" id="MaterialPendientePaginaAnterior">Anterior</button>
+                                                <button type="button" class="btn btn-outline-secondary" id="MaterialPendientePaginaSiguiente">Siguiente</button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
