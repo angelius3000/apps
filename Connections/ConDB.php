@@ -153,6 +153,45 @@ if ($conn === false) {
         sincronizarSeccionesBase($conn);
     }
 
+
+    // Ensure personnel catalog tables have a Deshabilitado column so records can be disabled
+    // without being removed from history.
+    $tablasCatalogoPersonal = ['aduana', 'vendedor', 'Surtidor', 'almacenista'];
+    foreach ($tablasCatalogoPersonal as $tablaCatalogo) {
+        $tablaExiste = false;
+        $resultadoTablaCatalogo = @mysqli_query(
+            $conn,
+            "SHOW TABLES LIKE '" . mysqli_real_escape_string($conn, $tablaCatalogo) . "'"
+        );
+
+        if ($resultadoTablaCatalogo instanceof mysqli_result) {
+            $tablaExiste = mysqli_num_rows($resultadoTablaCatalogo) > 0;
+            mysqli_free_result($resultadoTablaCatalogo);
+        }
+
+        if (!$tablaExiste) {
+            continue;
+        }
+
+        $columnaDeshabilitado = @mysqli_query(
+            $conn,
+            "SHOW COLUMNS FROM `" . str_replace('`', '``', $tablaCatalogo) . "` LIKE 'Deshabilitado'"
+        );
+
+        $tieneColumnaDeshabilitado = false;
+        if ($columnaDeshabilitado instanceof mysqli_result) {
+            $tieneColumnaDeshabilitado = mysqli_num_rows($columnaDeshabilitado) > 0;
+            mysqli_free_result($columnaDeshabilitado);
+        }
+
+        if (!$tieneColumnaDeshabilitado) {
+            @mysqli_query(
+                $conn,
+                "ALTER TABLE `" . str_replace('`', '``', $tablaCatalogo) . "` ADD COLUMN Deshabilitado TINYINT(1) NOT NULL DEFAULT 0"
+            );
+        }
+    }
+
     $columnaSeccionInicio = @mysqli_query(
         $conn,
         "SHOW COLUMNS FROM usuarios LIKE 'SECCIONINICIOID'"

@@ -26,7 +26,7 @@ if ($resultadoClientesPendientes instanceof mysqli_result) {
     mysqli_free_result($resultadoClientesPendientes);
 }
 
-$queryVendedoresPendientes = "SELECT vendedorID, NombreVendedor FROM vendedor ORDER BY NombreVendedor ASC";
+$queryVendedoresPendientes = "SELECT vendedorID, NombreVendedor FROM vendedor WHERE Deshabilitado = 0 ORDER BY NombreVendedor ASC";
 $resultadoVendedoresPendientes = mysqli_query($conn, $queryVendedoresPendientes);
 
 $listaVendedoresPendientes = [];
@@ -37,7 +37,7 @@ if ($resultadoVendedoresPendientes instanceof mysqli_result) {
     mysqli_free_result($resultadoVendedoresPendientes);
 }
 
-$queryAlmacenistasPendientes = "SELECT AlmacenistaID, NombreAlmacenista FROM almacenista ORDER BY NombreAlmacenista ASC";
+$queryAlmacenistasPendientes = "SELECT AlmacenistaID, NombreAlmacenista FROM almacenista WHERE Deshabilitado = 0 ORDER BY NombreAlmacenista ASC";
 $resultadoAlmacenistasPendientes = mysqli_query($conn, $queryAlmacenistasPendientes);
 
 $listaAlmacenistasPendientes = [];
@@ -48,7 +48,7 @@ if ($resultadoAlmacenistasPendientes instanceof mysqli_result) {
     mysqli_free_result($resultadoAlmacenistasPendientes);
 }
 
-$queryAduanasPendientes = "SELECT AduanaID, NombreAduana FROM aduana ORDER BY NombreAduana ASC";
+$queryAduanasPendientes = "SELECT AduanaID, NombreAduana FROM aduana WHERE Deshabilitado = 0 ORDER BY NombreAduana ASC";
 $resultadoAduanasPendientes = mysqli_query($conn, $queryAduanasPendientes);
 
 $listaAduanasPendientes = [];
