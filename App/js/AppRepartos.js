@@ -20,6 +20,7 @@ $(document).ready(function() {
       allowClear: true,
       width: '100%' // Asegura que ocupe todo el ancho del contenedor
     });
+    actualizarMapaReparto(configAgregar);
   });
   $('#ModalEditarReparto').on('shown.bs.modal', function () {
     $('#CLIENTEIDEditar').select2({
@@ -28,6 +29,7 @@ $(document).ready(function() {
       allowClear: true,
       width: '100%' // Asegura que ocupe todo el ancho del contenedor
     });
+    actualizarMapaReparto(configEditar);
   });
   $('#ModalClonarReparto').on('shown.bs.modal', function () {
     $('#CLIENTEIDClonar').select2({
@@ -36,15 +38,16 @@ $(document).ready(function() {
       allowClear: true,
       width: '100%' // Asegura que ocupe todo el ancho del contenedor
     });
+    actualizarMapaReparto(configClonar);
   });
 
-  function obtenerDireccionReparto() {
+  function obtenerDireccionReparto(config) {
     var partes = [
-      $("#CalleNumero").val(),
-      $("#Colonia").val(),
-      $("#CP").val(),
-      $("#Ciudad").val(),
-      $("#Estado").val()
+      $(config.calleNumero).val(),
+      $(config.colonia).val(),
+      $(config.cp).val(),
+      $(config.ciudad).val(),
+      $(config.estado).val()
     ];
 
     return partes
@@ -53,10 +56,10 @@ $(document).ready(function() {
       .join(", ");
   }
 
-  function actualizarMapaReparto() {
-    var direccion = obtenerDireccionReparto();
-    var inputEnlace = $("#EnlaceGoogleMaps");
-    var iframeMapa = $("#MiniMapaReparto");
+  function actualizarMapaReparto(config) {
+    var direccion = obtenerDireccionReparto(config);
+    var inputEnlace = $(config.enlace);
+    var iframeMapa = $(config.mapa);
 
     if (!direccion) {
       inputEnlace.val("");
@@ -72,193 +75,46 @@ $(document).ready(function() {
     iframeMapa.attr("src", enlaceEmbed);
   }
 
-  var autocompletandoUbicacionPorCP = false;
-  var ultimaConsultaCP = "";
-  var timeoutConsultaCP = null;
-  var controladorConsultaCP = null;
+  var configAgregar = {
+    calleNumero: "#CalleNumero",
+    colonia: "#Colonia",
+    cp: "#CP",
+    ciudad: "#Ciudad",
+    estado: "#Estado",
+    enlace: "#EnlaceGoogleMaps",
+    mapa: "#MiniMapaReparto"
+  };
 
-  function debeAutocompletarCampo(selector) {
-    var $campo = $(selector);
-    return !$campo.data("manual") || ($campo.val() || "").trim() === "";
-  }
+  var configEditar = {
+    calleNumero: "#CalleNumeroEditar",
+    colonia: "#ColoniaEditar",
+    cp: "#CPEditar",
+    ciudad: "#CiudadEditar",
+    estado: "#EstadoEditar",
+    enlace: "#EnlaceGoogleMapsEditar",
+    mapa: "#MiniMapaRepartoEditar"
+  };
 
-  function marcarCampoComoManualSiAplica(selector) {
-    if (autocompletandoUbicacionPorCP) {
-      return;
-    }
-
-    $(selector).data("manual", true);
-  }
-
-  function obtenerCiudadDesdeDireccion(direccion) {
-    if (!direccion) {
-      return "";
-    }
-
-    return (
-      direccion.city ||
-      direccion.town ||
-      direccion.village ||
-      direccion.municipality ||
-      direccion.city_district ||
-      direccion.county ||
-      ""
-    ).trim();
-  }
-
-
-  function aplicarCiudadEstadoEnFormulario(ciudad, estado) {
-    autocompletandoUbicacionPorCP = true;
-
-    if (ciudad && debeAutocompletarCampo("#Ciudad")) {
-      $("#Ciudad").val(ciudad).data("manual", false);
-    }
-
-    if (estado && debeAutocompletarCampo("#Estado")) {
-      $("#Estado").val(estado).data("manual", false);
-    }
-
-    autocompletandoUbicacionPorCP = false;
-    actualizarMapaReparto();
-  }
-
-  function autocompletarConZippopotam(cp) {
-    return fetch("https://api.zippopotam.us/mx/" + cp, {
-      signal: controladorConsultaCP.signal
-    })
-      .then(function(response) {
-        if (!response.ok) {
-          throw new Error("No se encontró información para el código postal");
-        }
-
-        return response.json();
-      })
-      .then(function(data) {
-        if (!data || !Array.isArray(data.places) || data.places.length === 0) {
-          return;
-        }
-
-        var estado = (data.places[0].state || "").trim();
-        var nombresUnicos = {};
-        data.places.forEach(function(lugar) {
-          var nombre = ((lugar || {})["place name"] || "").trim();
-          if (nombre) {
-            nombresUnicos[nombre] = true;
-          }
-        });
-
-        var listaNombres = Object.keys(nombresUnicos);
-        var ciudad = listaNombres.length === 1 ? listaNombres[0] : "";
-
-        aplicarCiudadEstadoEnFormulario(ciudad, estado);
-      });
-  }
-
-  function autocompletarCiudadEstadoPorCP() {
-    var cp = ($("#CP").val() || "").trim();
-
-    if (!/^\d{5}$/.test(cp) || cp === ultimaConsultaCP) {
-      return;
-    }
-
-    ultimaConsultaCP = cp;
-
-    if (controladorConsultaCP) {
-      controladorConsultaCP.abort();
-    }
-
-    controladorConsultaCP = new AbortController();
-
-    var endpoint = "https://nominatim.openstreetmap.org/search?postalcode=" + cp + "&country=Mexico&format=jsonv2&addressdetails=1&limit=1";
-
-    fetch(endpoint, {
-      signal: controladorConsultaCP.signal,
-      headers: {
-        "Accept": "application/json"
-      }
-    })
-      .then(function(response) {
-        if (!response.ok) {
-          throw new Error("No se encontró información para el código postal");
-        }
-
-        return response.json();
-      })
-      .then(function(data) {
-        if (!Array.isArray(data) || data.length === 0) {
-          return;
-        }
-
-        var direccion = data[0].address || {};
-        var ciudad = obtenerCiudadDesdeDireccion(direccion);
-        var estado = (direccion.state || "").trim();
-
-        aplicarCiudadEstadoEnFormulario(ciudad, estado);
-      })
-      .catch(function(error) {
-        if (error && error.name === "AbortError") {
-          return;
-        }
-
-        autocompletarConZippopotam(cp)
-          .catch(function(errorZippopotam) {
-            autocompletandoUbicacionPorCP = false;
-
-            if (errorZippopotam && errorZippopotam.name === "AbortError") {
-              return;
-            }
-
-            console.warn("No fue posible autocompletar ciudad/estado por CP", errorZippopotam);
-          });
-      });
-  }
-
-  function separarCalleYNumero(valorCompleto) {
-    var valor = (valorCompleto || "").trim();
-
-    if (!valor) {
-      return { calle: "", numero: "" };
-    }
-
-    var match = valor.match(/^(.*?)(?:\s+#?([\dA-Za-z-]+))$/);
-
-    if (match && match[1] && /\d/.test(match[2])) {
-      return {
-        calle: match[1].trim(),
-        numero: match[2].trim()
-      };
-    }
-
-    return {
-      calle: valor,
-      numero: ""
-    };
-  }
+  var configClonar = {
+    calleNumero: "#CalleNumeroClonar",
+    colonia: "#ColoniaClonar",
+    cp: "#CPClonar",
+    ciudad: "#CiudadClonar",
+    estado: "#EstadoClonar",
+    enlace: "#EnlaceGoogleMapsClonar",
+    mapa: "#MiniMapaRepartoClonar"
+  };
 
   $(document).on("input change", "#CalleNumero, #Colonia, #CP, #Ciudad, #Estado", function() {
-    actualizarMapaReparto();
+    actualizarMapaReparto(configAgregar);
   });
 
-  $(document).on("input", "#Ciudad, #Estado", function(evento) {
-    marcarCampoComoManualSiAplica("#" + evento.target.id);
+  $(document).on("input change", "#CalleNumeroEditar, #ColoniaEditar, #CPEditar, #CiudadEditar, #EstadoEditar", function() {
+    actualizarMapaReparto(configEditar);
   });
 
-  $(document).on("input", "#CP", function() {
-    ultimaConsultaCP = "";
-
-    if (timeoutConsultaCP) {
-      clearTimeout(timeoutConsultaCP);
-    }
-
-    timeoutConsultaCP = setTimeout(function() {
-      autocompletarCiudadEstadoPorCP();
-    }, 350);
-  });
-
-  $('#ModalAgregarReparto').on('show.bs.modal', function () {
-    $("#Ciudad, #Estado").data("manual", false);
-    ultimaConsultaCP = "";
-    actualizarMapaReparto();
+  $(document).on("input change", "#CalleNumeroClonar, #ColoniaClonar, #CPClonar, #CiudadClonar, #EstadoClonar", function() {
+    actualizarMapaReparto(configClonar);
   });
 
   // Variables para almacenar las fechas
@@ -455,7 +311,7 @@ $(document).ready(function() {
     var calleSeparada = separarCalleYNumero($("#CalleNumero").val());
     $("#Calle").val(calleSeparada.calle);
     $("#NumeroEXT").val(calleSeparada.numero);
-    actualizarMapaReparto();
+    actualizarMapaReparto(configAgregar);
 
     form.parsley().validate();
 
@@ -485,6 +341,11 @@ $(document).ready(function() {
    // Para Clonar Repartos
    $("#ValidacionClonarRepartos").on("submit", function(e) {
     var form = $(this);
+
+    var calleSeparadaClonar = separarCalleYNumero($("#CalleNumeroClonar").val());
+    $("#CalleClonar").val(calleSeparadaClonar.calle);
+    $("#NumeroEXTClonar").val(calleSeparadaClonar.numero);
+    actualizarMapaReparto(configClonar);
 
     form.parsley().validate();
 
@@ -536,6 +397,11 @@ $(document).ready(function() {
     console.log("Si se mando la forma");
 
     var form = $(this);
+
+    var calleSeparadaEditar = separarCalleYNumero($("#CalleNumeroEditar").val());
+    $("#CalleEditar").val(calleSeparadaEditar.calle);
+    $("#NumeroEXTEditar").val(calleSeparadaEditar.numero);
+    actualizarMapaReparto(configEditar);
 
     form.parsley().validate();
 
@@ -689,6 +555,7 @@ function TomarDatosParaModalRepartos(val) {
 
       $("select#CLIENTEIDEditar").val(response.CLIENTEID);
       $("input#NumeroDeFacturaEditar").val(response.NumeroDeFactura);
+      $("input#CalleNumeroEditar").val(((response.Calle || "") + " " + (response.NumeroEXT || "")).trim());
       $("input#CalleEditar").val(response.Calle);
       $("input#ColoniaEditar").val(response.Colonia);
       $("input#NumeroEXTEditar").val(response.NumeroEXT);
@@ -711,6 +578,7 @@ function TomarDatosParaModalRepartos(val) {
 
       $("select#CLIENTEIDClonar").val(response.CLIENTEID);
       //$("input#NumeroDeFacturaClonar").val(response.NumeroDeFactura);
+      $("input#CalleNumeroClonar").val(((response.Calle || "") + " " + (response.NumeroEXT || "")).trim());
       $("input#CalleClonar").val(response.Calle);
       $("input#ColoniaClonar").val(response.Colonia);
       $("input#NumeroEXTClonar").val(response.NumeroEXT);
@@ -725,6 +593,24 @@ function TomarDatosParaModalRepartos(val) {
       $("textarea#ComentariosClonar").val(response.Comentarios);
       $("input#USUARIOIDClonar").val(response.USUARIOID);
       $("input#REPARTOIDClonar").val(response.REPARTOID);
+
+      var direccionEditar = [response.Calle, response.NumeroEXT, response.Colonia, response.CP, response.Ciudad, response.Estado]
+        .filter(function(valor) { return valor !== null && valor !== undefined && valor !== ""; })
+        .join(", ");
+      if (direccionEditar) {
+        var queryEditar = encodeURIComponent(direccionEditar);
+        $("#EnlaceGoogleMapsEditar").val("https://www.google.com/maps/search/?api=1&query=" + queryEditar);
+        $("#MiniMapaRepartoEditar").attr("src", "https://www.google.com/maps?q=" + queryEditar + "&output=embed");
+      }
+
+      var direccionClonar = [response.Calle, response.NumeroEXT, response.Colonia, response.CP, response.Ciudad, response.Estado]
+        .filter(function(valor) { return valor !== null && valor !== undefined && valor !== ""; })
+        .join(", ");
+      if (direccionClonar) {
+        var queryClonar = encodeURIComponent(direccionClonar);
+        $("#EnlaceGoogleMapsClonar").val("https://www.google.com/maps/search/?api=1&query=" + queryClonar);
+        $("#MiniMapaRepartoClonar").attr("src", "https://www.google.com/maps?q=" + queryClonar + "&output=embed");
+      }
       
 
       // Para el editor de Status
