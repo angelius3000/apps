@@ -59,13 +59,6 @@ if (!usuarioTieneAccesoSeccion('clientes')) {
                                     <tr>
                                         <th>Número de cliente</th>
                                         <th>Nombre</th>
-                                        <th>Email</th>
-                                        <th>Teléfono</th>
-                                        <th>Contacto</th>
-                                        <th>Dirección</th>
-                                        <th>Colonia</th>
-                                        <th>Ciudad</th>
-                                        <th>Estado</th>
                                         <th></th>
                                     </tr>
                                 </thead>
