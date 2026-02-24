@@ -31,54 +31,6 @@
                                                     <input type="text" class="form-control" id="NombreCliente" autocomplete="off" placeholder="Roberto" name="NombreCliente" required>
 
                                                 </div>
-                                                <div class="col-lg-6 col-sm-12 mb-4">
-
-                                                    <label for="EmailCliente" class="form-label">Email</label>
-                                                    <input type="text" class="form-control" id="EmailCliente" autocomplete="off" placeholder="correo@email.com" name="EmailCliente">
-
-                                                </div>
-
-                                                <div class="col-lg-6 col-sm-12 mb-4">
-
-                                                    <label for="TelefonoCliente" class="form-label">Teléfono cliente</label>
-                                                    <input type="text" class="form-control" id="TelefonoCliente" autocomplete="off" placeholder="6561234567" name="TelefonoCliente">
-
-                                                </div>
-
-                                                <div class="col-lg-6 col-sm-12 mb-4">
-
-                                                    <label for="NombreContacto" class="form-label">Contacto</label>
-                                                    <input type="text" class="form-control" id="NombreContacto" autocomplete="off" placeholder="Pedro" name="NombreContacto">
-
-                                                </div>
-
-                                                <div class="col-lg-6 col-sm-12 mb-4">
-
-                                                    <label for="DireccionCliente" class="form-label">Calle y número</label>
-                                                    <input type="text" class="form-control" id="DireccionCliente" placeholder="Arbolito 1208-A" name="DireccionCliente">
-
-                                                </div>
-
-                                                <div class="col-lg-6 col-sm-12 mb-4">
-
-                                                    <label for="ColoniaCliente" class="form-label">Colonia</label>
-                                                    <input type="text" class="form-control" id="ColoniaCliente" placeholder="Col Del Bosque" name="ColoniaCliente">
-
-                                                </div>
-
-                                                <div class="col-lg-6 col-sm-12 mb-4">
-
-                                                    <label for="CiudadCliente" class="form-label">Ciudad</label>
-                                                    <input type="text" class="form-control" id="CiudadCliente" placeholder="Monterrey" name="CiudadCliente">
-
-                                                </div>
-
-                                                <div class="col-lg-6 col-sm-12 mb-4">
-
-                                                    <label for="EstadoCliente" class="form-label">Estado</label>
-                                                    <input type="text" class="form-control" id="EstadoCliente" placeholder="Nuevo León" name="EstadoCliente">
-
-                                                </div>
 
                                             </div>
 
@@ -133,53 +85,6 @@
 
                                                     <label for="NombreClienteEditar" class="form-label">Nombre</label>
                                                     <input type="text" class="form-control" id="NombreClienteEditar" autocomplete="off" placeholder="" name="NombreClienteEditar" required>
-
-                                                </div>
-                                                <div class="col-lg-6 col-sm-12 mb-4">
-
-                                                    <label for="EmailClienteEditar" class="form-label">Email</label>
-                                                    <input type="text" class="form-control" id="EmailClienteEditar" autocomplete="off" placeholder="" name="EmailClienteEditar">
-
-                                                </div>
-                                                <div class="col-lg-6 col-sm-12 mb-4">
-
-                                                    <label for="TelefonoClienteEditar" class="form-label">Teléfono</label>
-                                                    <input type="text" class="form-control" id="TelefonoClienteEditar" autocomplete="off" placeholder="" name="TelefonoClienteEditar">
-
-                                                </div>
-
-                                                <div class="col-lg-6 col-sm-12 mb-4">
-
-                                                    <label for="NombreContactoEditar" class="form-label">Contacto</label>
-                                                    <input type="text" class="form-control" id="NombreContactoEditar" autocomplete="off" placeholder="" name="NombreContactoEditar">
-
-                                                </div>
-
-                                                <div class="col-lg-6 col-sm-12 mb-4">
-
-                                                    <label for="DireccionClienteEditar" class="form-label">Calle y numero</label>
-                                                    <input type="text" class="form-control" id="DireccionClienteEditar" autocomplete="off" placeholder="" name="DireccionClienteEditar">
-
-                                                </div>
-
-                                                <div class="col-lg-6 col-sm-12 mb-4">
-
-                                                    <label for="ColoniaClienteEditar" class="form-label">Colonia</label>
-                                                    <input type="text" class="form-control" id="ColoniaClienteEditar" autocomplete="off" placeholder="" name="ColoniaClienteEditar">
-
-                                                </div>
-
-                                                <div class="col-lg-6 col-sm-12 mb-4">
-
-                                                    <label for="CiudadClienteEditar" class="form-label">Ciudad</label>
-                                                    <input type="text" class="form-control" id="CiudadClienteEditar" autocomplete="off" placeholder="" name="CiudadClienteEditar">
-
-                                                </div>
-
-                                                <div class="col-lg-6 col-sm-12 mb-4">
-
-                                                    <label for="EstadoClienteEditar" class="form-label">Estado</label>
-                                                    <input type="text" class="form-control" id="EstadoClienteEditar" autocomplete="off" placeholder="" name="EstadoClienteEditar">
 
                                                 </div>
 
@@ -277,41 +182,6 @@
                                         Nombre:
                                         <br>
                                         <strong><span id="NombreClienteYaExiste"></span></strong>
-                                    </div>
-                                    <div class="col-lg-6 col-sm-12 mb-4">
-                                        Correo:
-                                        <br>
-                                        <strong><span id="EmailClienteYaExiste"></span></strong>
-                                    </div>
-                                    <div class="col-lg-6 col-sm-12 mb-4">
-                                        Teléfono:
-                                        <br>
-                                        <strong><span id="TelefonoClienteYaExiste"></span></strong>
-                                    </div>
-                                    <div class="col-lg-6 col-sm-12 mb-4">
-                                        Contacto:
-                                        <br>
-                                        <strong><span id="NombreContactoYaExiste"></span></strong>
-                                    </div>
-                                    <div class="col-lg-6 col-sm-12 mb-4">
-                                        Dirección:
-                                        <br>
-                                        <strong><span id="DireccionClienteYaExiste"></span></strong>
-                                    </div>
-                                    <div class="col-lg-6 col-sm-12 mb-4">
-                                        Colonia:
-                                        <br>
-                                        <strong><span id="ColoniaClienteYaExiste"></span></strong>
-                                    </div>
-                                    <div class="col-lg-6 col-sm-12 mb-4">
-                                        Ciudad:
-                                        <br>
-                                        <strong><span id="CiudadClienteYaExiste"></span></strong>
-                                    </div>
-                                    <div class="col-lg-6 col-sm-12 mb-4">
-                                        Estado:
-                                        <br>
-                                        <strong><span id="EstadoClienteYaExiste"></span></strong>
                                     </div>
                                 </div>
                             </div>

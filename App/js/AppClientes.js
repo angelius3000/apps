@@ -269,13 +269,6 @@ $(document).ready(function() {
 
             $("#NumeroDeClienteSIANYaExiste").text(response.CLIENTESIAN);
             $("#NombreClienteYaExiste").text(response.NombreCliente);
-            $("#EmailClienteYaExiste").text(response.EmailCliente);
-            $("#TelefonoClienteYaExiste").text(response.TelefonoCliente);
-            $("#NombreContactoYaExiste").text(response.NombreContacto);
-            $("#DireccionClienteYaExiste").text(response.DireccionCliente);
-            $("#ColoniaClienteYaExiste").text(response.ColoniaCliente);
-            $("#CiudadClienteYaExiste").text(response.CiudadCliente);
-            $("#EstadoClienteYaExiste").text(response.EstadoCliente);
           }
         },
       }).done(function() {});
@@ -308,13 +301,6 @@ function TomarDatosParaModalClientes(val) {
       $("input#CLCSIANEditar").val(response.CLCSIAN);
 
       $("input#NombreClienteEditar").val(response.NombreCliente);
-      $("input#EmailClienteEditar").val(response.EmailCliente);
-      $("input#TelefonoClienteEditar").val(response.TelefonoCliente);
-      $("input#NombreContactoEditar").val(response.NombreContacto);
-      $("input#DireccionClienteEditar").val(response.DireccionCliente);
-      $("input#ColoniaClienteEditar").val(response.ColoniaCliente);
-      $("input#CiudadClienteEditar").val(response.CiudadCliente);
-      $("input#EstadoClienteEditar").val(response.EstadoCliente);
 
       //Para modal de Borrar
 
