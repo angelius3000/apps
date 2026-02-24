@@ -90,6 +90,70 @@ $(document).ready(function() {
     $(selector).data("manual", true);
   }
 
+  function obtenerCiudadDesdeDireccion(direccion) {
+    if (!direccion) {
+      return "";
+    }
+
+    return (
+      direccion.city ||
+      direccion.town ||
+      direccion.village ||
+      direccion.municipality ||
+      direccion.city_district ||
+      direccion.county ||
+      ""
+    ).trim();
+  }
+
+
+  function aplicarCiudadEstadoEnFormulario(ciudad, estado) {
+    autocompletandoUbicacionPorCP = true;
+
+    if (ciudad && debeAutocompletarCampo("#Ciudad")) {
+      $("#Ciudad").val(ciudad).data("manual", false);
+    }
+
+    if (estado && debeAutocompletarCampo("#Estado")) {
+      $("#Estado").val(estado).data("manual", false);
+    }
+
+    autocompletandoUbicacionPorCP = false;
+    actualizarMapaReparto();
+  }
+
+  function autocompletarConZippopotam(cp) {
+    return fetch("https://api.zippopotam.us/mx/" + cp, {
+      signal: controladorConsultaCP.signal
+    })
+      .then(function(response) {
+        if (!response.ok) {
+          throw new Error("No se encontró información para el código postal");
+        }
+
+        return response.json();
+      })
+      .then(function(data) {
+        if (!data || !Array.isArray(data.places) || data.places.length === 0) {
+          return;
+        }
+
+        var estado = (data.places[0].state || "").trim();
+        var nombresUnicos = {};
+        data.places.forEach(function(lugar) {
+          var nombre = ((lugar || {})["place name"] || "").trim();
+          if (nombre) {
+            nombresUnicos[nombre] = true;
+          }
+        });
+
+        var listaNombres = Object.keys(nombresUnicos);
+        var ciudad = listaNombres.length === 1 ? listaNombres[0] : "";
+
+        aplicarCiudadEstadoEnFormulario(ciudad, estado);
+      });
+  }
+
   function autocompletarCiudadEstadoPorCP() {
     var cp = ($("#CP").val() || "").trim();
 
@@ -105,8 +169,13 @@ $(document).ready(function() {
 
     controladorConsultaCP = new AbortController();
 
-    fetch("https://api.zippopotam.us/mx/" + cp, {
-      signal: controladorConsultaCP.signal
+    var endpoint = "https://nominatim.openstreetmap.org/search?postalcode=" + cp + "&country=Mexico&format=jsonv2&addressdetails=1&limit=1";
+
+    fetch(endpoint, {
+      signal: controladorConsultaCP.signal,
+      headers: {
+        "Accept": "application/json"
+      }
     })
       .then(function(response) {
         if (!response.ok) {
@@ -116,35 +185,31 @@ $(document).ready(function() {
         return response.json();
       })
       .then(function(data) {
-        if (!data || !Array.isArray(data.places) || data.places.length === 0) {
+        if (!Array.isArray(data) || data.length === 0) {
           return;
         }
 
-        var primerLugar = data.places[0] || {};
-        var ciudad = (primerLugar["place name"] || "").trim();
-        var estado = (primerLugar.state || "").trim();
+        var direccion = data[0].address || {};
+        var ciudad = obtenerCiudadDesdeDireccion(direccion);
+        var estado = (direccion.state || "").trim();
 
-        autocompletandoUbicacionPorCP = true;
-
-        if (ciudad && debeAutocompletarCampo("#Ciudad")) {
-          $("#Ciudad").val(ciudad).data("manual", false);
-        }
-
-        if (estado && debeAutocompletarCampo("#Estado")) {
-          $("#Estado").val(estado).data("manual", false);
-        }
-
-        autocompletandoUbicacionPorCP = false;
-        actualizarMapaReparto();
+        aplicarCiudadEstadoEnFormulario(ciudad, estado);
       })
       .catch(function(error) {
-        autocompletandoUbicacionPorCP = false;
-
         if (error && error.name === "AbortError") {
           return;
         }
 
-        console.warn("No fue posible autocompletar ciudad/estado por CP", error);
+        autocompletarConZippopotam(cp)
+          .catch(function(errorZippopotam) {
+            autocompletandoUbicacionPorCP = false;
+
+            if (errorZippopotam && errorZippopotam.name === "AbortError") {
+              return;
+            }
+
+            console.warn("No fue posible autocompletar ciudad/estado por CP", errorZippopotam);
+          });
       });
   }
 
