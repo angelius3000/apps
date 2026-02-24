@@ -72,6 +72,147 @@ $(document).ready(function() {
     iframeMapa.attr("src", enlaceEmbed);
   }
 
+  var autocompletandoUbicacionPorCP = false;
+  var ultimaConsultaCP = "";
+  var timeoutConsultaCP = null;
+  var controladorConsultaCP = null;
+
+  function debeAutocompletarCampo(selector) {
+    var $campo = $(selector);
+    return !$campo.data("manual") || ($campo.val() || "").trim() === "";
+  }
+
+  function marcarCampoComoManualSiAplica(selector) {
+    if (autocompletandoUbicacionPorCP) {
+      return;
+    }
+
+    $(selector).data("manual", true);
+  }
+
+  function obtenerCiudadDesdeDireccion(direccion) {
+    if (!direccion) {
+      return "";
+    }
+
+    return (
+      direccion.city ||
+      direccion.town ||
+      direccion.village ||
+      direccion.municipality ||
+      direccion.city_district ||
+      direccion.county ||
+      ""
+    ).trim();
+  }
+
+
+  function aplicarCiudadEstadoEnFormulario(ciudad, estado) {
+    autocompletandoUbicacionPorCP = true;
+
+    if (ciudad && debeAutocompletarCampo("#Ciudad")) {
+      $("#Ciudad").val(ciudad).data("manual", false);
+    }
+
+    if (estado && debeAutocompletarCampo("#Estado")) {
+      $("#Estado").val(estado).data("manual", false);
+    }
+
+    autocompletandoUbicacionPorCP = false;
+    actualizarMapaReparto();
+  }
+
+  function autocompletarConZippopotam(cp) {
+    return fetch("https://api.zippopotam.us/mx/" + cp, {
+      signal: controladorConsultaCP.signal
+    })
+      .then(function(response) {
+        if (!response.ok) {
+          throw new Error("No se encontró información para el código postal");
+        }
+
+        return response.json();
+      })
+      .then(function(data) {
+        if (!data || !Array.isArray(data.places) || data.places.length === 0) {
+          return;
+        }
+
+        var estado = (data.places[0].state || "").trim();
+        var nombresUnicos = {};
+        data.places.forEach(function(lugar) {
+          var nombre = ((lugar || {})["place name"] || "").trim();
+          if (nombre) {
+            nombresUnicos[nombre] = true;
+          }
+        });
+
+        var listaNombres = Object.keys(nombresUnicos);
+        var ciudad = listaNombres.length === 1 ? listaNombres[0] : "";
+
+        aplicarCiudadEstadoEnFormulario(ciudad, estado);
+      });
+  }
+
+  function autocompletarCiudadEstadoPorCP() {
+    var cp = ($("#CP").val() || "").trim();
+
+    if (!/^\d{5}$/.test(cp) || cp === ultimaConsultaCP) {
+      return;
+    }
+
+    ultimaConsultaCP = cp;
+
+    if (controladorConsultaCP) {
+      controladorConsultaCP.abort();
+    }
+
+    controladorConsultaCP = new AbortController();
+
+    var endpoint = "https://nominatim.openstreetmap.org/search?postalcode=" + cp + "&country=Mexico&format=jsonv2&addressdetails=1&limit=1";
+
+    fetch(endpoint, {
+      signal: controladorConsultaCP.signal,
+      headers: {
+        "Accept": "application/json"
+      }
+    })
+      .then(function(response) {
+        if (!response.ok) {
+          throw new Error("No se encontró información para el código postal");
+        }
+
+        return response.json();
+      })
+      .then(function(data) {
+        if (!Array.isArray(data) || data.length === 0) {
+          return;
+        }
+
+        var direccion = data[0].address || {};
+        var ciudad = obtenerCiudadDesdeDireccion(direccion);
+        var estado = (direccion.state || "").trim();
+
+        aplicarCiudadEstadoEnFormulario(ciudad, estado);
+      })
+      .catch(function(error) {
+        if (error && error.name === "AbortError") {
+          return;
+        }
+
+        autocompletarConZippopotam(cp)
+          .catch(function(errorZippopotam) {
+            autocompletandoUbicacionPorCP = false;
+
+            if (errorZippopotam && errorZippopotam.name === "AbortError") {
+              return;
+            }
+
+            console.warn("No fue posible autocompletar ciudad/estado por CP", errorZippopotam);
+          });
+      });
+  }
+
   function separarCalleYNumero(valorCompleto) {
     var valor = (valorCompleto || "").trim();
 
@@ -95,6 +236,28 @@ $(document).ready(function() {
   }
 
   $(document).on("input change", "#CalleNumero, #Colonia, #CP, #Ciudad, #Estado", function() {
+    actualizarMapaReparto();
+  });
+
+  $(document).on("input", "#Ciudad, #Estado", function(evento) {
+    marcarCampoComoManualSiAplica("#" + evento.target.id);
+  });
+
+  $(document).on("input", "#CP", function() {
+    ultimaConsultaCP = "";
+
+    if (timeoutConsultaCP) {
+      clearTimeout(timeoutConsultaCP);
+    }
+
+    timeoutConsultaCP = setTimeout(function() {
+      autocompletarCiudadEstadoPorCP();
+    }, 350);
+  });
+
+  $('#ModalAgregarReparto').on('show.bs.modal', function () {
+    $("#Ciudad, #Estado").data("manual", false);
+    ultimaConsultaCP = "";
     actualizarMapaReparto();
   });
 
