@@ -38,6 +38,66 @@ $(document).ready(function() {
     });
   });
 
+  function obtenerDireccionReparto() {
+    var partes = [
+      $("#CalleNumero").val(),
+      $("#Colonia").val(),
+      $("#CP").val(),
+      $("#Ciudad").val(),
+      $("#Estado").val()
+    ];
+
+    return partes
+      .map(function(valor) { return (valor || "").trim(); })
+      .filter(function(valor) { return valor !== ""; })
+      .join(", ");
+  }
+
+  function actualizarMapaReparto() {
+    var direccion = obtenerDireccionReparto();
+    var inputEnlace = $("#EnlaceGoogleMaps");
+    var iframeMapa = $("#MiniMapaReparto");
+
+    if (!direccion) {
+      inputEnlace.val("");
+      iframeMapa.attr("src", "about:blank");
+      return;
+    }
+
+    var query = encodeURIComponent(direccion);
+    var enlaceBusqueda = "https://www.google.com/maps/search/?api=1&query=" + query;
+    var enlaceEmbed = "https://www.google.com/maps?q=" + query + "&output=embed";
+
+    inputEnlace.val(enlaceBusqueda);
+    iframeMapa.attr("src", enlaceEmbed);
+  }
+
+  function separarCalleYNumero(valorCompleto) {
+    var valor = (valorCompleto || "").trim();
+
+    if (!valor) {
+      return { calle: "", numero: "" };
+    }
+
+    var match = valor.match(/^(.*?)(?:\s+#?([\dA-Za-z-]+))$/);
+
+    if (match && match[1] && /\d/.test(match[2])) {
+      return {
+        calle: match[1].trim(),
+        numero: match[2].trim()
+      };
+    }
+
+    return {
+      calle: valor,
+      numero: ""
+    };
+  }
+
+  $(document).on("input change", "#CalleNumero, #Colonia, #CP, #Ciudad, #Estado", function() {
+    actualizarMapaReparto();
+  });
+
   // Variables para almacenar las fechas
   var fechaInicioRegistro;
   var fechaFinalRegistro;
@@ -228,6 +288,11 @@ $(document).ready(function() {
   // Para Agregar Repartos
   $("#ValidacionAgregarRepartos").on("submit", function(e) {
     var form = $(this);
+
+    var calleSeparada = separarCalleYNumero($("#CalleNumero").val());
+    $("#Calle").val(calleSeparada.calle);
+    $("#NumeroEXT").val(calleSeparada.numero);
+    actualizarMapaReparto();
 
     form.parsley().validate();
 
