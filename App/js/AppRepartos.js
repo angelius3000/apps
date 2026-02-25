@@ -20,6 +20,7 @@ $(document).ready(function() {
       allowClear: true,
       width: '100%' // Asegura que ocupe todo el ancho del contenedor
     });
+    actualizarMapaReparto(configAgregar);
   });
   $('#ModalEditarReparto').on('shown.bs.modal', function () {
     $('#CLIENTEIDEditar').select2({
@@ -28,6 +29,7 @@ $(document).ready(function() {
       allowClear: true,
       width: '100%' // Asegura que ocupe todo el ancho del contenedor
     });
+    actualizarMapaReparto(configEditar);
   });
   $('#ModalClonarReparto').on('shown.bs.modal', function () {
     $('#CLIENTEIDClonar').select2({
@@ -36,6 +38,83 @@ $(document).ready(function() {
       allowClear: true,
       width: '100%' // Asegura que ocupe todo el ancho del contenedor
     });
+    actualizarMapaReparto(configClonar);
+  });
+
+  function obtenerDireccionReparto(config) {
+    var partes = [
+      $(config.calleNumero).val(),
+      $(config.colonia).val(),
+      $(config.cp).val(),
+      $(config.ciudad).val(),
+      $(config.estado).val()
+    ];
+
+    return partes
+      .map(function(valor) { return (valor || "").trim(); })
+      .filter(function(valor) { return valor !== ""; })
+      .join(", ");
+  }
+
+  function actualizarMapaReparto(config) {
+    var direccion = obtenerDireccionReparto(config);
+    var inputEnlace = $(config.enlace);
+    var iframeMapa = $(config.mapa);
+
+    if (!direccion) {
+      inputEnlace.val("");
+      iframeMapa.attr("src", "about:blank");
+      return;
+    }
+
+    var query = encodeURIComponent(direccion);
+    var enlaceBusqueda = "https://www.google.com/maps/search/?api=1&query=" + query;
+    var enlaceEmbed = "https://www.google.com/maps?q=" + query + "&output=embed";
+
+    inputEnlace.val(enlaceBusqueda);
+    iframeMapa.attr("src", enlaceEmbed);
+  }
+
+  var configAgregar = {
+    calleNumero: "#CalleNumero",
+    colonia: "#Colonia",
+    cp: "#CP",
+    ciudad: "#Ciudad",
+    estado: "#Estado",
+    enlace: "#EnlaceGoogleMaps",
+    mapa: "#MiniMapaReparto"
+  };
+
+  var configEditar = {
+    calleNumero: "#CalleNumeroEditar",
+    colonia: "#ColoniaEditar",
+    cp: "#CPEditar",
+    ciudad: "#CiudadEditar",
+    estado: "#EstadoEditar",
+    enlace: "#EnlaceGoogleMapsEditar",
+    mapa: "#MiniMapaRepartoEditar"
+  };
+
+  var configClonar = {
+    calleNumero: "#CalleNumeroClonar",
+    colonia: "#ColoniaClonar",
+    cp: "#CPClonar",
+    ciudad: "#CiudadClonar",
+    estado: "#EstadoClonar",
+    enlace: "#EnlaceGoogleMapsClonar",
+    mapa: "#MiniMapaRepartoClonar"
+  };
+
+  $(document).on("input change", "#CalleNumero, #Colonia, #CP, #Ciudad, #Estado", function() {
+    actualizarMapaReparto(configAgregar);
+  });
+
+  $(document).on("input change", "#CalleNumeroEditar, #ColoniaEditar, #CPEditar, #CiudadEditar, #EstadoEditar", function() {
+    actualizarMapaReparto(configEditar);
+  });
+
+  $(document).on("input change", "#CalleNumeroClonar, #ColoniaClonar, #CPClonar, #CiudadClonar, #EstadoClonar", function() {
+    actualizarMapaReparto(configClonar);
   });
 
   // Variables para almacenar las fechas
@@ -227,14 +306,17 @@ $(document).ready(function() {
 
   // Para Agregar Repartos
   $("#ValidacionAgregarRepartos").on("submit", function(e) {
+    e.preventDefault();
     var form = $(this);
+
+    var calleSeparada = separarCalleYNumero($("#CalleNumero").val());
+    $("#Calle").val(calleSeparada.calle);
+    $("#NumeroEXT").val(calleSeparada.numero);
+    actualizarMapaReparto(configAgregar);
 
     form.parsley().validate();
 
     if (form.parsley().isValid()) {
-      //prevent Default functionality
-      e.preventDefault();
-
       // data string
       var dataString = form.serialize();
 
@@ -256,14 +338,17 @@ $(document).ready(function() {
 
    // Para Clonar Repartos
    $("#ValidacionClonarRepartos").on("submit", function(e) {
+    e.preventDefault();
     var form = $(this);
+
+    var calleSeparadaClonar = separarCalleYNumero($("#CalleNumeroClonar").val());
+    $("#CalleClonar").val(calleSeparadaClonar.calle);
+    $("#NumeroEXTClonar").val(calleSeparadaClonar.numero);
+    actualizarMapaReparto(configClonar);
 
     form.parsley().validate();
 
     if (form.parsley().isValid()) {
-      //prevent Default functionality
-      e.preventDefault();
-
       // data string
       var dataString = form.serialize();
 
@@ -305,16 +390,19 @@ $(document).ready(function() {
   });
 
   $("#ValidacionEditarRepartos").on("submit", function(e) {
+    e.preventDefault();
     console.log("Si se mando la forma");
 
     var form = $(this);
 
+    var calleSeparadaEditar = separarCalleYNumero($("#CalleNumeroEditar").val());
+    $("#CalleEditar").val(calleSeparadaEditar.calle);
+    $("#NumeroEXTEditar").val(calleSeparadaEditar.numero);
+    actualizarMapaReparto(configEditar);
+
     form.parsley().validate();
 
     if (form.parsley().isValid()) {
-      //prevent Default functionality
-      e.preventDefault();
-
       // data string
       var dataString = form.serialize();
 
@@ -385,6 +473,7 @@ $(document).ready(function() {
   // Evento para editar Status de reparto
 
   $("#ValidacionEditarStatus").on("submit", function(e) {
+    e.preventDefault();
     if (!puedeCambiarEstatus) {
       e.preventDefault();
       window.alert(mensajeRestriccionCambioEstatus);
@@ -396,9 +485,6 @@ $(document).ready(function() {
     form.parsley().validate();
 
     if (form.parsley().isValid()) {
-      //prevent Default functionality
-      e.preventDefault();
-
       // data string
       var dataString = form.serialize();
 
@@ -461,6 +547,7 @@ function TomarDatosParaModalRepartos(val) {
 
       $("select#CLIENTEIDEditar").val(response.CLIENTEID);
       $("input#NumeroDeFacturaEditar").val(response.NumeroDeFactura);
+      $("input#CalleNumeroEditar").val(((response.Calle || "") + " " + (response.NumeroEXT || "")).trim());
       $("input#CalleEditar").val(response.Calle);
       $("input#ColoniaEditar").val(response.Colonia);
       $("input#NumeroEXTEditar").val(response.NumeroEXT);
@@ -483,6 +570,7 @@ function TomarDatosParaModalRepartos(val) {
 
       $("select#CLIENTEIDClonar").val(response.CLIENTEID);
       //$("input#NumeroDeFacturaClonar").val(response.NumeroDeFactura);
+      $("input#CalleNumeroClonar").val(((response.Calle || "") + " " + (response.NumeroEXT || "")).trim());
       $("input#CalleClonar").val(response.Calle);
       $("input#ColoniaClonar").val(response.Colonia);
       $("input#NumeroEXTClonar").val(response.NumeroEXT);
@@ -497,6 +585,24 @@ function TomarDatosParaModalRepartos(val) {
       $("textarea#ComentariosClonar").val(response.Comentarios);
       $("input#USUARIOIDClonar").val(response.USUARIOID);
       $("input#REPARTOIDClonar").val(response.REPARTOID);
+
+      var direccionEditar = [response.Calle, response.NumeroEXT, response.Colonia, response.CP, response.Ciudad, response.Estado]
+        .filter(function(valor) { return valor !== null && valor !== undefined && valor !== ""; })
+        .join(", ");
+      if (direccionEditar) {
+        var queryEditar = encodeURIComponent(direccionEditar);
+        $("#EnlaceGoogleMapsEditar").val("https://www.google.com/maps/search/?api=1&query=" + queryEditar);
+        $("#MiniMapaRepartoEditar").attr("src", "https://www.google.com/maps?q=" + queryEditar + "&output=embed");
+      }
+
+      var direccionClonar = [response.Calle, response.NumeroEXT, response.Colonia, response.CP, response.Ciudad, response.Estado]
+        .filter(function(valor) { return valor !== null && valor !== undefined && valor !== ""; })
+        .join(", ");
+      if (direccionClonar) {
+        var queryClonar = encodeURIComponent(direccionClonar);
+        $("#EnlaceGoogleMapsClonar").val("https://www.google.com/maps/search/?api=1&query=" + queryClonar);
+        $("#MiniMapaRepartoClonar").attr("src", "https://www.google.com/maps?q=" + queryClonar + "&output=embed");
+      }
       
 
       // Para el editor de Status
