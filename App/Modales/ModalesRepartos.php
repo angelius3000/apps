@@ -73,7 +73,7 @@
                 <h5 class="modal-title">Agregar reparto</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="btn-close"></button>
             </div>
-            <form data-parsley-validate class="forms-sample" id="ValidacionAgregarRepartos">
+            <form method="post" data-parsley-validate class="forms-sample" id="ValidacionAgregarRepartos">
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-sm-12">
@@ -204,7 +204,7 @@
                 <h5 class="modal-title">Editar reparto</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="btn-close"></button>
             </div>
-            <form data-parsley-validate class="forms-sample" id="ValidacionEditarRepartos">
+            <form method="post" data-parsley-validate class="forms-sample" id="ValidacionEditarRepartos">
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-sm-12">
@@ -366,7 +366,7 @@
                 <h5 class="modal-title">Clonar reparto</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="btn-close"></button>
             </div>
-            <form data-parsley-validate class="forms-sample" id="ValidacionClonarRepartos">
+            <form method="post" data-parsley-validate class="forms-sample" id="ValidacionClonarRepartos">
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-sm-12">
@@ -610,7 +610,7 @@
                 <h5 class="modal-title">Checar Select 2</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="btn-close"></button>
             </div>
-            <form data-parsley-validate class="forms-sample" id="ValidacionAgregarRepartos">
+            <form method="post" data-parsley-validate class="forms-sample" id="ValidacionAgregarRepartos">
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-sm-12">

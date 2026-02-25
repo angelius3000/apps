@@ -306,6 +306,7 @@ $(document).ready(function() {
 
   // Para Agregar Repartos
   $("#ValidacionAgregarRepartos").on("submit", function(e) {
+    e.preventDefault();
     var form = $(this);
 
     var calleSeparada = separarCalleYNumero($("#CalleNumero").val());
@@ -316,9 +317,6 @@ $(document).ready(function() {
     form.parsley().validate();
 
     if (form.parsley().isValid()) {
-      //prevent Default functionality
-      e.preventDefault();
-
       // data string
       var dataString = form.serialize();
 
@@ -340,6 +338,7 @@ $(document).ready(function() {
 
    // Para Clonar Repartos
    $("#ValidacionClonarRepartos").on("submit", function(e) {
+    e.preventDefault();
     var form = $(this);
 
     var calleSeparadaClonar = separarCalleYNumero($("#CalleNumeroClonar").val());
@@ -350,9 +349,6 @@ $(document).ready(function() {
     form.parsley().validate();
 
     if (form.parsley().isValid()) {
-      //prevent Default functionality
-      e.preventDefault();
-
       // data string
       var dataString = form.serialize();
 
@@ -394,6 +390,7 @@ $(document).ready(function() {
   });
 
   $("#ValidacionEditarRepartos").on("submit", function(e) {
+    e.preventDefault();
     console.log("Si se mando la forma");
 
     var form = $(this);
@@ -406,9 +403,6 @@ $(document).ready(function() {
     form.parsley().validate();
 
     if (form.parsley().isValid()) {
-      //prevent Default functionality
-      e.preventDefault();
-
       // data string
       var dataString = form.serialize();
 
@@ -479,6 +473,7 @@ $(document).ready(function() {
   // Evento para editar Status de reparto
 
   $("#ValidacionEditarStatus").on("submit", function(e) {
+    e.preventDefault();
     if (!puedeCambiarEstatus) {
       e.preventDefault();
       window.alert(mensajeRestriccionCambioEstatus);
@@ -490,9 +485,6 @@ $(document).ready(function() {
     form.parsley().validate();
 
     if (form.parsley().isValid()) {
-      //prevent Default functionality
-      e.preventDefault();
-
       // data string
       var dataString = form.serialize();
 
