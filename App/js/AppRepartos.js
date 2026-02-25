@@ -75,6 +75,29 @@ $(document).ready(function() {
     iframeMapa.attr("src", enlaceEmbed);
   }
 
+
+  function separarCalleYNumero(valorCompleto) {
+    var valor = (valorCompleto || "").trim();
+
+    if (!valor) {
+      return { calle: "", numero: "" };
+    }
+
+    var match = valor.match(/^(.*?)(?:\s+#?([\dA-Za-z-]+))$/);
+
+    if (match && match[1] && /\d/.test(match[2])) {
+      return {
+        calle: match[1].trim(),
+        numero: match[2].trim()
+      };
+    }
+
+    return {
+      calle: valor,
+      numero: ""
+    };
+  }
+
   var configAgregar = {
     calleNumero: "#CalleNumero",
     colonia: "#Colonia",
