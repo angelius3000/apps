@@ -24,30 +24,135 @@ if (!$conn) {
 
 establecerZonaHorariaConteo();
 
-$fechaSolicitada = isset($_GET['fecha']) ? trim((string) $_GET['fecha']) : '';
-if ($fechaSolicitada === '') {
-    $fechaSolicitada = obtenerFechaActualConteo();
+$inicioSolicitado = isset($_GET['inicio']) ? trim((string) $_GET['inicio']) : '';
+$finSolicitado = isset($_GET['fin']) ? trim((string) $_GET['fin']) : '';
+$agrupacion = isset($_GET['agrupacion']) ? trim((string) $_GET['agrupacion']) : 'hora';
+
+if ($agrupacion !== 'hora' && $agrupacion !== 'dia') {
+    $agrupacion = 'hora';
 }
 
-$fechaValida = DateTime::createFromFormat('Y-m-d', $fechaSolicitada);
-if (!$fechaValida || $fechaValida->format('Y-m-d') !== $fechaSolicitada) {
+if ($inicioSolicitado === '' || $finSolicitado === '') {
+    $fechaActual = obtenerFechaActualConteo();
+    $inicioSolicitado = $fechaActual . 'T08:00';
+    $finSolicitado = $fechaActual . 'T19:00';
+}
+
+$inicio = DateTime::createFromFormat('Y-m-d\TH:i', $inicioSolicitado);
+$fin = DateTime::createFromFormat('Y-m-d\TH:i', $finSolicitado);
+
+if (!$inicio || $inicio->format('Y-m-d\TH:i') !== $inicioSolicitado) {
     header('HTTP/1.1 400 Bad Request');
-    echo 'Fecha inválida para exportar.';
+    echo 'Fecha y hora inicial inválida para exportar.';
+    exit;
+}
+
+if (!$fin || $fin->format('Y-m-d\TH:i') !== $finSolicitado) {
+    header('HTTP/1.1 400 Bad Request');
+    echo 'Fecha y hora final inválida para exportar.';
+    exit;
+}
+
+if ($inicio > $fin) {
+    header('HTTP/1.1 400 Bad Request');
+    echo 'La fecha y hora inicial debe ser menor o igual a la final.';
     exit;
 }
 
 $nombreBaseDatos = $dbname ?? '';
 asegurarTablaConteo($conn, $nombreBaseDatos);
-asegurarFilasConteo($conn, $fechaSolicitada);
 
-$registros = obtenerConteoPorFecha($conn, $fechaSolicitada);
-$rangos = obtenerRangosHorasConteo();
-$registrosIndexados = [];
-foreach ($registros as $registro) {
-    $registrosIndexados[$registro['horaInicio']] = $registro;
+$inicioFecha = $inicio->format('Y-m-d');
+$finFecha = $fin->format('Y-m-d');
+
+$inicioCursor = clone $inicio;
+$inicioCursor->setTime(0, 0, 0);
+$finCursor = clone $fin;
+$finCursor->setTime(0, 0, 0);
+
+while ($inicioCursor <= $finCursor) {
+    asegurarFilasConteo($conn, $inicioCursor->format('Y-m-d'));
+    $inicioCursor->modify('+1 day');
 }
 
-$nombreArchivo = 'conteo_' . date('Ymd_His') . '.xls';
+$stmt = mysqli_prepare(
+    $conn,
+    'SELECT Fecha, HoraInicio, HoraFin, Hombre, Mujer, Pareja, Familia, Cuadrilla '
+    . 'FROM conteo_visitas WHERE Fecha BETWEEN ? AND ? ORDER BY Fecha ASC, HoraInicio ASC'
+);
+
+if (!$stmt) {
+    header('HTTP/1.1 500 Internal Server Error');
+    echo 'No se pudo preparar la consulta de exportación.';
+    exit;
+}
+
+mysqli_stmt_bind_param($stmt, 'ss', $inicioFecha, $finFecha);
+mysqli_stmt_execute($stmt);
+mysqli_stmt_bind_result($stmt, $fechaDb, $horaInicioDb, $horaFinDb, $hombreDb, $mujerDb, $parejaDb, $familiaDb, $cuadrillaDb);
+
+$filas = [];
+while (mysqli_stmt_fetch($stmt)) {
+    $inicioBloque = DateTime::createFromFormat('Y-m-d H:i:s', $fechaDb . ' ' . $horaInicioDb);
+    $finBloque = DateTime::createFromFormat('Y-m-d H:i:s', $fechaDb . ' ' . $horaFinDb);
+
+    if (!$inicioBloque || !$finBloque) {
+        continue;
+    }
+
+    if ($finBloque <= $inicio || $inicioBloque >= $fin) {
+        continue;
+    }
+
+    $hombre = (int) $hombreDb;
+    $mujer = (int) $mujerDb;
+    $pareja = (int) $parejaDb;
+    $familia = (int) $familiaDb;
+    $cuadrilla = (int) $cuadrillaDb;
+
+    $filas[] = [
+        'fecha' => $fechaDb,
+        'horaInicio' => $horaInicioDb,
+        'horaFin' => $horaFinDb,
+        'hombre' => $hombre,
+        'mujer' => $mujer,
+        'pareja' => $pareja,
+        'familia' => $familia,
+        'cuadrilla' => $cuadrilla,
+        'total' => $hombre + $mujer + $pareja + $familia + $cuadrilla,
+    ];
+}
+
+mysqli_stmt_close($stmt);
+
+$agrupados = [];
+foreach ($filas as $fila) {
+    $clave = $agrupacion === 'dia' ? $fila['fecha'] : $fila['fecha'] . ' ' . substr($fila['horaInicio'], 0, 5);
+
+    if (!isset($agrupados[$clave])) {
+        $agrupados[$clave] = [
+            'periodo' => $clave,
+            'hombre' => 0,
+            'mujer' => 0,
+            'pareja' => 0,
+            'familia' => 0,
+            'cuadrilla' => 0,
+            'total' => 0,
+            'registros' => 0,
+        ];
+    }
+
+    $agrupados[$clave]['hombre'] += $fila['hombre'];
+    $agrupados[$clave]['mujer'] += $fila['mujer'];
+    $agrupados[$clave]['pareja'] += $fila['pareja'];
+    $agrupados[$clave]['familia'] += $fila['familia'];
+    $agrupados[$clave]['cuadrilla'] += $fila['cuadrilla'];
+    $agrupados[$clave]['total'] += $fila['total'];
+    $agrupados[$clave]['registros']++;
+}
+
+ksort($agrupados);
+$nombreArchivo = 'conteo_periodo_' . date('Ymd_His') . '.xls';
 
 header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
 header('Content-Disposition: attachment; filename=' . $nombreArchivo);
@@ -64,38 +169,60 @@ echo '<Worksheet ss:Name="Conteo">';
 echo '<Table>';
 
 echo '<Row>';
-echo '<Cell><Data ss:Type="String">Fecha</Data></Cell>';
-echo '<Cell><Data ss:Type="String">Hora</Data></Cell>';
+echo '<Cell><Data ss:Type="String">Inicio solicitado</Data></Cell>';
+echo '<Cell><Data ss:Type="String">Fin solicitado</Data></Cell>';
+echo '<Cell><Data ss:Type="String">Agrupación</Data></Cell>';
+echo '</Row>';
+echo '<Row>';
+echo '<Cell><Data ss:Type="String">' . $escapeXml($inicio->format('Y-m-d H:i')) . '</Data></Cell>';
+echo '<Cell><Data ss:Type="String">' . $escapeXml($fin->format('Y-m-d H:i')) . '</Data></Cell>';
+echo '<Cell><Data ss:Type="String">' . $escapeXml($agrupacion === 'dia' ? 'Día' : 'Hora') . '</Data></Cell>';
+echo '</Row>';
+echo '<Row></Row>';
+
+echo '<Row>';
+echo '<Cell><Data ss:Type="String">Periodo</Data></Cell>';
 echo '<Cell><Data ss:Type="String">Hombre</Data></Cell>';
 echo '<Cell><Data ss:Type="String">Mujer</Data></Cell>';
 echo '<Cell><Data ss:Type="String">Pareja</Data></Cell>';
 echo '<Cell><Data ss:Type="String">Familia</Data></Cell>';
 echo '<Cell><Data ss:Type="String">Cuadrilla</Data></Cell>';
 echo '<Cell><Data ss:Type="String">Total</Data></Cell>';
+echo '<Cell><Data ss:Type="String">Promedio por registro</Data></Cell>';
 echo '</Row>';
 
-foreach ($rangos as $rango) {
-    $registro = $registrosIndexados[$rango['horaInicio']] ?? [
-        'hombre' => 0,
-        'mujer' => 0,
-        'pareja' => 0,
-        'familia' => 0,
-        'cuadrilla' => 0,
-    ];
+$totalGeneral = 0;
+$registrosTotales = 0;
 
-    $total = $registro['hombre'] + $registro['mujer'] + $registro['pareja'] + $registro['familia'] + $registro['cuadrilla'];
+foreach ($agrupados as $grupo) {
+    $promedioGrupo = $grupo['registros'] > 0 ? $grupo['total'] / $grupo['registros'] : 0;
 
     echo '<Row>';
-    echo '<Cell><Data ss:Type="String">' . $escapeXml($fechaSolicitada) . '</Data></Cell>';
-    echo '<Cell><Data ss:Type="String">' . $escapeXml($rango['etiqueta']) . '</Data></Cell>';
-    echo '<Cell><Data ss:Type="Number">' . (int) $registro['hombre'] . '</Data></Cell>';
-    echo '<Cell><Data ss:Type="Number">' . (int) $registro['mujer'] . '</Data></Cell>';
-    echo '<Cell><Data ss:Type="Number">' . (int) $registro['pareja'] . '</Data></Cell>';
-    echo '<Cell><Data ss:Type="Number">' . (int) $registro['familia'] . '</Data></Cell>';
-    echo '<Cell><Data ss:Type="Number">' . (int) $registro['cuadrilla'] . '</Data></Cell>';
-    echo '<Cell><Data ss:Type="Number">' . (int) $total . '</Data></Cell>';
+    echo '<Cell><Data ss:Type="String">' . $escapeXml($grupo['periodo']) . '</Data></Cell>';
+    echo '<Cell><Data ss:Type="Number">' . (int) $grupo['hombre'] . '</Data></Cell>';
+    echo '<Cell><Data ss:Type="Number">' . (int) $grupo['mujer'] . '</Data></Cell>';
+    echo '<Cell><Data ss:Type="Number">' . (int) $grupo['pareja'] . '</Data></Cell>';
+    echo '<Cell><Data ss:Type="Number">' . (int) $grupo['familia'] . '</Data></Cell>';
+    echo '<Cell><Data ss:Type="Number">' . (int) $grupo['cuadrilla'] . '</Data></Cell>';
+    echo '<Cell><Data ss:Type="Number">' . (int) $grupo['total'] . '</Data></Cell>';
+    echo '<Cell><Data ss:Type="Number">' . number_format($promedioGrupo, 2, '.', '') . '</Data></Cell>';
     echo '</Row>';
+
+    $totalGeneral += $grupo['total'];
+    $registrosTotales += $grupo['registros'];
 }
+
+echo '<Row></Row>';
+echo '<Row>';
+echo '<Cell><Data ss:Type="String">Total general</Data></Cell>';
+echo '<Cell><Data ss:Type="Number"></Data></Cell>';
+echo '<Cell><Data ss:Type="Number"></Data></Cell>';
+echo '<Cell><Data ss:Type="Number"></Data></Cell>';
+echo '<Cell><Data ss:Type="Number"></Data></Cell>';
+echo '<Cell><Data ss:Type="Number"></Data></Cell>';
+echo '<Cell><Data ss:Type="Number">' . (int) $totalGeneral . '</Data></Cell>';
+echo '<Cell><Data ss:Type="Number">' . ($registrosTotales > 0 ? number_format($totalGeneral / $registrosTotales, 2, '.', '') : '0.00') . '</Data></Cell>';
+echo '</Row>';
 
 echo '</Table>';
 echo '</Worksheet>';
