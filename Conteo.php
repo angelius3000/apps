@@ -80,10 +80,32 @@ $puedeExportarConteo = in_array($tipoUsuarioId, $perfilesConExportacion, true);
                                     <div class="card-body">
                                         <?php if ($puedeExportarConteo) : ?>
                                             <form action="App/Server/ServerExportarConteoExcel.php" method="GET" class="row g-3 align-items-end mb-4">
-                                                <div class="col-12 col-md-auto">
-                                                    <label class="form-label fw-semibold" for="fechaConteoExportar">Fecha para exportar</label>
-                                                    <input type="date" class="form-control" id="fechaConteoExportar" name="fecha"
-                                                        value="<?php echo htmlspecialchars($fechaActual, ENT_QUOTES, 'UTF-8'); ?>" required>
+                                                <div class="col-12 col-md-3">
+                                                    <label class="form-label fw-semibold" for="inicioConteoExportar">Fecha y hora inicial</label>
+                                                    <input
+                                                        type="datetime-local"
+                                                        class="form-control"
+                                                        id="inicioConteoExportar"
+                                                        name="inicio"
+                                                        value="<?php echo htmlspecialchars($fechaActual . 'T08:00', ENT_QUOTES, 'UTF-8'); ?>"
+                                                        required>
+                                                </div>
+                                                <div class="col-12 col-md-3">
+                                                    <label class="form-label fw-semibold" for="finConteoExportar">Fecha y hora final</label>
+                                                    <input
+                                                        type="datetime-local"
+                                                        class="form-control"
+                                                        id="finConteoExportar"
+                                                        name="fin"
+                                                        value="<?php echo htmlspecialchars($fechaActual . 'T19:00', ENT_QUOTES, 'UTF-8'); ?>"
+                                                        required>
+                                                </div>
+                                                <div class="col-12 col-md-2">
+                                                    <label class="form-label fw-semibold" for="agrupacionConteoExportar">Agrupar por</label>
+                                                    <select class="form-select" id="agrupacionConteoExportar" name="agrupacion">
+                                                        <option value="hora" selected>Hora</option>
+                                                        <option value="dia">Día</option>
+                                                    </select>
                                                 </div>
                                                 <div class="col-12 col-md-auto">
                                                     <button type="submit" class="btn btn-success">Exportar Excel</button>
