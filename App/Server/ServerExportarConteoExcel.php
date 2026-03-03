@@ -127,11 +127,13 @@ mysqli_stmt_close($stmt);
 
 $agrupados = [];
 foreach ($filas as $fila) {
-    $clave = $agrupacion === 'dia' ? $fila['fecha'] : $fila['fecha'] . ' ' . substr($fila['horaInicio'], 0, 5);
+    $hora = substr($fila['horaInicio'], 0, 5);
+    $clave = $agrupacion === 'dia' ? $fila['fecha'] : $fila['fecha'] . ' ' . $hora;
 
     if (!isset($agrupados[$clave])) {
         $agrupados[$clave] = [
-            'periodo' => $clave,
+            'fecha' => $fila['fecha'],
+            'hora' => $agrupacion === 'dia' ? '' : $hora,
             'hombre' => 0,
             'mujer' => 0,
             'pareja' => 0,
@@ -181,7 +183,8 @@ echo '</Row>';
 echo '<Row></Row>';
 
 echo '<Row>';
-echo '<Cell><Data ss:Type="String">Periodo</Data></Cell>';
+echo '<Cell><Data ss:Type="String">Fecha</Data></Cell>';
+echo '<Cell><Data ss:Type="String">Hora</Data></Cell>';
 echo '<Cell><Data ss:Type="String">Hombre</Data></Cell>';
 echo '<Cell><Data ss:Type="String">Mujer</Data></Cell>';
 echo '<Cell><Data ss:Type="String">Pareja</Data></Cell>';
@@ -198,7 +201,8 @@ foreach ($agrupados as $grupo) {
     $promedioGrupo = $grupo['registros'] > 0 ? $grupo['total'] / $grupo['registros'] : 0;
 
     echo '<Row>';
-    echo '<Cell><Data ss:Type="String">' . $escapeXml($grupo['periodo']) . '</Data></Cell>';
+    echo '<Cell><Data ss:Type="String">' . $escapeXml($grupo['fecha']) . '</Data></Cell>';
+    echo '<Cell><Data ss:Type="String">' . $escapeXml($grupo['hora']) . '</Data></Cell>';
     echo '<Cell><Data ss:Type="Number">' . (int) $grupo['hombre'] . '</Data></Cell>';
     echo '<Cell><Data ss:Type="Number">' . (int) $grupo['mujer'] . '</Data></Cell>';
     echo '<Cell><Data ss:Type="Number">' . (int) $grupo['pareja'] . '</Data></Cell>';
@@ -215,6 +219,7 @@ foreach ($agrupados as $grupo) {
 echo '<Row></Row>';
 echo '<Row>';
 echo '<Cell><Data ss:Type="String">Total general</Data></Cell>';
+echo '<Cell><Data ss:Type="String"></Data></Cell>';
 echo '<Cell><Data ss:Type="Number"></Data></Cell>';
 echo '<Cell><Data ss:Type="Number"></Data></Cell>';
 echo '<Cell><Data ss:Type="Number"></Data></Cell>';
