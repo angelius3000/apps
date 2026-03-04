@@ -145,10 +145,8 @@
                                     <option value="">Sin asignar</option>
                                     <?php foreach ($usuariosActivos as $usuarioActivo) {
                                         $nombreCompleto = trim(
-                                            (string)$usuarioActivo['ApellidoPaterno'] . ' ' .
-                                            (string)$usuarioActivo['ApellidoMaterno'] . ' ' .
                                             (string)$usuarioActivo['PrimerNombre'] . ' ' .
-                                            (string)$usuarioActivo['SegundoNombre']
+                                            (string)$usuarioActivo['ApellidoPaterno']
                                         );
                                     ?>
                                         <option value="<?php echo (int)$usuarioActivo['USUARIOID']; ?>"><?php echo htmlspecialchars($nombreCompleto, ENT_QUOTES, 'UTF-8'); ?></option>

@@ -32,10 +32,12 @@ $esAdmin = in_array($tipoUsuarioActual, ['soporte it', 'administrador'], true);
 $usuariosActivos = [];
 $consultaUsuarios = mysqli_query(
     $conn,
-    "SELECT USUARIOID, PrimerNombre, SegundoNombre, ApellidoPaterno, ApellidoMaterno
+    "SELECT usuarios.USUARIOID, usuarios.PrimerNombre, usuarios.ApellidoPaterno
      FROM usuarios
-     WHERE Deshabilitado = 0
-     ORDER BY ApellidoPaterno, ApellidoMaterno, PrimerNombre"
+     LEFT JOIN tipodeusuarios ON usuarios.TIPODEUSUARIOID = tipodeusuarios.TIPODEUSUARIOID
+     WHERE usuarios.Deshabilitado = 0
+       AND LOWER(TRIM(tipodeusuarios.TipoDeUsuario)) = 'soporte it'
+     ORDER BY usuarios.ApellidoPaterno, usuarios.PrimerNombre"
 );
 
 if ($consultaUsuarios) {
