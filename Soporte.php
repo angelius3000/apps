@@ -6,7 +6,28 @@ if (!usuarioTieneAccesoSeccion('soporte')) {
 }
 
 $tipoUsuarioActual = strtolower(trim((string)($_SESSION['TipoDeUsuario'] ?? '')));
-$esAdmin = ($tipoUsuarioActual === 'administrador');
+$tipoUsuarioSesionId = (int)($_SESSION['TIPOUSUARIO'] ?? 0);
+
+if ($tipoUsuarioActual === '' && $tipoUsuarioSesionId > 0) {
+    $consultaTipoUsuario = mysqli_prepare(
+        $conn,
+        'SELECT TipoDeUsuario FROM tipodeusuarios WHERE TIPODEUSUARIOID = ? LIMIT 1'
+    );
+
+    if ($consultaTipoUsuario) {
+        mysqli_stmt_bind_param($consultaTipoUsuario, 'i', $tipoUsuarioSesionId);
+        mysqli_stmt_execute($consultaTipoUsuario);
+        mysqli_stmt_bind_result($consultaTipoUsuario, $tipoUsuarioRecuperado);
+
+        if (mysqli_stmt_fetch($consultaTipoUsuario)) {
+            $tipoUsuarioActual = strtolower(trim((string) $tipoUsuarioRecuperado));
+        }
+
+        mysqli_stmt_close($consultaTipoUsuario);
+    }
+}
+
+$esAdmin = in_array($tipoUsuarioActual, ['soporte it', 'administrador'], true);
 
 $usuariosActivos = [];
 $consultaUsuarios = mysqli_query(

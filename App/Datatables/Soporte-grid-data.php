@@ -8,7 +8,28 @@ if (!isset($_SESSION)) {
 $requestData = $_REQUEST;
 
 $tipo = strtolower(trim((string)($_SESSION['TipoDeUsuario'] ?? '')));
-$esAdmin = ($tipo === 'administrador');
+$tipoUsuarioSesionId = (int)($_SESSION['TIPOUSUARIO'] ?? 0);
+
+if ($tipo === '' && $tipoUsuarioSesionId > 0) {
+    $consultaTipoUsuario = mysqli_prepare(
+        $conn,
+        'SELECT TipoDeUsuario FROM tipodeusuarios WHERE TIPODEUSUARIOID = ? LIMIT 1'
+    );
+
+    if ($consultaTipoUsuario) {
+        mysqli_stmt_bind_param($consultaTipoUsuario, 'i', $tipoUsuarioSesionId);
+        mysqli_stmt_execute($consultaTipoUsuario);
+        mysqli_stmt_bind_result($consultaTipoUsuario, $tipoUsuarioRecuperado);
+
+        if (mysqli_stmt_fetch($consultaTipoUsuario)) {
+            $tipo = strtolower(trim((string) $tipoUsuarioRecuperado));
+        }
+
+        mysqli_stmt_close($consultaTipoUsuario);
+    }
+}
+
+$esAdmin = in_array($tipo, ['soporte it', 'administrador'], true);
 $usuarioIdSesion = (int)($_SESSION['USUARIOID'] ?? 0);
 
 $columns = array(

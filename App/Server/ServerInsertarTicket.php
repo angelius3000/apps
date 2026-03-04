@@ -75,6 +75,22 @@ if ($resultadoFolio) {
 $USUARIOID_ASIGNADO = 'NULL';
 $AutoAsignado = 0;
 
+$sqlAdmin = "SELECT usuarios.USUARIOID
+    FROM usuarios
+    LEFT JOIN tipodeusuarios ON usuarios.TIPODEUSUARIOID = tipodeusuarios.TIPODEUSUARIOID
+    WHERE LOWER(tipodeusuarios.TipoDeUsuario) IN ('soporte it', 'administrador') AND usuarios.Deshabilitado = 0
+    ORDER BY usuarios.USUARIOID ASC LIMIT 1";
+
+$resultadoAdmin = mysqli_query($conn, $sqlAdmin);
+if ($resultadoAdmin && mysqli_num_rows($resultadoAdmin) > 0) {
+    $filaAdmin = mysqli_fetch_assoc($resultadoAdmin);
+    $USUARIOID_ASIGNADO = (int)$filaAdmin['USUARIOID'];
+    $AutoAsignado = 1;
+}
+if ($resultadoAdmin) {
+    mysqli_free_result($resultadoAdmin);
+}
+
 $sql = "INSERT INTO tickets (Folio, Titulo, Descripcion, Prioridad, Categoria, STATUS, USUARIOID_CREADOR, USUARIOID_ASIGNADO, AutoAsignado)
 VALUES ('$folio', '$Titulo', '$Descripcion', '$Prioridad', '$Categoria', 'Abierto', '$USUARIOID_CREADOR', " . ($USUARIOID_ASIGNADO === 'NULL' ? 'NULL' : "'$USUARIOID_ASIGNADO'") . ", '$AutoAsignado')";
 
