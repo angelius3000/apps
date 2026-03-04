@@ -66,6 +66,13 @@ if (!function_exists('obtenerDefinicionSeccionesBase')) {
                 'Orden' => 9,
                 'MostrarEnMenu' => 1,
             ],
+            [
+                'Nombre' => 'Soporte',
+                'Slug' => 'soporte',
+                'Ruta' => 'Soporte.php',
+                'Orden' => 8,
+                'MostrarEnMenu' => 1,
+            ],
         ];
     }
 }
