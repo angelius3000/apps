@@ -5,8 +5,8 @@ include("../../Connections/ConDB.php");
 $ID = (int)($_POST['ID'] ?? 0);
 
 $sql = "SELECT t.*, 
-        CONCAT_WS(' ', u1.PrimerNombre, u1.SegundoNombre, u1.ApellidoPaterno, u1.ApellidoMaterno) AS CreadoPor,
-        CONCAT_WS(' ', u2.PrimerNombre, u2.SegundoNombre, u2.ApellidoPaterno, u2.ApellidoMaterno) AS AsignadoA
+        CONCAT_WS(' ', u1.PrimerNombre, u1.ApellidoPaterno) AS CreadoPor,
+        CONCAT_WS(' ', u2.PrimerNombre, u2.ApellidoPaterno) AS AsignadoA
         FROM tickets t
         LEFT JOIN usuarios u1 ON t.USUARIOID_CREADOR = u1.USUARIOID
         LEFT JOIN usuarios u2 ON t.USUARIOID_ASIGNADO = u2.USUARIOID

@@ -8,7 +8,7 @@ if (!isset($_SESSION)) {
 $requestData = $_REQUEST;
 
 $tipo = strtolower(trim((string)($_SESSION['TipoDeUsuario'] ?? '')));
-$esAdmin = in_array($tipo, ['soporte it', 'administrador'], true);
+$esAdmin = ($tipo === 'administrador');
 $usuarioIdSesion = (int)($_SESSION['USUARIOID'] ?? 0);
 
 $columns = array(
@@ -38,8 +38,8 @@ $totalData = mysqli_num_rows($query);
 $totalFiltered = $totalData;
 
 $sql = "SELECT t.*,
-        CONCAT_WS(' ', u1.PrimerNombre, u1.SegundoNombre, u1.ApellidoPaterno, u1.ApellidoMaterno) AS creador,
-        CONCAT_WS(' ', u2.PrimerNombre, u2.SegundoNombre, u2.ApellidoPaterno, u2.ApellidoMaterno) AS asignado
+        CONCAT_WS(' ', u1.PrimerNombre, u1.ApellidoPaterno) AS creador,
+        CONCAT_WS(' ', u2.PrimerNombre, u2.ApellidoPaterno) AS asignado
         FROM tickets t
         LEFT JOIN usuarios u1 ON t.USUARIOID_CREADOR = u1.USUARIOID
         LEFT JOIN usuarios u2 ON t.USUARIOID_ASIGNADO = u2.USUARIOID
@@ -61,8 +61,8 @@ if (!empty($requestData['search']['value'])) {
             t.Prioridad LIKE '%" . $word . "%' OR
             t.Categoria LIKE '%" . $word . "%' OR
             t.STATUS LIKE '%" . $word . "%' OR
-            CONCAT_WS(' ', u1.PrimerNombre, u1.SegundoNombre, u1.ApellidoPaterno, u1.ApellidoMaterno) LIKE '%" . $word . "%' OR
-            CONCAT_WS(' ', u2.PrimerNombre, u2.SegundoNombre, u2.ApellidoPaterno, u2.ApellidoMaterno) LIKE '%" . $word . "%'
+            CONCAT_WS(' ', u1.PrimerNombre, u1.ApellidoPaterno) LIKE '%" . $word . "%' OR
+            CONCAT_WS(' ', u2.PrimerNombre, u2.ApellidoPaterno) LIKE '%" . $word . "%'
         )";
     }
 

@@ -6,7 +6,7 @@ if (!isset($_SESSION)) {
 }
 
 $tipoUsuarioActual = strtolower(trim((string)($_SESSION['TipoDeUsuario'] ?? '')));
-$esAdmin = in_array($tipoUsuarioActual, ['soporte it', 'administrador'], true);
+$esAdmin = ($tipoUsuarioActual === 'administrador');
 $usuarioSesion = (int)($_SESSION['USUARIOID'] ?? 0);
 
 $TICKETIDEditar = (int)($_POST['TICKETIDEditar'] ?? 0);
@@ -44,7 +44,25 @@ if ($esAdmin) {
         if ($_POST['USUARIOID_ASIGNADOEditar'] === '') {
             $set[] = "USUARIOID_ASIGNADO = NULL";
         } else {
-            $set[] = "USUARIOID_ASIGNADO = '" . (int)$_POST['USUARIOID_ASIGNADOEditar'] . "'";
+            $usuarioAsignado = (int)$_POST['USUARIOID_ASIGNADOEditar'];
+            $sqlSoporteIt = "SELECT usuarios.USUARIOID
+                FROM usuarios
+                LEFT JOIN tipodeusuarios ON usuarios.TIPODEUSUARIOID = tipodeusuarios.TIPODEUSUARIOID
+                WHERE usuarios.USUARIOID = '$usuarioAsignado'
+                  AND usuarios.Deshabilitado = 0
+                  AND LOWER(TRIM(tipodeusuarios.TipoDeUsuario)) = 'soporte it'
+                LIMIT 1";
+
+            $resultadoSoporteIt = mysqli_query($conn, $sqlSoporteIt);
+            if ($resultadoSoporteIt && mysqli_num_rows($resultadoSoporteIt) > 0) {
+                $set[] = "USUARIOID_ASIGNADO = '$usuarioAsignado'";
+            } else {
+                $set[] = "USUARIOID_ASIGNADO = NULL";
+            }
+
+            if ($resultadoSoporteIt) {
+                mysqli_free_result($resultadoSoporteIt);
+            }
         }
     }
 

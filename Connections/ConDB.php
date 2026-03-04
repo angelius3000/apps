@@ -153,19 +153,6 @@ if ($conn === false) {
         sincronizarSeccionesBase($conn);
     }
 
-    // Ensure every user has an explicit permission row for every section so
-    // newly added modules (for example, Soporte) can be enabled/disabled per
-    // user from the same controls used by the rest of sections.
-    @mysqli_query(
-        $conn,
-        'INSERT INTO usuario_secciones (USUARIOID, SECCIONID, PuedeVer) '
-            . 'SELECT u.USUARIOID, s.SECCIONID, 1 '
-            . 'FROM usuarios u '
-            . 'CROSS JOIN secciones s '
-            . 'LEFT JOIN usuario_secciones us ON us.USUARIOID = u.USUARIOID AND us.SECCIONID = s.SECCIONID '
-            . 'WHERE us.USUARIOID IS NULL'
-    );
-
     $crearTablaTickets = "CREATE TABLE IF NOT EXISTS tickets (
         TICKETID INT NOT NULL AUTO_INCREMENT,
         Folio VARCHAR(25) NOT NULL,
