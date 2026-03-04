@@ -8,7 +8,7 @@ if (!isset($_SESSION)) {
 $requestData = $_REQUEST;
 
 $tipo = strtolower(trim((string)($_SESSION['TipoDeUsuario'] ?? '')));
-$esAdmin = ($tipo === 'administrador');
+$esAdmin = in_array($tipo, ['soporte it', 'administrador'], true);
 $usuarioIdSesion = (int)($_SESSION['USUARIOID'] ?? 0);
 
 $columns = array(

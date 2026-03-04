@@ -100,7 +100,7 @@ if ($ordenCharolaId <= 0 || $statusIdEntrada === '') {
     exit;
 }
 
-$rolesPermitidos = ['administrador', 'supervisor', 'auditor'];
+$rolesPermitidos = ['soporte it', 'administrador', 'supervisor', 'auditor'];
 $tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string) $_SESSION['TipoDeUsuario'])) : '';
 $puedeCambiarEstatus = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $rolesPermitidos, true);
 $puedeAsignarVerificado = $puedeCambiarEstatus;
@@ -108,7 +108,7 @@ $puedeAsignarAuditado = $tipoUsuarioActual === 'auditor';
 
 if (!$puedeCambiarEstatus) {
     http_response_code(403);
-    echo json_encode(['error' => 'Solo un administrador, supervisor o auditor puede cambiar el estatus.']);
+    echo json_encode(['error' => 'Solo un Soporte IT, administrador, supervisor o auditor puede cambiar el estatus.']);
     mysqli_close($conn);
     exit;
 }
@@ -141,7 +141,7 @@ if ($stmtStatusAuditado) {
 
 if ($statusVerificadoId !== null && (string) $statusVerificadoId === $statusIdEntrada && !$puedeAsignarVerificado) {
     http_response_code(403);
-    echo json_encode(['error' => 'Solo un administrador, supervisor o auditor puede asignar el estatus Verificado.']);
+    echo json_encode(['error' => 'Solo un Soporte IT, administrador, supervisor o auditor puede asignar el estatus Verificado.']);
     mysqli_close($conn);
     exit;
 }

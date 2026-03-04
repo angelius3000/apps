@@ -6,7 +6,7 @@ if (!isset($_SESSION)) {
 }
 
 $tipoUsuarioActual = strtolower(trim((string)($_SESSION['TipoDeUsuario'] ?? '')));
-$esAdmin = ($tipoUsuarioActual === 'administrador');
+$esAdmin = in_array($tipoUsuarioActual, ['soporte it', 'administrador'], true);
 $usuarioSesion = (int)($_SESSION['USUARIOID'] ?? 0);
 
 $TICKETIDEditar = (int)($_POST['TICKETIDEditar'] ?? 0);

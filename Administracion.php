@@ -6,7 +6,7 @@ require_once __DIR__ . '/Connections/ConDB.php';
 $pageTitle = 'Edison - Administración';
 
 $tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string) $_SESSION['TipoDeUsuario'])) : '';
-if ($tipoUsuarioActual !== 'administrador') {
+if (!in_array($tipoUsuarioActual, ['soporte it', 'administrador'], true)) {
     header("Location: main.php");
     exit;
 }

@@ -18,7 +18,7 @@ $(document).ready(function() {
   var puedeAsignarVerificado = !!configuracionCharolas.puedeAsignarVerificado;
   var mensajeRestriccionVerificado = typeof configuracionCharolas.mensajeRestriccionVerificado === 'string' && configuracionCharolas.mensajeRestriccionVerificado.trim() !== ''
     ? configuracionCharolas.mensajeRestriccionVerificado
-    : 'Solo un administrador, supervisor o auditor puede asignar el estatus Verificado.';
+    : 'Solo un Soporte IT, administrador, supervisor o auditor puede asignar el estatus Verificado.';
   var nombreStatusVerificadoNormalizado = '';
   var statusAuditadoId = configuracionCharolas.statusAuditadoId !== null && configuracionCharolas.statusAuditadoId !== undefined
     ? String(configuracionCharolas.statusAuditadoId)
