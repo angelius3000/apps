@@ -295,25 +295,13 @@ $(document).on("change", ".usuario-seccion-toggle", function() {
   var checkbox = $(this);
   var nuevoEstado = checkbox.is(":checked");
   var estadoAnterior = !nuevoEstado;
-  var data = {
-    USUARIOID: checkbox.data("usuario"),
-    SECCIONID: checkbox.data("seccion"),
-    PuedeVer: nuevoEstado ? 1 : 0,
-  };
-
   checkbox.prop("disabled", true);
 
-  $.ajax({
-    type: "POST",
-    url: "App/Server/ServerActualizarPermisoSeccion.php",
-    data: data,
-    dataType: "json",
-  })
-    .done(function(response) {
-      if (!response || response.success !== true) {
-        checkbox.prop("checked", estadoAnterior);
-      }
-    })
+  actualizarPermisoSeccion(
+    checkbox.data("usuario"),
+    checkbox.data("seccion"),
+    nuevoEstado ? 1 : 0
+  )
     .fail(function() {
       checkbox.prop("checked", estadoAnterior);
     })
@@ -321,3 +309,66 @@ $(document).on("change", ".usuario-seccion-toggle", function() {
       checkbox.prop("disabled", false);
     });
 });
+
+$(document).on("click", ".global-seccion-toggle", function() {
+  var boton = $(this);
+  var seccionId = parseInt(boton.data("seccion"), 10);
+  var puedeVer = parseInt(boton.data("puedeVer"), 10) === 1 ? 1 : 0;
+  var checkboxes = $(".usuario-seccion-toggle[data-seccion='" + seccionId + "']");
+
+  if (!checkboxes.length) {
+    return;
+  }
+
+  var estadosOriginales = [];
+  checkboxes.each(function(index) {
+    estadosOriginales[index] = $(this).is(":checked");
+  });
+
+  boton.prop("disabled", true);
+  checkboxes.prop("disabled", true).prop("checked", puedeVer === 1);
+
+  $.ajax({
+    type: "POST",
+    url: "App/Server/ServerActualizarPermisoSeccionGlobal.php",
+    data: {
+      SECCIONID: seccionId,
+      PuedeVer: puedeVer,
+    },
+    dataType: "json",
+  })
+    .done(function(response) {
+      if (!response || response.success !== true) {
+        checkboxes.each(function(index) {
+          $(this).prop("checked", estadosOriginales[index]);
+        });
+      }
+    })
+    .fail(function() {
+      checkboxes.each(function(index) {
+        $(this).prop("checked", estadosOriginales[index]);
+      });
+    })
+    .always(function() {
+      boton.prop("disabled", false);
+      checkboxes.prop("disabled", false);
+    });
+});
+
+function actualizarPermisoSeccion(usuarioId, seccionId, puedeVer) {
+  return $.ajax({
+    type: "POST",
+    url: "App/Server/ServerActualizarPermisoSeccion.php",
+    data: {
+      USUARIOID: usuarioId,
+      SECCIONID: seccionId,
+      PuedeVer: puedeVer,
+    },
+    dataType: "json",
+  }).then(function(response) {
+    if (!response || response.success !== true) {
+      return $.Deferred().reject(response).promise();
+    }
+    return response;
+  });
+}
