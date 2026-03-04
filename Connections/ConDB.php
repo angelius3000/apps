@@ -32,7 +32,7 @@ if ($conn === false) {
 
     // Ensure new user profiles exist so they are available across the
     // application without requiring a manual database migration.
-    $perfilesNuevos = ['Auditor', 'Supervisor'];
+    $perfilesNuevos = ['Auditor', 'Supervisor', 'Soporte IT'];
     foreach ($perfilesNuevos as $perfil) {
         $stmt = @mysqli_prepare(
             $conn,

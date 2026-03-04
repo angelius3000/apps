@@ -28,8 +28,8 @@ $totalRows_charolas = count($charolas);
 
 $statusVerificadoNombre = 'Verificado';
 $statusVerificadoId = null;
-$mensajeRestriccionVerificado = 'Solo un administrador, supervisor o auditor puede asignar el estatus Verificado.';
-$tiposPermitidosCambioEstatus = ['administrador', 'supervisor', 'auditor'];
+$mensajeRestriccionVerificado = 'Solo un Soporte IT, administrador, supervisor o auditor puede asignar el estatus Verificado.';
+$tiposPermitidosCambioEstatus = ['soporte it', 'administrador', 'supervisor', 'auditor'];
 $tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string) $_SESSION['TipoDeUsuario'])) : '';
 $puedeCambiarEstatusCharolas = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $tiposPermitidosCambioEstatus, true);
 $puedeAsignarVerificado = $puedeCambiarEstatusCharolas;

@@ -7,10 +7,10 @@ if (!isset($_SESSION)) {
     session_start();
 }
 
-$perfilesPermitidos = [1, 5, 8];
-$tipoUsuarioId = isset($_SESSION['TIPOUSUARIO']) ? (int) $_SESSION['TIPOUSUARIO'] : 0;
+$tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string) $_SESSION['TipoDeUsuario'])) : '';
+$perfilesPermitidos = ['soporte it', 'administrador', 'supervisor', 'auditor'];
 
-if (!in_array($tipoUsuarioId, $perfilesPermitidos, true)) {
+if (!in_array($tipoUsuarioActual, $perfilesPermitidos, true)) {
     header('HTTP/1.1 403 Forbidden');
     echo 'No tienes permisos para exportar este reporte.';
     exit;
