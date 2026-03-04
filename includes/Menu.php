@@ -79,7 +79,7 @@
                 $mostrar = false;
             }
 
-            if (!empty($seccionMenu['soloAdministrador']) && $tipoUsuarioActual !== 'administrador') {
+            if (!empty($seccionMenu['soloAdministrador']) && !in_array($tipoUsuarioActual, ['soporte it', 'administrador'], true)) {
                 $mostrar = false;
             }
 

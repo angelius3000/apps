@@ -6,7 +6,7 @@ if (!usuarioTieneAccesoSeccion('soporte')) {
 }
 
 $tipoUsuarioActual = strtolower(trim((string)($_SESSION['TipoDeUsuario'] ?? '')));
-$esAdmin = ($tipoUsuarioActual === 'administrador');
+$esAdmin = in_array($tipoUsuarioActual, ['soporte it', 'administrador'], true);
 
 $usuariosActivos = [];
 $consultaUsuarios = mysqli_query(

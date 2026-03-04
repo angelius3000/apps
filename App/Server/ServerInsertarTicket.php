@@ -78,7 +78,7 @@ $AutoAsignado = 0;
 $sqlAdmin = "SELECT usuarios.USUARIOID
     FROM usuarios
     LEFT JOIN tipodeusuarios ON usuarios.TIPODEUSUARIOID = tipodeusuarios.TIPODEUSUARIOID
-    WHERE LOWER(tipodeusuarios.TipoDeUsuario) = 'administrador' AND usuarios.Deshabilitado = 0
+    WHERE LOWER(tipodeusuarios.TipoDeUsuario) IN ('soporte it', 'administrador') AND usuarios.Deshabilitado = 0
     ORDER BY usuarios.USUARIOID ASC LIMIT 1";
 
 $resultadoAdmin = mysqli_query($conn, $sqlAdmin);
