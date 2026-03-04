@@ -7,7 +7,7 @@
             </div>
 
             <div class="modal-body">
-                <form id="ValidacionAgregarTicket" data-parsley-validate>
+                <form id="ValidacionAgregarTicket" data-parsley-validate enctype="multipart/form-data">
                     <div class="row">
                         <div class="col-sm-12">
                             <div class="mb-3">
@@ -42,7 +42,28 @@
                         <div class="col-sm-12">
                             <div class="mb-3">
                                 <label class="form-label">Descripción</label>
-                                <textarea class="form-control" name="Descripcion" id="Descripcion" rows="4" required></textarea>
+                                <textarea class="form-control" name="Descripcion" id="Descripcion" rows="4" required placeholder="Describe el problema. También puedes pegar (Ctrl+V) una imagen aquí."></textarea>
+                            </div>
+                        </div>
+                        <div class="col-sm-12">
+                            <div class="mb-3">
+                                <label class="form-label">Adjuntar imagen</label>
+                                <div id="ZonaAdjuntoTicket" class="card border-dashed" style="border: 2px dashed #cfd8dc; border-radius: 8px; cursor: pointer;">
+                                    <div class="card-body text-center py-3">
+                                        <p class="mb-2">Arrastra y suelta una imagen aquí</p>
+                                        <p class="mb-2">o</p>
+                                        <button type="button" id="BtnSeleccionarImagenTicket" class="btn btn-sm btn-outline-primary">Seleccionar imagen</button>
+                                        <p class="mb-0 mt-2 text-muted">También puedes pegar con <strong>Ctrl + V</strong> sobre la descripción.</p>
+                                    </div>
+                                </div>
+                                <input type="file" class="d-none" id="ImagenTicket" name="ImagenTicket" accept="image/*">
+                                <input type="hidden" id="ImagenTicketPegada" name="ImagenTicketPegada">
+                                <div id="PreviewImagenTicket" class="mt-2" style="display:none;">
+                                    <img id="PreviewImagenTicketImg" src="" alt="Vista previa" style="max-width: 100%; max-height: 220px; border-radius: 6px;">
+                                    <div class="mt-2">
+                                        <button type="button" id="QuitarImagenTicket" class="btn btn-sm btn-outline-danger">Quitar imagen</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

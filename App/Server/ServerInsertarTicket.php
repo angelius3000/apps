@@ -11,6 +11,52 @@ $Prioridad = mysqli_real_escape_string($conn, $_POST['Prioridad'] ?? 'Media');
 $Categoria = mysqli_real_escape_string($conn, $_POST['Categoria'] ?? 'Otros');
 $USUARIOID_CREADOR = (int)($_SESSION['USUARIOID'] ?? 0);
 
+$rutaAdjunto = '';
+
+$directorioAdjuntos = dirname(__DIR__) . '/Uploads/Soporte';
+if (!is_dir($directorioAdjuntos)) {
+    @mkdir($directorioAdjuntos, 0775, true);
+}
+
+if (isset($_FILES['ImagenTicket']) && isset($_FILES['ImagenTicket']['tmp_name']) && $_FILES['ImagenTicket']['tmp_name'] !== '') {
+    $mime = (string)($_FILES['ImagenTicket']['type'] ?? '');
+    if (strpos($mime, 'image/') === 0) {
+        $extension = strtolower(pathinfo((string)$_FILES['ImagenTicket']['name'], PATHINFO_EXTENSION));
+        if ($extension === '') {
+            $extension = 'png';
+        }
+
+        $nombreArchivo = 'ticket_' . date('Ymd_His') . '_' . mt_rand(1000, 9999) . '.' . preg_replace('/[^a-z0-9]/', '', $extension);
+        $destino = $directorioAdjuntos . '/' . $nombreArchivo;
+
+        if (@move_uploaded_file($_FILES['ImagenTicket']['tmp_name'], $destino)) {
+            $rutaAdjunto = 'App/Uploads/Soporte/' . $nombreArchivo;
+        }
+    }
+} elseif (!empty($_POST['ImagenTicketPegada'])) {
+    $imagenPegada = (string)$_POST['ImagenTicketPegada'];
+    if (preg_match('/^data:image\/(png|jpe?g|gif|webp);base64,/', $imagenPegada, $coincidencias)) {
+        $tipo = strtolower($coincidencias[1]);
+        if ($tipo === 'jpeg') {
+            $tipo = 'jpg';
+        }
+
+        $base64 = substr($imagenPegada, strpos($imagenPegada, ',') + 1);
+        $binario = base64_decode($base64, true);
+        if ($binario !== false) {
+            $nombreArchivo = 'ticket_' . date('Ymd_His') . '_' . mt_rand(1000, 9999) . '.' . $tipo;
+            $destino = $directorioAdjuntos . '/' . $nombreArchivo;
+            if (@file_put_contents($destino, $binario) !== false) {
+                $rutaAdjunto = 'App/Uploads/Soporte/' . $nombreArchivo;
+            }
+        }
+    }
+}
+
+if ($rutaAdjunto !== '') {
+    $Descripcion .= "\n\nAdjunto: " . $rutaAdjunto;
+}
+
 $hoy = date('Ymd');
 $folio = 'SOP-' . $hoy . '-0001';
 
