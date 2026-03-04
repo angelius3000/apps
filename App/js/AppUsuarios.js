@@ -26,9 +26,13 @@ $(document).ready(function() {
   });
   
   var permisoCount = parseInt($('#UsuariosDT').data('permisoCount'), 10) || 0;
-  var nonOrderableTargets = [];
-  for (var i = 0; i < permisoCount + 2; i++) {
-    nonOrderableTargets.push(4 + i);
+  var seccionStartIndex = 2;
+  var emailColumnIndex = seccionStartIndex + permisoCount;
+  var estatusColumnIndex = emailColumnIndex + 1;
+  var accionesColumnIndex = emailColumnIndex + 2;
+  var nonOrderableTargets = [accionesColumnIndex];
+  for (var i = 0; i < permisoCount; i++) {
+    nonOrderableTargets.push(seccionStartIndex + i);
   }
 
   var dataTableUsuarioDT = $("#UsuariosDT").DataTable({
@@ -61,7 +65,11 @@ $(document).ready(function() {
       type: "post",
     },
 
-    columnDefs: [{ orderable: false, targets: nonOrderableTargets }],
+    columnDefs: [
+      { orderable: false, targets: nonOrderableTargets },
+      { className: "none", targets: [emailColumnIndex, estatusColumnIndex, accionesColumnIndex] },
+      { responsivePriority: 1, targets: [0, 1] }
+    ],
 
     lengthChange: true, // añade la lista desplegable
     order: [[0, "DESC"]],

@@ -79,14 +79,13 @@ if ($conn) {
                                 <thead>
                                     <tr>
                                         <th>Nombre</th>
-                                        <th>email</th>
                                         <th>Tipo de usuario</th>
-                                        <th>Empresa</th>
                                         <?php foreach ($seccionesSistema as $seccion) { ?>
                                             <th><?php echo htmlspecialchars($seccion['Nombre'], ENT_QUOTES, 'UTF-8'); ?></th>
                                         <?php } ?>
-                                        <th></th>
-                                        <th></th>
+                                        <th>Correo</th>
+                                        <th>Estatus</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                             </table>
