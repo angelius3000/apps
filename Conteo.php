@@ -27,9 +27,9 @@ foreach ($registrosConteo as $registro) {
     $registrosIndexados[$registro['horaInicio']] = $registro;
 }
 
-$perfilesConExportacion = [1, 5, 8];
-$tipoUsuarioId = isset($_SESSION['TIPOUSUARIO']) ? (int) $_SESSION['TIPOUSUARIO'] : 0;
-$puedeExportarConteo = in_array($tipoUsuarioId, $perfilesConExportacion, true);
+$tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string) $_SESSION['TipoDeUsuario'])) : '';
+$perfilesConExportacion = ['soporte it', 'administrador', 'supervisor', 'auditor'];
+$puedeExportarConteo = in_array($tipoUsuarioActual, $perfilesConExportacion, true);
 
 ?>
 <!DOCTYPE html>

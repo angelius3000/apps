@@ -3,7 +3,7 @@ $(document).ready(function() {
   var puedeCambiarEstatus = !!repartosConfig.puedeCambiarEstatus;
   var mensajeRestriccionCambioEstatus = typeof repartosConfig.mensajeRestriccionCambioEstatus === 'string' && repartosConfig.mensajeRestriccionCambioEstatus.trim() !== ''
     ? repartosConfig.mensajeRestriccionCambioEstatus
-    : 'Solo un administrador, supervisor o auditor puede cambiar el estatus.';
+    : 'Solo un Soporte IT, administrador, supervisor o auditor puede cambiar el estatus.';
 
   $('#ModalCambioStatus').on('show.bs.modal', function(event) {
     if (!puedeCambiarEstatus) {

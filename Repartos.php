@@ -49,10 +49,10 @@ $Solicitantes = mysqli_query($conn, $query_Solicitantes) or die(mysqli_error($co
 $totalRows_Solicitantes = mysqli_num_rows($Solicitantes);
 
 $tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string) $_SESSION['TipoDeUsuario'])) : '';
-$tiposPermitidosCambioEstatus = ['administrador', 'supervisor', 'auditor'];
+$tiposPermitidosCambioEstatus = ['soporte it', 'administrador', 'supervisor', 'auditor'];
 $puedeCambiarEstatusRepartos = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $tiposPermitidosCambioEstatus, true);
-$mensajeRestriccionCambioEstatus = 'Solo un administrador, supervisor o auditor puede cambiar el estatus.';
-$tiposPermitidosAgregarReparto = ['administrador', 'supervisor'];
+$mensajeRestriccionCambioEstatus = 'Solo un Soporte IT, administrador, supervisor o auditor puede cambiar el estatus.';
+$tiposPermitidosAgregarReparto = ['soporte it', 'administrador', 'supervisor'];
 $puedeAgregarReparto = in_array((string) ($_SESSION['TIPOUSUARIO'] ?? ''), ['1', '3'], true)
     || ($tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $tiposPermitidosAgregarReparto, true));
 

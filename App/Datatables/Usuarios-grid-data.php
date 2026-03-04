@@ -20,10 +20,8 @@ if ($resultSecciones) {
 
 $columns = array(
     // datatable column index  => database column name
-    0 => 'usuarios.ApellidoPaterno',
-    1 => 'usuarios.email',
-    2 => 'tipodeusuarios.TipoDeUsuario',
-    3 => 'clientes.NombreCliente'
+    0 => 'usuarios.PrimerNombre',
+    1 => 'tipodeusuarios.TipoDeUsuario'
 );
 
 $baseColumns = count($columns);
@@ -31,8 +29,9 @@ foreach ($secciones as $indice => $seccion) {
     $columns[$baseColumns + $indice] = 'Permiso' . (int)$seccion['SECCIONID'];
 }
 
-$columns[$baseColumns + count($secciones)] = 'usuarios.Deshabilitado';
-$columns[$baseColumns + count($secciones) + 1] = 'acciones';
+$columns[$baseColumns + count($secciones)] = 'usuarios.email';
+$columns[$baseColumns + count($secciones) + 1] = 'usuarios.Deshabilitado';
+$columns[$baseColumns + count($secciones) + 2] = 'acciones';
 
 // getting total number records without any search
 $sql = "SELECT * FROM usuarios 
@@ -68,7 +67,7 @@ $query = mysqli_query($conn, $sql) or die("employee-grid-data.php: get employees
 $totalFiltered = mysqli_num_rows($query); // when there is a search parameter then we have to modify total number filtered rows as per search result. 
 
 $orderColumnIndex = isset($requestData['order'][0]['column']) ? (int)$requestData['order'][0]['column'] : 0;
-$orderColumn = isset($columns[$orderColumnIndex]) ? $columns[$orderColumnIndex] : 'usuarios.ApellidoPaterno';
+$orderColumn = isset($columns[$orderColumnIndex]) ? $columns[$orderColumnIndex] : 'usuarios.PrimerNombre';
 $orderDir = isset($requestData['order'][0]['dir']) && in_array(strtolower($requestData['order'][0]['dir']), ['asc', 'desc'], true)
     ? $requestData['order'][0]['dir']
     : 'ASC';
@@ -94,19 +93,10 @@ while ($row = mysqli_fetch_array($query)) {  // preparing an array ... Preparand
     $claseBotonEstado = $estaDeshabilitado ? 'btn-success' : 'btn-danger';
     $iconoBotonEstado = $estaDeshabilitado ? 'mdi mdi-account-check' : 'mdi mdi-block-helper';
 
-    if (!empty($row["CLIENTEID"])) {
-        $Empresa = $row["NombreCliente"];
-    } else {
-        $Empresa = 'Edison';
-    }
-
-
     $nestedData = array();
 
-    $nestedData[] = htmlspecialchars(trim($row["ApellidoPaterno"] . ' ' . $row["ApellidoMaterno"] . ' ' . $row["PrimerNombre"] . ' ' . $row["SegundoNombre"]), ENT_QUOTES, 'UTF-8');
-    $nestedData[] = htmlspecialchars($row["email"], ENT_QUOTES, 'UTF-8');
+    $nestedData[] = htmlspecialchars(trim($row["PrimerNombre"] . ' ' . $row["ApellidoPaterno"]), ENT_QUOTES, 'UTF-8');
     $nestedData[] = htmlspecialchars($row["TipoDeUsuario"], ENT_QUOTES, 'UTF-8');
-    $nestedData[] = htmlspecialchars($Empresa, ENT_QUOTES, 'UTF-8');
 
     $permisosUsuario = [];
     $consultaPermisos = mysqli_query($conn, "SELECT SECCIONID, PuedeVer FROM usuario_secciones WHERE USUARIOID = " . (int)$row["USUARIOID"]);
@@ -124,6 +114,7 @@ while ($row = mysqli_fetch_array($query)) {  // preparing an array ... Preparand
         $nestedData[] = $checkbox;
     }
 
+    $nestedData[] = htmlspecialchars($row["email"], ENT_QUOTES, 'UTF-8');
     $nestedData[] = $BadgeActivo;
     $nestedData[] = '
 

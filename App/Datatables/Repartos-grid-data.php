@@ -7,7 +7,7 @@ if (!isset($_SESSION)) {
 }
 
 $tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string) $_SESSION['TipoDeUsuario'])) : '';
-$tiposPermitidosCambioEstatus = ['administrador', 'supervisor', 'auditor'];
+$tiposPermitidosCambioEstatus = ['soporte it', 'administrador', 'supervisor', 'auditor'];
 $puedeCambiarEstatus = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $tiposPermitidosCambioEstatus, true);
 
 // check request

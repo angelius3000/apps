@@ -22,12 +22,12 @@ if (!$conn) {
 }
 
 $tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string) $_SESSION['TipoDeUsuario'])) : '';
-$rolesPermitidos = ['administrador', 'supervisor', 'auditor'];
+$rolesPermitidos = ['soporte it', 'administrador', 'supervisor', 'auditor'];
 $puedeCambiarEstatus = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $rolesPermitidos, true);
 
 if (!$puedeCambiarEstatus) {
     http_response_code(403);
-    echo json_encode(['error' => 'Solo un administrador, supervisor o auditor puede cambiar el estatus.']);
+    echo json_encode(['error' => 'Solo un Soporte IT, administrador, supervisor o auditor puede cambiar el estatus.']);
     mysqli_close($conn);
     exit;
 }

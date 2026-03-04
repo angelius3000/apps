@@ -79,14 +79,35 @@ if ($conn) {
                                 <thead>
                                     <tr>
                                         <th>Nombre</th>
-                                        <th>email</th>
                                         <th>Tipo de usuario</th>
-                                        <th>Empresa</th>
                                         <?php foreach ($seccionesSistema as $seccion) { ?>
-                                            <th><?php echo htmlspecialchars($seccion['Nombre'], ENT_QUOTES, 'UTF-8'); ?></th>
+                                            <th>
+                                                <div class="d-flex flex-column align-items-start">
+                                                    <span><?php echo htmlspecialchars($seccion['Nombre'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                                    <div class="btn-group btn-group-sm mt-1" role="group" aria-label="Control global <?php echo htmlspecialchars($seccion['Nombre'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-outline-success global-seccion-toggle"
+                                                            data-seccion="<?php echo (int)$seccion['SECCIONID']; ?>"
+                                                            data-puede-ver="1"
+                                                            title="Activar esta sección para todos los usuarios">
+                                                            ON
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-outline-danger global-seccion-toggle"
+                                                            data-seccion="<?php echo (int)$seccion['SECCIONID']; ?>"
+                                                            data-puede-ver="0"
+                                                            title="Desactivar esta sección para todos los usuarios">
+                                                            OFF
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </th>
                                         <?php } ?>
-                                        <th></th>
-                                        <th></th>
+                                        <th>Correo</th>
+                                        <th>Estatus</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                             </table>

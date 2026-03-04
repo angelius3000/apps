@@ -26,9 +26,13 @@ $(document).ready(function() {
   });
   
   var permisoCount = parseInt($('#UsuariosDT').data('permisoCount'), 10) || 0;
-  var nonOrderableTargets = [];
-  for (var i = 0; i < permisoCount + 2; i++) {
-    nonOrderableTargets.push(4 + i);
+  var seccionStartIndex = 2;
+  var emailColumnIndex = seccionStartIndex + permisoCount;
+  var estatusColumnIndex = emailColumnIndex + 1;
+  var accionesColumnIndex = emailColumnIndex + 2;
+  var nonOrderableTargets = [accionesColumnIndex];
+  for (var i = 0; i < permisoCount; i++) {
+    nonOrderableTargets.push(seccionStartIndex + i);
   }
 
   var dataTableUsuarioDT = $("#UsuariosDT").DataTable({
@@ -61,7 +65,11 @@ $(document).ready(function() {
       type: "post",
     },
 
-    columnDefs: [{ orderable: false, targets: nonOrderableTargets }],
+    columnDefs: [
+      { orderable: false, targets: nonOrderableTargets },
+      { className: "none", targets: [emailColumnIndex, estatusColumnIndex, accionesColumnIndex] },
+      { responsivePriority: 1, targets: [0, 1] }
+    ],
 
     lengthChange: true, // añade la lista desplegable
     order: [[0, "DESC"]],
@@ -287,25 +295,13 @@ $(document).on("change", ".usuario-seccion-toggle", function() {
   var checkbox = $(this);
   var nuevoEstado = checkbox.is(":checked");
   var estadoAnterior = !nuevoEstado;
-  var data = {
-    USUARIOID: checkbox.data("usuario"),
-    SECCIONID: checkbox.data("seccion"),
-    PuedeVer: nuevoEstado ? 1 : 0,
-  };
-
   checkbox.prop("disabled", true);
 
-  $.ajax({
-    type: "POST",
-    url: "App/Server/ServerActualizarPermisoSeccion.php",
-    data: data,
-    dataType: "json",
-  })
-    .done(function(response) {
-      if (!response || response.success !== true) {
-        checkbox.prop("checked", estadoAnterior);
-      }
-    })
+  actualizarPermisoSeccion(
+    checkbox.data("usuario"),
+    checkbox.data("seccion"),
+    nuevoEstado ? 1 : 0
+  )
     .fail(function() {
       checkbox.prop("checked", estadoAnterior);
     })
@@ -313,3 +309,66 @@ $(document).on("change", ".usuario-seccion-toggle", function() {
       checkbox.prop("disabled", false);
     });
 });
+
+$(document).on("click", ".global-seccion-toggle", function() {
+  var boton = $(this);
+  var seccionId = parseInt(boton.data("seccion"), 10);
+  var puedeVer = parseInt(boton.data("puedeVer"), 10) === 1 ? 1 : 0;
+  var checkboxes = $(".usuario-seccion-toggle[data-seccion='" + seccionId + "']");
+
+  if (!checkboxes.length) {
+    return;
+  }
+
+  var estadosOriginales = [];
+  checkboxes.each(function(index) {
+    estadosOriginales[index] = $(this).is(":checked");
+  });
+
+  boton.prop("disabled", true);
+  checkboxes.prop("disabled", true).prop("checked", puedeVer === 1);
+
+  $.ajax({
+    type: "POST",
+    url: "App/Server/ServerActualizarPermisoSeccionGlobal.php",
+    data: {
+      SECCIONID: seccionId,
+      PuedeVer: puedeVer,
+    },
+    dataType: "json",
+  })
+    .done(function(response) {
+      if (!response || response.success !== true) {
+        checkboxes.each(function(index) {
+          $(this).prop("checked", estadosOriginales[index]);
+        });
+      }
+    })
+    .fail(function() {
+      checkboxes.each(function(index) {
+        $(this).prop("checked", estadosOriginales[index]);
+      });
+    })
+    .always(function() {
+      boton.prop("disabled", false);
+      checkboxes.prop("disabled", false);
+    });
+});
+
+function actualizarPermisoSeccion(usuarioId, seccionId, puedeVer) {
+  return $.ajax({
+    type: "POST",
+    url: "App/Server/ServerActualizarPermisoSeccion.php",
+    data: {
+      USUARIOID: usuarioId,
+      SECCIONID: seccionId,
+      PuedeVer: puedeVer,
+    },
+    dataType: "json",
+  }).then(function(response) {
+    if (!response || response.success !== true) {
+      return $.Deferred().reject(response).promise();
+    }
+    return response;
+  });
+}

@@ -9,7 +9,7 @@ $tipoUsuarioActual = isset($_SESSION['TipoDeUsuario'])
     ? strtolower(trim((string) $_SESSION['TipoDeUsuario']))
     : '';
 
-if ($tipoUsuarioActual !== 'administrador') {
+if (!in_array($tipoUsuarioActual, ['soporte it', 'administrador'], true)) {
     http_response_code(403);
     exit('No tienes permisos para descargar respaldos.');
 }
