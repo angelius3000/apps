@@ -51,6 +51,12 @@
                 'nombre' => 'Usuarios',
             ],
             [
+                'slug' => 'soporte',
+                'ruta' => 'Soporte.php',
+                'icono' => 'support_agent',
+                'nombre' => 'Soporte',
+            ],
+            [
                 'slug' => 'personal',
                 'ruta' => 'Personal.php',
                 'icono' => 'badge',

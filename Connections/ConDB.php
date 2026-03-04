@@ -32,7 +32,7 @@ if ($conn === false) {
 
     // Ensure new user profiles exist so they are available across the
     // application without requiring a manual database migration.
-    $perfilesNuevos = ['Auditor', 'Supervisor'];
+    $perfilesNuevos = ['Auditor', 'Supervisor', 'Soporte IT'];
     foreach ($perfilesNuevos as $perfil) {
         $stmt = @mysqli_prepare(
             $conn,
@@ -152,6 +152,44 @@ if ($conn === false) {
     if (function_exists('sincronizarSeccionesBase')) {
         sincronizarSeccionesBase($conn);
     }
+
+    $crearTablaTickets = "CREATE TABLE IF NOT EXISTS tickets (
+        TICKETID INT NOT NULL AUTO_INCREMENT,
+        Folio VARCHAR(25) NOT NULL,
+        Titulo VARCHAR(200) NOT NULL,
+        Descripcion TEXT NOT NULL,
+        Prioridad VARCHAR(20) NOT NULL DEFAULT 'Media',
+        Categoria VARCHAR(50) NOT NULL DEFAULT 'Otros',
+        STATUS VARCHAR(30) NOT NULL DEFAULT 'Abierto',
+        USUARIOID_CREADOR INT NOT NULL,
+        USUARIOID_ASIGNADO INT NULL,
+        AutoAsignado TINYINT(1) NOT NULL DEFAULT 0,
+        FechaCreacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FechaActualizacion TIMESTAMP NULL DEFAULT NULL,
+        FechaCierre TIMESTAMP NULL DEFAULT NULL,
+        PRIMARY KEY (TICKETID),
+        UNIQUE KEY uq_tickets_folio (Folio),
+        CONSTRAINT fk_tickets_usuario_creador FOREIGN KEY (USUARIOID_CREADOR)
+            REFERENCES usuarios (USUARIOID) ON DELETE RESTRICT,
+        CONSTRAINT fk_tickets_usuario_asignado FOREIGN KEY (USUARIOID_ASIGNADO)
+            REFERENCES usuarios (USUARIOID) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+    $crearTablaTicketsComentarios = "CREATE TABLE IF NOT EXISTS tickets_comentarios (
+        COMENTARIOID INT NOT NULL AUTO_INCREMENT,
+        TICKETID INT NOT NULL,
+        USUARIOID INT NOT NULL,
+        Comentario TEXT NOT NULL,
+        Fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (COMENTARIOID),
+        CONSTRAINT fk_tickets_comentarios_ticket FOREIGN KEY (TICKETID)
+            REFERENCES tickets (TICKETID) ON DELETE CASCADE,
+        CONSTRAINT fk_tickets_comentarios_usuario FOREIGN KEY (USUARIOID)
+            REFERENCES usuarios (USUARIOID) ON DELETE RESTRICT
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+    @mysqli_query($conn, $crearTablaTickets);
+    @mysqli_query($conn, $crearTablaTicketsComentarios);
 
 
     // Ensure personnel catalog tables have a Deshabilitado column so records can be disabled
