@@ -70,6 +70,12 @@ if (!usuarioTieneAccesoSeccion('aplicaciones')) {
                                                 'icono' => 'pending_actions',
                                                 'nombre' => 'Material Pendiente',
                                             ],
+                                            [
+                                                'slug' => 'soporte',
+                                                'ruta' => 'Soporte.php',
+                                                'icono' => 'support_agent',
+                                                'nombre' => 'Soporte',
+                                            ],
                                         ];
 
                                         foreach ($apps as $app) {
