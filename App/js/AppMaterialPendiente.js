@@ -1043,11 +1043,8 @@ $(document).ready(function() {
     }
 
     if ($modalDocumentoDuplicado.length) {
-      accionModalDocumento = 'cambiar';
+      accionModalDocumento = '';
       $modalDocumentoDuplicado.modal('show');
-      if ($modal.length) {
-        $modal.modal('hide');
-      }
       return;
     }
 
@@ -1823,9 +1820,6 @@ $(document).ready(function() {
     $modalDocumentoDuplicado.on('hidden.bs.modal', function() {
       if (accionModalDocumento === 'cambiar') {
         accionModalDocumento = '';
-        if ($modal.length) {
-          $modal.modal('show');
-        }
       }
     });
   }
@@ -1850,7 +1844,9 @@ $(document).ready(function() {
         $modalDocumentoDuplicado.modal('hide');
       }
       if ($modal.length) {
-        $modal.modal('hide');
+        setTimeout(function() {
+          $modal.modal('hide');
+        }, 200);
       }
     });
   }
