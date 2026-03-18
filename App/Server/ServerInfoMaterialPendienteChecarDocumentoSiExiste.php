@@ -41,15 +41,37 @@ $sqlCrearTablaFactura = "CREATE TABLE IF NOT EXISTS facturamp (
 
 @mysqli_query($conn, $sqlCrearTablaFactura);
 
+$nombreBaseDatos = $dbname ?? '';
+if ($nombreBaseDatos !== '') {
+    $stmtColumna = mysqli_prepare(
+        $conn,
+        'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1'
+    );
+
+    if ($stmtColumna) {
+        $tabla = 'facturamp';
+        $columna = 'ActivoFMP';
+        mysqli_stmt_bind_param($stmtColumna, 'sss', $nombreBaseDatos, $tabla, $columna);
+        mysqli_stmt_execute($stmtColumna);
+        mysqli_stmt_store_result($stmtColumna);
+
+        if (mysqli_stmt_num_rows($stmtColumna) === 0) {
+            @mysqli_query($conn, "ALTER TABLE facturamp ADD COLUMN ActivoFMP TINYINT(1) NOT NULL DEFAULT 1 AFTER AduanaFMP");
+        }
+
+        mysqli_stmt_close($stmtColumna);
+    }
+}
+
 if ($folio > 0) {
     $stmt = mysqli_prepare(
         $conn,
-        'SELECT FacturaMPID FROM facturamp WHERE DocumentoFMP = ? AND FacturaMPID <> ? LIMIT 1'
+        'SELECT FacturaMPID FROM facturamp WHERE DocumentoFMP = ? AND FacturaMPID <> ? AND ActivoFMP = 1 LIMIT 1'
     );
 } else {
     $stmt = mysqli_prepare(
         $conn,
-        'SELECT FacturaMPID FROM facturamp WHERE DocumentoFMP = ? LIMIT 1'
+        'SELECT FacturaMPID FROM facturamp WHERE DocumentoFMP = ? AND ActivoFMP = 1 LIMIT 1'
     );
 }
 

@@ -267,7 +267,7 @@ if (empty($productosValidos)) {
 
 $stmtDocumento = mysqli_prepare(
     $conn,
-    'SELECT FacturaMPID FROM facturamp WHERE DocumentoFMP = ? LIMIT 1'
+    'SELECT FacturaMPID FROM facturamp WHERE DocumentoFMP = ? AND ActivoFMP = 1 LIMIT 1'
 );
 
 if (!$stmtDocumento) {
