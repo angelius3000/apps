@@ -45,6 +45,12 @@
                 'nombre' => 'Clientes',
             ],
             [
+                'slug' => 'productos',
+                'ruta' => 'Productos.php',
+                'icono' => 'inventory_2',
+                'nombre' => 'Productos',
+            ],
+            [
                 'slug' => 'usuarios',
                 'ruta' => 'Usuarios.php',
                 'icono' => 'person_add_alt',
