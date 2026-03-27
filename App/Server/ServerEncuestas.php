@@ -43,6 +43,107 @@ function normalizarTipoPregunta(string $tipo): string
     return in_array($tipo, $permitidos, true) ? $tipo : 'texto_corto';
 }
 
+function normalizarConfiguracionEscalaAgrupada(array $preguntaInput): array
+{
+    $criteriosInput = is_array($preguntaInput['criterios'] ?? null) ? $preguntaInput['criterios'] : [];
+    $opcionesEscalaInput = is_array($preguntaInput['opciones_escala'] ?? null) ? $preguntaInput['opciones_escala'] : [];
+
+    $criterios = [];
+    $indice = 1;
+    foreach ($criteriosInput as $criterio) {
+        $valorCriterio = $criterio;
+        if (is_array($criterio)) {
+            $valorCriterio = $criterio['label'] ?? '';
+        }
+
+        $criterioLimpio = limpiarTextoEncuesta($valorCriterio, 255);
+        if ($criterioLimpio === '') {
+            continue;
+        }
+
+        $criterios[] = [
+            'id' => 'criterio_' . $indice,
+            'label' => $criterioLimpio,
+        ];
+        $indice++;
+    }
+
+    $opciones = [];
+    foreach ($opcionesEscalaInput as $opcionEscala) {
+        $opcionEscalaLimpia = limpiarTextoEncuesta($opcionEscala, 255);
+        if ($opcionEscalaLimpia !== '') {
+            $opciones[] = $opcionEscalaLimpia;
+        }
+    }
+
+    return [
+        'schema_version' => 1,
+        'criterios' => $criterios,
+        'opciones' => array_values($opciones),
+        'permitir_otras' => !empty($preguntaInput['permitir_otras']),
+        'etiqueta_otras' => 'Otras',
+    ];
+}
+
+function validarRespuestasEscalaAgrupada(array $config, array $respuestas, bool $requerida): array
+{
+    $errores = [];
+    $normalizadas = [];
+    $opciones = array_values(array_map('strval', $config['opciones'] ?? []));
+    $permitirOtras = !empty($config['permitir_otras']);
+    $etiquetaOtras = (string)($config['etiqueta_otras'] ?? 'Otras');
+
+    foreach (($config['criterios'] ?? []) as $criterioConfig) {
+        $criterioId = (string)($criterioConfig['id'] ?? '');
+        $criterioLabel = (string)($criterioConfig['label'] ?? '');
+        if ($criterioId === '' || $criterioLabel === '') {
+            continue;
+        }
+
+        $respuesta = $respuestas[$criterioId] ?? [];
+        $opcion = limpiarTextoEncuesta($respuesta['opcion'] ?? '', 255);
+        $texto = limpiarTextoEncuesta($respuesta['texto'] ?? '', 2000);
+
+        if ($requerida && $opcion === '') {
+            $errores[] = 'El criterio "' . $criterioLabel . '" es obligatorio.';
+            continue;
+        }
+
+        if ($opcion === '') {
+            continue;
+        }
+
+        $esOtras = strcasecmp($opcion, $etiquetaOtras) === 0;
+        if (!$esOtras && !in_array($opcion, $opciones, true)) {
+            $errores[] = 'La opción seleccionada para "' . $criterioLabel . '" no es válida.';
+            continue;
+        }
+
+        if ($esOtras && !$permitirOtras) {
+            $errores[] = 'No se permite la opción Otras para "' . $criterioLabel . '".';
+            continue;
+        }
+
+        if ($esOtras && $texto === '') {
+            $errores[] = 'Debes capturar el detalle de Otras en "' . $criterioLabel . '".';
+            continue;
+        }
+
+        $normalizadas[] = [
+            'criterio_id' => $criterioId,
+            'criterio' => $criterioLabel,
+            'opcion' => $opcion,
+            'valor_texto' => $esOtras ? $texto : '',
+        ];
+    }
+
+    return [
+        'valid' => empty($errores),
+        'errors' => $errores,
+        'rows' => $normalizadas,
+    ];
+}
+
 function usuarioPuedeAdministrarEncuestas(): bool
 {
     $permisos = $_SESSION['PermisosSecciones'] ?? [];
@@ -315,38 +416,15 @@ if ($action === 'save') {
         }
 
         if ($tipo === 'escala_agrupada') {
-            $criteriosInput = is_array($preguntaInput['criterios'] ?? null) ? $preguntaInput['criterios'] : [];
-            $opcionesEscalaInput = is_array($preguntaInput['opciones_escala'] ?? null) ? $preguntaInput['opciones_escala'] : [];
+            $configuracion = normalizarConfiguracionEscalaAgrupada($preguntaInput);
 
-            $criterios = [];
-            foreach ($criteriosInput as $criterio) {
-                $criterioLimpio = limpiarTextoEncuesta($criterio, 255);
-                if ($criterioLimpio !== '') {
-                    $criterios[] = $criterioLimpio;
-                }
-            }
-
-            $opcionesEscala = [];
-            foreach ($opcionesEscalaInput as $opcionEscala) {
-                $opcionEscalaLimpia = limpiarTextoEncuesta($opcionEscala, 255);
-                if ($opcionEscalaLimpia !== '') {
-                    $opcionesEscala[] = $opcionEscalaLimpia;
-                }
-            }
-
-            if (count($criterios) === 0) {
+            if (count($configuracion['criterios']) === 0) {
                 responderEncuestas(['success' => false, 'message' => 'La escala agrupada requiere al menos un criterio.'], 422);
             }
 
-            if (count($opcionesEscala) < 2) {
+            if (count($configuracion['opciones']) < 2) {
                 responderEncuestas(['success' => false, 'message' => 'La escala agrupada requiere al menos dos opciones de escala.'], 422);
             }
-
-            $configuracion = [
-                'criterios' => array_values($criterios),
-                'opciones' => array_values($opcionesEscala),
-                'permitir_otras' => !empty($preguntaInput['permitir_otras']) ? true : false,
-            ];
         }
 
         $preguntasNormalizadas[] = [
@@ -689,6 +767,30 @@ if ($action === 'empleado_mes_template') {
             ],
         ],
     ]);
+}
+
+if ($action === 'validar_escala_agrupada') {
+    $rawConfig = json_decode((string)($_POST['configuracion'] ?? '{}'), true);
+    $rawRespuestas = json_decode((string)($_POST['respuestas'] ?? '{}'), true);
+    $requerida = (int)($_POST['requerida'] ?? 1) === 1;
+
+    if (!is_array($rawConfig) || !is_array($rawRespuestas)) {
+        responderEncuestas(['success' => false, 'message' => 'Datos inválidos para validar la escala agrupada.'], 422);
+    }
+
+    $config = [
+        'criterios' => is_array($rawConfig['criterios'] ?? null) ? $rawConfig['criterios'] : [],
+        'opciones' => is_array($rawConfig['opciones'] ?? null) ? $rawConfig['opciones'] : [],
+        'permitir_otras' => !empty($rawConfig['permitir_otras']),
+        'etiqueta_otras' => (string)($rawConfig['etiqueta_otras'] ?? 'Otras'),
+    ];
+
+    $resultado = validarRespuestasEscalaAgrupada($config, $rawRespuestas, $requerida);
+    responderEncuestas([
+        'success' => $resultado['valid'],
+        'errors' => $resultado['errors'],
+        'rows' => $resultado['rows'],
+    ], $resultado['valid'] ? 200 : 422);
 }
 
 responderEncuestas(['success' => false, 'message' => 'Acción no soportada.'], 404);

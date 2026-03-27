@@ -5,6 +5,16 @@ $(document).ready(function() {
     return $('<div>').text(value == null ? '' : String(value)).html();
   }
 
+  function normalizarCriteriosParaUI(criterios) {
+    if (!Array.isArray(criterios)) return [];
+    return criterios.map(function(item) {
+      if (item && typeof item === 'object') {
+        return item.label || '';
+      }
+      return item || '';
+    });
+  }
+
   function formatearFecha(fecha) {
     if (!fecha) return '';
     return String(fecha).replace('T', ' ').substring(0, 16);
@@ -278,7 +288,7 @@ $(document).ready(function() {
             descripcion: p.Descripcion,
             requerida: parseInt(p.Requerida, 10) === 1,
             opciones: (p.Opciones || []).map(function(o) { return o.Texto; }),
-            criterios: (p.Configuracion && p.Configuracion.criterios) ? p.Configuracion.criterios : [],
+            criterios: normalizarCriteriosParaUI((p.Configuracion && p.Configuracion.criterios) ? p.Configuracion.criterios : []),
             opciones_escala: (p.Configuracion && p.Configuracion.opciones) ? p.Configuracion.opciones : [],
             permitir_otras: !!(p.Configuracion && p.Configuracion.permitir_otras)
           };
@@ -318,13 +328,13 @@ $(document).ready(function() {
         }
         html += '</tr></thead><tbody>';
 
-        (pregunta.criterios || []).forEach(function(criterio) {
+        (normalizarCriteriosParaUI(pregunta.criterios || []) || []).forEach(function(criterio) {
           html += '<tr><td>' + escapeHtml(criterio) + '</td>';
           (pregunta.opciones_escala || []).forEach(function() {
             html += '<td><input type="radio" disabled></td>';
           });
           if (pregunta.permitir_otras) {
-            html += '<td><input class="form-control form-control-sm" disabled placeholder="Detalle"></td>';
+            html += '<td><div class="d-flex align-items-center gap-1"><input type="radio" disabled> <input class="form-control form-control-sm" disabled placeholder="Detalle Otras"></div></td>';
           }
           html += '</tr>';
         });
