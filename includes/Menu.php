@@ -63,6 +63,12 @@
                 'nombre' => 'Soporte',
             ],
             [
+                'slug' => 'encuestas',
+                'ruta' => 'Encuestas.php',
+                'icono' => 'poll',
+                'nombre' => 'Encuestas',
+            ],
+            [
                 'slug' => 'personal',
                 'ruta' => 'Personal.php',
                 'icono' => 'badge',
