@@ -39,21 +39,9 @@ if (!usuarioTieneAccesoSeccion('encuestas')) {
                                 <div class="page-description text-center mb-4">
                                     <h1>Encuestas</h1>
                                     <p class="text-muted mb-0">Aquí estaremos creando encuestas por categorías para el equipo de trabajo.</p>
-                                    <div class="mt-4">
-                                        <button type="button" class="btn btn-primary">
-                                            <i class="material-icons align-middle mr-1" style="font-size: 18px;">add</i>
-                                            <span class="align-middle">Crear encuesta</span>
-                                        </button>
-                                    </div>
                                 </div>
 
-                                <div class="card border-0 shadow-sm">
-                                    <div class="card-body text-center py-5">
-                                        <i class="material-icons-two-tone mb-3" style="font-size:72px;">emoji_events</i>
-                                        <h4 class="mb-2">Encuesta activa: El empleado del mes</h4>
-                                        <p class="text-muted mb-0">Sección inicial creada. En la siguiente iteración afinaremos los detalles de esta encuesta.</p>
-                                    </div>
-                                </div>
+                                <p class="text-center text-muted">Sección inicial creada. En la siguiente iteración afinaremos los detalles de la encuesta <strong>El empleado del mes</strong>.</p>
                             </div>
                         </div>
                     </div>
