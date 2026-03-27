@@ -241,7 +241,7 @@ function TomarDatosParaModalUsuarios(val) {
       var permisos = response.Permisos || {};
       $("#ModalEditarUsuarios input.permiso-seccion-editar").each(function() {
         var seccionId = String($(this).data("seccion"));
-        var activo = permisos.hasOwnProperty(seccionId) ? permisos[seccionId] == 1 : true;
+        var activo = permisos.hasOwnProperty(seccionId) ? permisos[seccionId] == 1 : false;
         $(this).prop("checked", activo);
       });
 

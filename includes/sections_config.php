@@ -205,5 +205,38 @@ if (!function_exists('sincronizarSeccionesBase')) {
         }
 
         mysqli_stmt_close($stmtInsertSeccion);
+
+        $resultadoTablaUsuarios = @mysqli_query($conn, "SHOW TABLES LIKE 'usuarios'");
+        $resultadoTablaUsuarioSecciones = @mysqli_query($conn, "SHOW TABLES LIKE 'usuario_secciones'");
+
+        $tablaUsuariosDisponible = $resultadoTablaUsuarios instanceof mysqli_result && mysqli_num_rows($resultadoTablaUsuarios) > 0;
+        $tablaUsuarioSeccionesDisponible = $resultadoTablaUsuarioSecciones instanceof mysqli_result && mysqli_num_rows($resultadoTablaUsuarioSecciones) > 0;
+
+        if ($resultadoTablaUsuarios instanceof mysqli_result) {
+            mysqli_free_result($resultadoTablaUsuarios);
+        }
+
+        if ($resultadoTablaUsuarioSecciones instanceof mysqli_result) {
+            mysqli_free_result($resultadoTablaUsuarioSecciones);
+        }
+
+        if ($tablaUsuariosDisponible && $tablaUsuarioSeccionesDisponible) {
+            @mysqli_query(
+                $conn,
+                'INSERT INTO usuario_secciones (USUARIOID, SECCIONID, PuedeVer)
+'
+                . 'SELECT u.USUARIOID, s.SECCIONID, 1
+'
+                . 'FROM usuarios u
+'
+                . 'INNER JOIN secciones s
+'
+                . 'LEFT JOIN usuario_secciones us
+'
+                . '    ON us.USUARIOID = u.USUARIOID AND us.SECCIONID = s.SECCIONID
+'
+                . 'WHERE us.USUARIOID IS NULL'
+            );
+        }
     }
 }
