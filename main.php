@@ -76,6 +76,12 @@ if (!usuarioTieneAccesoSeccion('aplicaciones')) {
                                                 'icono' => 'support_agent',
                                                 'nombre' => 'Soporte',
                                             ],
+                                            [
+                                                'slug' => 'encuestas',
+                                                'ruta' => 'Encuestas.php',
+                                                'icono' => 'poll',
+                                                'nombre' => 'Encuestas',
+                                            ],
                                         ];
 
                                         foreach ($apps as $app) {
