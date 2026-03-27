@@ -191,6 +191,107 @@ if ($conn === false) {
     @mysqli_query($conn, $crearTablaTickets);
     @mysqli_query($conn, $crearTablaTicketsComentarios);
 
+    $crearTablaEncuestas = "CREATE TABLE IF NOT EXISTS encuestas (
+        ENCUESTAID INT NOT NULL AUTO_INCREMENT,
+        Titulo VARCHAR(200) NOT NULL,
+        Descripcion TEXT NULL,
+        Estado VARCHAR(20) NOT NULL DEFAULT 'borrador',
+        Categoria VARCHAR(100) NULL,
+        Anonima TINYINT(1) NOT NULL DEFAULT 0,
+        UnaRespuestaPorUsuario TINYINT(1) NOT NULL DEFAULT 1,
+        PermitirMultiplesRespuestas TINYINT(1) NOT NULL DEFAULT 0,
+        RequiereLogin TINYINT(1) NOT NULL DEFAULT 1,
+        FechaInicio DATETIME NULL,
+        FechaFin DATETIME NULL,
+        MensajeConfirmacion TEXT NULL,
+        ConfiguracionJSON LONGTEXT NULL,
+        CreadoPor INT NOT NULL,
+        PublicadoPor INT NULL,
+        FechaPublicacion DATETIME NULL,
+        FechaCreacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FechaActualizacion TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+        Eliminado TINYINT(1) NOT NULL DEFAULT 0,
+        PRIMARY KEY (ENCUESTAID),
+        INDEX idx_encuestas_estado (Estado),
+        INDEX idx_encuestas_creado_por (CreadoPor),
+        CONSTRAINT fk_encuestas_creado_por FOREIGN KEY (CreadoPor) REFERENCES usuarios (USUARIOID) ON DELETE RESTRICT,
+        CONSTRAINT fk_encuestas_publicado_por FOREIGN KEY (PublicadoPor) REFERENCES usuarios (USUARIOID) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+    $crearTablaEncuestaPreguntas = "CREATE TABLE IF NOT EXISTS encuesta_preguntas (
+        PREGUNTAID INT NOT NULL AUTO_INCREMENT,
+        ENCUESTAID INT NOT NULL,
+        Tipo VARCHAR(40) NOT NULL,
+        Titulo VARCHAR(500) NOT NULL,
+        Descripcion TEXT NULL,
+        Requerida TINYINT(1) NOT NULL DEFAULT 0,
+        Orden INT NOT NULL DEFAULT 1,
+        ConfiguracionJSON LONGTEXT NULL,
+        FechaCreacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FechaActualizacion TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (PREGUNTAID),
+        INDEX idx_encuesta_preguntas_encuesta (ENCUESTAID),
+        INDEX idx_encuesta_preguntas_orden (Orden),
+        CONSTRAINT fk_encuesta_preguntas_encuesta FOREIGN KEY (ENCUESTAID) REFERENCES encuestas (ENCUESTAID) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+    $crearTablaEncuestaOpciones = "CREATE TABLE IF NOT EXISTS encuesta_opciones (
+        OPCIONID INT NOT NULL AUTO_INCREMENT,
+        PREGUNTAID INT NOT NULL,
+        Texto VARCHAR(255) NOT NULL,
+        Valor VARCHAR(255) NULL,
+        Orden INT NOT NULL DEFAULT 1,
+        Activo TINYINT(1) NOT NULL DEFAULT 1,
+        FechaCreacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FechaActualizacion TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (OPCIONID),
+        INDEX idx_encuesta_opciones_pregunta (PREGUNTAID),
+        CONSTRAINT fk_encuesta_opciones_pregunta FOREIGN KEY (PREGUNTAID) REFERENCES encuesta_preguntas (PREGUNTAID) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+    $crearTablaEncuestaRespuestas = "CREATE TABLE IF NOT EXISTS encuesta_respuestas (
+        RESPUESTAID INT NOT NULL AUTO_INCREMENT,
+        ENCUESTAID INT NOT NULL,
+        USUARIOID INT NULL,
+        HashControlRespuesta VARCHAR(255) NULL,
+        TokenInvitacion VARCHAR(255) NULL,
+        IpRespuesta VARCHAR(64) NULL,
+        UserAgent VARCHAR(255) NULL,
+        FechaCreacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FechaActualizacion TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (RESPUESTAID),
+        INDEX idx_encuesta_respuestas_encuesta (ENCUESTAID),
+        INDEX idx_encuesta_respuestas_usuario (USUARIOID),
+        CONSTRAINT fk_encuesta_respuestas_encuesta FOREIGN KEY (ENCUESTAID) REFERENCES encuestas (ENCUESTAID) ON DELETE CASCADE,
+        CONSTRAINT fk_encuesta_respuestas_usuario FOREIGN KEY (USUARIOID) REFERENCES usuarios (USUARIOID) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+    $crearTablaEncuestaRespuestaDetalle = "CREATE TABLE IF NOT EXISTS encuesta_respuesta_detalle (
+        DETALLEID INT NOT NULL AUTO_INCREMENT,
+        RESPUESTAID INT NOT NULL,
+        PREGUNTAID INT NOT NULL,
+        Criterio VARCHAR(255) NULL,
+        OpcionTexto VARCHAR(255) NULL,
+        OPCIONID INT NULL,
+        ValorTexto TEXT NULL,
+        ValorNumero DECIMAL(14,4) NULL,
+        ValorFecha DATETIME NULL,
+        FechaCreacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FechaActualizacion TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (DETALLEID),
+        INDEX idx_encuesta_respuesta_detalle_respuesta (RESPUESTAID),
+        INDEX idx_encuesta_respuesta_detalle_pregunta (PREGUNTAID),
+        CONSTRAINT fk_encuesta_detalle_respuesta FOREIGN KEY (RESPUESTAID) REFERENCES encuesta_respuestas (RESPUESTAID) ON DELETE CASCADE,
+        CONSTRAINT fk_encuesta_detalle_pregunta FOREIGN KEY (PREGUNTAID) REFERENCES encuesta_preguntas (PREGUNTAID) ON DELETE CASCADE,
+        CONSTRAINT fk_encuesta_detalle_opcion FOREIGN KEY (OPCIONID) REFERENCES encuesta_opciones (OPCIONID) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+    @mysqli_query($conn, $crearTablaEncuestas);
+    @mysqli_query($conn, $crearTablaEncuestaPreguntas);
+    @mysqli_query($conn, $crearTablaEncuestaOpciones);
+    @mysqli_query($conn, $crearTablaEncuestaRespuestas);
+    @mysqli_query($conn, $crearTablaEncuestaRespuestaDetalle);
+
 
     // Ensure personnel catalog tables have a Deshabilitado column so records can be disabled
     // without being removed from history.
