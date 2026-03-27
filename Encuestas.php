@@ -2,7 +2,7 @@
 
 $pageTitle = 'Edison - Encuestas';
 
-if (!usuarioTieneAccesoSeccion('aplicaciones')) {
+if (!usuarioTieneAccesoSeccion('encuestas')) {
     header("Location: index.php");
     exit;
 }
