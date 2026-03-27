@@ -109,7 +109,7 @@ while ($row = mysqli_fetch_array($query)) {  // preparing an array ... Preparand
 
     foreach ($secciones as $seccion) {
         $seccionId = (int)$seccion['SECCIONID'];
-        $puedeVer = isset($permisosUsuario[$seccionId]) ? (int)$permisosUsuario[$seccionId] === 1 : true;
+        $puedeVer = isset($permisosUsuario[$seccionId]) ? (int)$permisosUsuario[$seccionId] === 1 : false;
         $checkbox = '<div class="form-check form-switch m-0"><input type="checkbox" class="form-check-input usuario-seccion-toggle" data-usuario="' . (int)$row["USUARIOID"] . '" data-seccion="' . $seccionId . '"' . ($puedeVer ? ' checked' : '') . '></div>';
         $nestedData[] = $checkbox;
     }
