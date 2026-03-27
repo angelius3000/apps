@@ -41,7 +41,6 @@ if (!usuarioTieneAccesoSeccion('encuestas')) {
                                     <p class="text-muted mb-0">Aquí estaremos creando encuestas por categorías para el equipo de trabajo.</p>
                                 </div>
 
-                                <p class="text-center text-muted">Sección inicial creada. En la siguiente iteración afinaremos los detalles de la encuesta <strong>El empleado del mes</strong>.</p>
                             </div>
                         </div>
                     </div>
