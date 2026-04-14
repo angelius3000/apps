@@ -4,6 +4,10 @@ include("../../Connections/ConDB.php");
 
 header('Content-Type: application/json');
 
+if (!isset($_SESSION)) {
+    session_start();
+}
+
 function responderError(string $mensaje, int $codigo = 400): void
 {
     http_response_code($codigo);
@@ -96,6 +100,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 if (!$conn) {
     responderError('No se pudo conectar a la base de datos.', 500);
+}
+
+$usuarioSesion = trim((string) ($_SESSION['Username'] ?? ''));
+if ($usuarioSesion === '') {
+    responderError('La sesión expiró. Inicia sesión nuevamente.', 401);
 }
 
 $tipoUsuarioActual = obtenerTipoUsuarioActual($conn);
