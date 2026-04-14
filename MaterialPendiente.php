@@ -7,6 +7,30 @@ if (!usuarioTieneAccesoSeccion('materialpendiente')) {
     exit;
 }
 
+$tipoUsuarioActual = strtolower(trim((string)($_SESSION['TipoDeUsuario'] ?? '')));
+$tipoUsuarioSesionId = (int)($_SESSION['TIPOUSUARIO'] ?? 0);
+
+if ($tipoUsuarioActual === '' && $tipoUsuarioSesionId > 0) {
+    $consultaTipoUsuario = mysqli_prepare(
+        $conn,
+        'SELECT TipoDeUsuario FROM tipodeusuarios WHERE TIPODEUSUARIOID = ? LIMIT 1'
+    );
+
+    if ($consultaTipoUsuario) {
+        mysqli_stmt_bind_param($consultaTipoUsuario, 'i', $tipoUsuarioSesionId);
+        mysqli_stmt_execute($consultaTipoUsuario);
+        mysqli_stmt_bind_result($consultaTipoUsuario, $tipoUsuarioRecuperado);
+
+        if (mysqli_stmt_fetch($consultaTipoUsuario)) {
+            $tipoUsuarioActual = strtolower(trim((string) $tipoUsuarioRecuperado));
+        }
+
+        mysqli_stmt_close($consultaTipoUsuario);
+    }
+}
+
+$esSoporteITMaterialPendiente = $tipoUsuarioActual === 'soporte it';
+
 $hayProductosPendientes = false;
 $queryProductosPendientes = "SELECT PRODUCTOSID FROM productos LIMIT 1";
 $resultadoProductosPendientes = mysqli_query($conn, $queryProductosPendientes);
@@ -310,6 +334,12 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                     <i class="material-icons-two-tone">file_download</i>
                                     Exportar Excel
                                 </a>
+                                <?php if ($esSoporteITMaterialPendiente) : ?>
+                                    <button type="button" class="btn btn-sm btn-outline-warning waves-effect width-md waves-light ms-2" id="BtnVerEliminadosMaterialPendiente">
+                                        <i class="material-icons-two-tone">restore_from_trash</i>
+                                        Ver eliminados
+                                    </button>
+                                <?php endif; ?>
                             </div>
                         </div>
 
@@ -519,6 +549,45 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
     </div>
 
     <?php include("App/Modales/ModalesMaterialPendiente.php") ?>
+
+    <?php if ($esSoporteITMaterialPendiente) : ?>
+        <div class="modal fade" id="ModalMaterialPendienteEliminado" tabindex="-1" aria-labelledby="ModalMaterialPendienteEliminadoLabel" aria-hidden="true" style="z-index: 1080;">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="ModalMaterialPendienteEliminadoLabel">Registros eliminados de Material Pendiente</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted mb-3">Solo Soporte IT puede reactivar folios eliminados.</p>
+                        <div class="alert alert-danger d-none" id="MaterialPendienteEliminadoError" role="alert"></div>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0" id="TablaMaterialPendienteEliminado">
+                                <thead>
+                                    <tr>
+                                        <th>Folio</th>
+                                        <th>Fecha</th>
+                                        <th>Documento</th>
+                                        <th>Razón social</th>
+                                        <th>Cliente</th>
+                                        <th class="text-end">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="TablaMaterialPendienteEliminadoBody">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">Abre esta ventana para cargar los registros eliminados.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
 
     <!-- Javascripts -->
     <script src="assets/plugins/jquery/jquery-3.5.1.min.js"></script>
