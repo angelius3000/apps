@@ -564,7 +564,7 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
     <?php include("App/Modales/ModalesMaterialPendiente.php") ?>
 
     <?php if ($esSoporteITMaterialPendiente) : ?>
-        <div class="modal fade" id="ModalMaterialPendienteEliminado" tabindex="-1" aria-labelledby="ModalMaterialPendienteEliminadoLabel" aria-hidden="true" style="z-index: 1080;">
+        <div class="modal fade" id="ModalMaterialPendienteEliminado" tabindex="-1" aria-labelledby="ModalMaterialPendienteEliminadoLabel" aria-hidden="true">
             <div class="modal-dialog modal-xl modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-header">
