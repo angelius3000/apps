@@ -79,6 +79,10 @@ $(document).ready(function() {
   var modoEdicion = false;
   var instanciaModalEliminados = null;
 
+  if ($modalEliminados.length && $modalEliminados.parent()[0] !== document.body) {
+    $modalEliminados.appendTo('body');
+  }
+
   function desplazarASeccionEntrega() {
     if (!$panelDetalle.length) {
       return;
@@ -1825,6 +1829,11 @@ $(document).ready(function() {
   }
 
   if ($modalEliminados.length) {
+    $modalEliminados.on('shown.bs.modal', function() {
+      $modalEliminados.css('z-index', 1060);
+      $('.modal-backdrop').last().css('z-index', 1055);
+    });
+
     $modalEliminados.on('show.bs.modal', function() {
       cargarRegistrosEliminados();
     });
