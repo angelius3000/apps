@@ -1159,6 +1159,26 @@ $(document).ready(function() {
     });
   }
 
+  function obtenerInstanciaModalEliminados() {
+    if (!$modalEliminados.length || !window.bootstrap || typeof window.bootstrap.Modal !== 'function') {
+      return null;
+    }
+
+    if (instanciaModalEliminados) {
+      return instanciaModalEliminados;
+    }
+
+    if (typeof window.bootstrap.Modal.getInstance === 'function') {
+      instanciaModalEliminados = window.bootstrap.Modal.getInstance($modalEliminados[0]);
+    }
+
+    if (!instanciaModalEliminados) {
+      instanciaModalEliminados = new window.bootstrap.Modal($modalEliminados[0]);
+    }
+
+    return instanciaModalEliminados;
+  }
+
   function mostrarAdvertenciaDocumentoDuplicado(documento) {
     documentoDuplicadoDetectado = true;
 
@@ -1805,10 +1825,6 @@ $(document).ready(function() {
   }
 
   if ($modalEliminados.length) {
-    if (window.bootstrap && typeof window.bootstrap.Modal === 'function') {
-      instanciaModalEliminados = window.bootstrap.Modal.getOrCreateInstance($modalEliminados[0]);
-    }
-
     $modalEliminados.on('show.bs.modal', function() {
       cargarRegistrosEliminados();
     });
@@ -1834,8 +1850,10 @@ $(document).ready(function() {
     $btnVerEliminados.on('click', function(evento) {
       evento.preventDefault();
 
-      if (instanciaModalEliminados) {
-        instanciaModalEliminados.show();
+      var modalEliminados = obtenerInstanciaModalEliminados();
+
+      if (modalEliminados && typeof modalEliminados.show === 'function') {
+        modalEliminados.show();
         return;
       }
 
