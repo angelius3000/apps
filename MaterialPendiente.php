@@ -232,6 +232,19 @@ $nombreBaseDatos = $dbname ?? '';
 asegurarTablaMaterialPendienteListado($conn, $nombreBaseDatos);
 asegurarTablaFacturaMPListado($conn, $nombreBaseDatos);
 
+@mysqli_query(
+    $conn,
+    "UPDATE facturamp f
+    SET f.ActivoFMP = 1
+    WHERE f.ActivoFMP = 0
+      AND EXISTS (
+          SELECT 1
+          FROM materialpendiente mp
+          WHERE mp.DocumentoMP = f.DocumentoFMP
+            AND mp.ActivoMP = 1
+      )"
+);
+
 $queryMaterialPendiente = "SELECT f.FacturaMPID, f.FechaFMP, f.DocumentoFMP, f.RazonSocialFMP, f.VendedorFMP, f.SurtidorFMP, f.ClienteFMP, f.AduanaFMP, "
     . "(SELECT COUNT(*) FROM materialpendiente mp WHERE mp.DocumentoMP = f.DocumentoFMP AND mp.ActivoMP = 1) AS PartidasPendientes "
     . "FROM facturamp f WHERE f.ActivoFMP = 1 ORDER BY f.FacturaMPID DESC";
