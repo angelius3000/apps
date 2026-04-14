@@ -48,6 +48,10 @@ $(document).ready(function() {
   var $resumenPaginacionMaterialPendiente = $('#ResumenPaginacionMaterialPendiente');
   var $btnPaginaAnterior = $('#MaterialPendientePaginaAnterior');
   var $btnPaginaSiguiente = $('#MaterialPendientePaginaSiguiente');
+  var $btnVerEliminados = $('#BtnVerEliminadosMaterialPendiente');
+  var $modalEliminados = $('#ModalMaterialPendienteEliminado');
+  var $tablaEliminadosBody = $('#TablaMaterialPendienteEliminadoBody');
+  var $errorEliminados = $('#MaterialPendienteEliminadoError');
   var REGISTROS_POR_PAGINA = 5;
   var paginaActualMaterialPendiente = 1;
   var $panelDetalle = $('#PanelEntregaMaterialPendiente');
@@ -73,6 +77,7 @@ $(document).ready(function() {
   var accionModalDocumento = '';
   var partidasPendientes = [];
   var modoEdicion = false;
+  var instanciaModalEliminados = null;
 
   function desplazarASeccionEntrega() {
     if (!$panelDetalle.length) {
@@ -1035,6 +1040,125 @@ $(document).ready(function() {
     window.alert(texto);
   }
 
+  function mostrarErrorEliminados(mensaje) {
+    if (!$errorEliminados.length) {
+      mostrarMensajeError(mensaje);
+      return;
+    }
+
+    $errorEliminados.removeClass('d-none').text((mensaje || '').toString().trim() || 'No se pudo completar la operación.');
+  }
+
+  function ocultarErrorEliminados() {
+    if ($errorEliminados.length) {
+      $errorEliminados.addClass('d-none').text('');
+    }
+  }
+
+  function formatearFechaEliminado(fecha) {
+    if (!fecha) {
+      return '-';
+    }
+
+    var valor = String(fecha).replace(' ', 'T');
+    var fechaObjeto = new Date(valor);
+
+    if (isNaN(fechaObjeto.getTime())) {
+      return fecha;
+    }
+
+    return fechaObjeto.toLocaleString('es-MX', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  function renderizarRegistrosEliminados(registros) {
+    if (!$tablaEliminadosBody.length) {
+      return;
+    }
+
+    if (!registros || !registros.length) {
+      $tablaEliminadosBody.html('<tr><td colspan="6" class="text-center text-muted">No hay registros eliminados para mostrar.</td></tr>');
+      return;
+    }
+
+    var filas = registros.map(function(registro) {
+      var folio = registro && registro.folio ? parseInt(registro.folio, 10) : 0;
+      var documento = registro && registro.documento ? registro.documento : '';
+      var partidasInactivas = registro && registro.partidasInactivas ? parseInt(registro.partidasInactivas, 10) : 0;
+      var textoPartidas = partidasInactivas > 0 ? ' (' + partidasInactivas + ' partidas)' : '';
+
+      return '<tr>' +
+        '<td>' + (folio > 0 ? folio : '-') + '</td>' +
+        '<td>' + escaparHtml(formatearFechaEliminado(registro && registro.fecha ? registro.fecha : '')) + '</td>' +
+        '<td>' + escaparHtml(documento || '-') + '</td>' +
+        '<td>' + escaparHtml((registro && registro.razonSocial) || '-') + '</td>' +
+        '<td>' + escaparHtml((registro && registro.cliente) || '-') + '</td>' +
+        '<td class="text-end">' +
+          '<button type="button" class="btn btn-sm btn-outline-success reactivar-material-pendiente" data-folio="' + folio + '" data-documento="' + escaparHtml(documento) + '">' +
+            '<i class="material-icons-two-tone">restore</i> Reactivar' + escaparHtml(textoPartidas) +
+          '</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+
+    $tablaEliminadosBody.html(filas);
+  }
+
+  function cargarRegistrosEliminados() {
+    if (!$tablaEliminadosBody.length) {
+      return;
+    }
+
+    ocultarErrorEliminados();
+    $tablaEliminadosBody.html('<tr><td colspan="6" class="text-center text-muted">Cargando registros eliminados…</td></tr>');
+
+    $.ajax({
+      url: 'App/Server/ServerListarMaterialPendienteEliminado.php',
+      method: 'GET',
+      dataType: 'json'
+    }).done(function(respuesta) {
+      if (!respuesta || !respuesta.success) {
+        mostrarErrorEliminados(respuesta && respuesta.message ? respuesta.message : 'No se pudieron cargar los registros eliminados.');
+        $tablaEliminadosBody.html('<tr><td colspan="6" class="text-center text-muted">No se pudieron cargar los registros eliminados.</td></tr>');
+        return;
+      }
+
+      renderizarRegistrosEliminados(respuesta.records || []);
+    }).fail(function() {
+      mostrarErrorEliminados('No se pudieron cargar los registros eliminados.');
+      $tablaEliminadosBody.html('<tr><td colspan="6" class="text-center text-muted">No se pudieron cargar los registros eliminados.</td></tr>');
+    });
+  }
+
+  function reactivarRegistroEliminado(folio) {
+    if (!folio || folio <= 0) {
+      return;
+    }
+
+    ocultarErrorEliminados();
+
+    $.ajax({
+      url: 'App/Server/ServerReactivarMaterialPendiente.php',
+      method: 'POST',
+      dataType: 'json',
+      data: { folio: folio }
+    }).done(function(respuesta) {
+      if (!respuesta || !respuesta.success) {
+        mostrarErrorEliminados(respuesta && respuesta.message ? respuesta.message : 'No se pudo reactivar el registro.');
+        return;
+      }
+
+      window.location.reload();
+    }).fail(function() {
+      mostrarErrorEliminados('No se pudo reactivar el registro.');
+    });
+  }
+
   function mostrarAdvertenciaDocumentoDuplicado(documento) {
     documentoDuplicadoDetectado = true;
 
@@ -1677,6 +1801,47 @@ $(document).ready(function() {
       }).fail(function() {
         mostrarMensajeError('No se pudo eliminar el registro.');
       });
+    });
+  }
+
+  if ($modalEliminados.length) {
+    if (window.bootstrap && typeof window.bootstrap.Modal === 'function') {
+      instanciaModalEliminados = window.bootstrap.Modal.getOrCreateInstance($modalEliminados[0]);
+    }
+
+    $modalEliminados.on('show.bs.modal', function() {
+      cargarRegistrosEliminados();
+    });
+
+    $tablaEliminadosBody.on('click', '.reactivar-material-pendiente', function() {
+      var folio = parseInt($(this).data('folio'), 10);
+      var documento = ($(this).data('documento') || '').toString().trim();
+      var mensaje = '¿Deseas reactivar este registro eliminado?';
+
+      if (documento !== '') {
+        mensaje += ' Documento: ' + documento + '.';
+      }
+
+      if (!window.confirm(mensaje)) {
+        return;
+      }
+
+      reactivarRegistroEliminado(folio);
+    });
+  }
+
+  if ($btnVerEliminados.length && $modalEliminados.length) {
+    $btnVerEliminados.on('click', function(evento) {
+      evento.preventDefault();
+
+      if (instanciaModalEliminados) {
+        instanciaModalEliminados.show();
+        return;
+      }
+
+      if (typeof $modalEliminados.modal === 'function') {
+        $modalEliminados.modal('show');
+      }
     });
   }
 
