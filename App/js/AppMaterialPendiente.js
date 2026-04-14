@@ -48,6 +48,7 @@ $(document).ready(function() {
   var $resumenPaginacionMaterialPendiente = $('#ResumenPaginacionMaterialPendiente');
   var $btnPaginaAnterior = $('#MaterialPendientePaginaAnterior');
   var $btnPaginaSiguiente = $('#MaterialPendientePaginaSiguiente');
+  var $btnVerEliminados = $('#BtnVerEliminadosMaterialPendiente');
   var $modalEliminados = $('#ModalMaterialPendienteEliminado');
   var $tablaEliminadosBody = $('#TablaMaterialPendienteEliminadoBody');
   var $errorEliminados = $('#MaterialPendienteEliminadoError');
@@ -76,6 +77,7 @@ $(document).ready(function() {
   var accionModalDocumento = '';
   var partidasPendientes = [];
   var modoEdicion = false;
+  var instanciaModalEliminados = null;
 
   function desplazarASeccionEntrega() {
     if (!$panelDetalle.length) {
@@ -1803,6 +1805,10 @@ $(document).ready(function() {
   }
 
   if ($modalEliminados.length) {
+    if (window.bootstrap && typeof window.bootstrap.Modal === 'function') {
+      instanciaModalEliminados = window.bootstrap.Modal.getOrCreateInstance($modalEliminados[0]);
+    }
+
     $modalEliminados.on('show.bs.modal', function() {
       cargarRegistrosEliminados();
     });
@@ -1821,6 +1827,21 @@ $(document).ready(function() {
       }
 
       reactivarRegistroEliminado(folio);
+    });
+  }
+
+  if ($btnVerEliminados.length && $modalEliminados.length) {
+    $btnVerEliminados.on('click', function(evento) {
+      evento.preventDefault();
+
+      if (instanciaModalEliminados) {
+        instanciaModalEliminados.show();
+        return;
+      }
+
+      if (typeof $modalEliminados.modal === 'function') {
+        $modalEliminados.modal('show');
+      }
     });
   }
 

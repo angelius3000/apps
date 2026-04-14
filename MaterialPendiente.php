@@ -348,7 +348,7 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
                                     Exportar Excel
                                 </a>
                                 <?php if ($esSoporteITMaterialPendiente) : ?>
-                                    <button type="button" class="btn btn-sm btn-outline-warning waves-effect width-md waves-light ms-2" id="BtnVerEliminadosMaterialPendiente" data-bs-toggle="modal" data-bs-target="#ModalMaterialPendienteEliminado">
+                                    <button type="button" class="btn btn-sm btn-outline-warning waves-effect width-md waves-light ms-2" id="BtnVerEliminadosMaterialPendiente">
                                         <i class="material-icons-two-tone">restore_from_trash</i>
                                         Ver eliminados
                                     </button>
@@ -564,7 +564,7 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
     <?php include("App/Modales/ModalesMaterialPendiente.php") ?>
 
     <?php if ($esSoporteITMaterialPendiente) : ?>
-        <div class="modal fade" id="ModalMaterialPendienteEliminado" tabindex="-1" aria-labelledby="ModalMaterialPendienteEliminadoLabel" aria-hidden="true">
+        <div class="modal fade" id="ModalMaterialPendienteEliminado" tabindex="-1" aria-labelledby="ModalMaterialPendienteEliminadoLabel" aria-hidden="true" style="z-index: 1080;">
             <div class="modal-dialog modal-xl modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-header">
