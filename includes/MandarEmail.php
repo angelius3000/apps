@@ -1,6 +1,6 @@
 <?php
 
-require '../../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 // Instalacion de php Mailer para mandar correos por SMTP ... Se puso el camino completo para que no hubiera problemas cuando se manda desde un Server ... porque es el camino relativo desde esa carpeta ... Pero creo que todas las notificaciones deben de salir asi ... debe de haber una forma de hacerlo Global como la conexion ... pero por ser el primer Script que se hace asi lo mantendremos asi ...
 
@@ -8,6 +8,24 @@ require '../../vendor/autoload.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+
+function obtenerVariableEntorno($llave, $valorPorDefecto = '')
+{
+    $valor = getenv($llave);
+    if ($valor !== false && $valor !== '') {
+        return $valor;
+    }
+
+    if (isset($_ENV[$llave]) && $_ENV[$llave] !== '') {
+        return $_ENV[$llave];
+    }
+
+    if (isset($_SERVER[$llave]) && $_SERVER[$llave] !== '') {
+        return $_SERVER[$llave];
+    }
+
+    return $valorPorDefecto;
+}
 
 function RecuperaTuPassword($email, $Hash)
 {
@@ -20,11 +38,20 @@ function RecuperaTuPassword($email, $Hash)
         $mail->SMTPAuth   = true;
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
 
-        $mail->Username   = getenv('SMTP_USER');
-        $mail->Password   = getenv('SMTP_PASS');
+        $smtpUser = obtenerVariableEntorno('SMTP_USER', 'apps@edison.com.mx');
+        $smtpPass = obtenerVariableEntorno('SMTP_PASS', '');
+        $smtpDebug = obtenerVariableEntorno('APP_DEBUG', '0');
+
+        if ($smtpPass === '') {
+            error_log('PHPMailer CONFIG ERROR: SMTP_PASS no está configurado.');
+            return false;
+        }
+
+        $mail->Username   = $smtpUser;
+        $mail->Password   = $smtpPass;
 
         // Habilitar debug a error_log (Plesk)
-        $mail->SMTPDebug = getenv('APP_DEBUG') === '1' ? 2 : 0;
+        $mail->SMTPDebug = $smtpDebug === '1' ? 2 : 0;
         $mail->Debugoutput = function ($str, $level) {
             error_log("PHPMailer [$level]: $str");
         };
