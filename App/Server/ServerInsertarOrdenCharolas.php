@@ -1,5 +1,8 @@
 <?php
 include("../../Connections/ConDB.php");
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if (!$conn) {
     http_response_code(500);
@@ -47,6 +50,38 @@ function obtenerColumnasMateriales($conn)
             }
         }
         mysqli_free_result($consulta);
+    }
+
+    return $columnas;
+}
+
+function asegurarColumnasCreacion($conn)
+{
+    $columnas = [
+        'USUARIOIDCreador' => false,
+        'FechaCreacion' => false,
+    ];
+
+    $consulta = mysqli_query($conn, 'SHOW COLUMNS FROM ordenes_charolas');
+    if ($consulta instanceof mysqli_result) {
+        while ($columna = mysqli_fetch_assoc($consulta)) {
+            $nombre = isset($columna['Field']) ? $columna['Field'] : null;
+            if ($nombre !== null && array_key_exists($nombre, $columnas)) {
+                $columnas[$nombre] = true;
+            }
+        }
+        mysqli_free_result($consulta);
+    }
+
+    if (!$columnas['USUARIOIDCreador']) {
+        if (mysqli_query($conn, 'ALTER TABLE ordenes_charolas ADD COLUMN `USUARIOIDCreador` INT NULL')) {
+            $columnas['USUARIOIDCreador'] = true;
+        }
+    }
+    if (!$columnas['FechaCreacion']) {
+        if (mysqli_query($conn, 'ALTER TABLE ordenes_charolas ADD COLUMN `FechaCreacion` DATETIME NULL')) {
+            $columnas['FechaCreacion'] = true;
+        }
     }
 
     return $columnas;
@@ -106,12 +141,18 @@ if ($charolasId <= 0 || $cantidad <= 0) {
 }
 
 $columnasDisponibles = obtenerColumnasMateriales($conn);
+$columnasCreacion = asegurarColumnasCreacion($conn);
+$usuarioCreadorId = isset($_SESSION['USUARIOID']) ? (int) $_SESSION['USUARIOID'] : 0;
 $columnasMaterialesDisponibles = !in_array(false, $columnasDisponibles, true);
 $detalles = obtenerDetallesMateriaPrima($conn, $charolasId);
 $totales = calcularTotalesMateriales($detalles, $cantidad);
 
 if ($columnasMaterialesDisponibles) {
-    $stmt = mysqli_prepare($conn, "INSERT INTO ordenes_charolas (CHAROLASID, Cantidad, STATUSID, Largueros, Tornilleria, JuntaZeta, Traves) VALUES (?, ?, 1, ?, ?, ?, ?)");
+    if ($columnasCreacion['USUARIOIDCreador'] && $columnasCreacion['FechaCreacion']) {
+        $stmt = mysqli_prepare($conn, "INSERT INTO ordenes_charolas (CHAROLASID, Cantidad, STATUSID, Largueros, Tornilleria, JuntaZeta, Traves, USUARIOIDCreador, FechaCreacion) VALUES (?, ?, 1, ?, ?, ?, ?, ?, NOW())");
+    } else {
+        $stmt = mysqli_prepare($conn, "INSERT INTO ordenes_charolas (CHAROLASID, Cantidad, STATUSID, Largueros, Tornilleria, JuntaZeta, Traves) VALUES (?, ?, 1, ?, ?, ?, ?)");
+    }
     if (!$stmt) {
         http_response_code(500);
         echo json_encode(['error' => mysqli_error($conn)]);
@@ -121,7 +162,11 @@ if ($columnasMaterialesDisponibles) {
     $totalTornilleria = (int) $totales['Tornilleria'];
     $totalJuntaZeta = (int) $totales['JuntaZeta'];
     $totalTraves = (int) $totales['Traves'];
-    mysqli_stmt_bind_param($stmt, 'idiiii', $charolasId, $cantidad, $totalLargueros, $totalTornilleria, $totalJuntaZeta, $totalTraves);
+    if ($columnasCreacion['USUARIOIDCreador'] && $columnasCreacion['FechaCreacion']) {
+        mysqli_stmt_bind_param($stmt, 'idiiiii', $charolasId, $cantidad, $totalLargueros, $totalTornilleria, $totalJuntaZeta, $totalTraves, $usuarioCreadorId);
+    } else {
+        mysqli_stmt_bind_param($stmt, 'idiiii', $charolasId, $cantidad, $totalLargueros, $totalTornilleria, $totalJuntaZeta, $totalTraves);
+    }
     if (!mysqli_stmt_execute($stmt)) {
         http_response_code(500);
         echo json_encode(['error' => mysqli_stmt_error($stmt)]);
@@ -130,13 +175,21 @@ if ($columnasMaterialesDisponibles) {
     }
     mysqli_stmt_close($stmt);
 } else {
-    $stmt = mysqli_prepare($conn, "INSERT INTO ordenes_charolas (CHAROLASID, Cantidad, STATUSID) VALUES (?, ?, 1)");
+    if ($columnasCreacion['USUARIOIDCreador'] && $columnasCreacion['FechaCreacion']) {
+        $stmt = mysqli_prepare($conn, "INSERT INTO ordenes_charolas (CHAROLASID, Cantidad, STATUSID, USUARIOIDCreador, FechaCreacion) VALUES (?, ?, 1, ?, NOW())");
+    } else {
+        $stmt = mysqli_prepare($conn, "INSERT INTO ordenes_charolas (CHAROLASID, Cantidad, STATUSID) VALUES (?, ?, 1)");
+    }
     if (!$stmt) {
         http_response_code(500);
         echo json_encode(['error' => mysqli_error($conn)]);
         exit;
     }
-    mysqli_stmt_bind_param($stmt, 'id', $charolasId, $cantidad);
+    if ($columnasCreacion['USUARIOIDCreador'] && $columnasCreacion['FechaCreacion']) {
+        mysqli_stmt_bind_param($stmt, 'idi', $charolasId, $cantidad, $usuarioCreadorId);
+    } else {
+        mysqli_stmt_bind_param($stmt, 'id', $charolasId, $cantidad);
+    }
     if (!mysqli_stmt_execute($stmt)) {
         http_response_code(500);
         echo json_encode(['error' => mysqli_stmt_error($stmt)]);

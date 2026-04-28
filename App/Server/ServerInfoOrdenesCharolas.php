@@ -117,6 +117,38 @@ function asegurarColumnaFactura($conn)
     return $columnaFactura;
 }
 
+function asegurarColumnasCreacion($conn)
+{
+    $columnas = [
+        'USUARIOIDCreador' => false,
+        'FechaCreacion' => false,
+    ];
+
+    $consulta = mysqli_query($conn, 'SHOW COLUMNS FROM ordenes_charolas');
+    if ($consulta instanceof mysqli_result) {
+        while ($columna = mysqli_fetch_assoc($consulta)) {
+            $nombre = isset($columna['Field']) ? $columna['Field'] : null;
+            if ($nombre !== null && array_key_exists($nombre, $columnas)) {
+                $columnas[$nombre] = true;
+            }
+        }
+        mysqli_free_result($consulta);
+    }
+
+    if (!$columnas['USUARIOIDCreador']) {
+        if (mysqli_query($conn, 'ALTER TABLE ordenes_charolas ADD COLUMN `USUARIOIDCreador` INT NULL')) {
+            $columnas['USUARIOIDCreador'] = true;
+        }
+    }
+    if (!$columnas['FechaCreacion']) {
+        if (mysqli_query($conn, 'ALTER TABLE ordenes_charolas ADD COLUMN `FechaCreacion` DATETIME NULL')) {
+            $columnas['FechaCreacion'] = true;
+        }
+    }
+
+    return $columnas;
+}
+
 function calcularTotalesMateriales($detalles, $cantidadOrden)
 {
     $totales = [
@@ -174,11 +206,24 @@ if (!empty($seleccionAuditado)) {
 
 $columnaFacturaDisponible = asegurarColumnaFactura($conn);
 $seleccionFacturaSql = $columnaFacturaDisponible ? ', oc.Factura AS Factura' : ', NULL AS Factura';
+$columnasCreacion = asegurarColumnasCreacion($conn);
+$seleccionCreacionSql = '';
+if ($columnasCreacion['USUARIOIDCreador']) {
+    $seleccionCreacionSql .= ', oc.USUARIOIDCreador';
+} else {
+    $seleccionCreacionSql .= ', NULL AS USUARIOIDCreador';
+}
+if ($columnasCreacion['FechaCreacion']) {
+    $seleccionCreacionSql .= ", DATE_FORMAT(oc.FechaCreacion, '%Y-%m-%d %H:%i:%s') AS FechaCreacion";
+} else {
+    $seleccionCreacionSql .= ', NULL AS FechaCreacion';
+}
 
-$query = "SELECT oc.ORDENCHAROLAID, oc.CHAROLASID, oc.Cantidad, oc.STATUSID, s.Status, c.SkuCharolas, c.DescripcionCharolas" . $seleccionAuditadoSql . $seleccionFacturaSql . $columnasSeleccionadas . "
+$query = "SELECT oc.ORDENCHAROLAID, oc.CHAROLASID, oc.Cantidad, oc.STATUSID, s.Status, c.SkuCharolas, c.DescripcionCharolas, CONCAT_WS(' ', u.PrimerNombre, u.ApellidoPaterno) AS UsuarioCreador" . $seleccionCreacionSql . $seleccionAuditadoSql . $seleccionFacturaSql . $columnasSeleccionadas . "
           FROM ordenes_charolas oc
           JOIN charolas c ON c.CHAROLASID = oc.CHAROLASID
           JOIN status s ON s.STATUSID = oc.STATUSID
+          LEFT JOIN usuarios u ON u.USUARIOID = oc.USUARIOIDCreador
           ORDER BY oc.ORDENCHAROLAID DESC";
 $result = mysqli_query($conn, $query);
 if (!$result) {

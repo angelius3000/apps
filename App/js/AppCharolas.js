@@ -570,6 +570,8 @@ $(document).ready(function() {
       '<th scope="col">SKU</th>' +
       '<th scope="col">Descripción</th>' +
       '<th scope="col">Cantidad</th>' +
+      '<th scope="col">Usuario</th>' +
+      '<th scope="col">Fecha creación</th>' +
       '<th scope="col">Salida</th>' +
       '<th scope="col">Entrada</th>' +
       '<th scope="col">Almacén</th>' +
@@ -586,7 +588,7 @@ $(document).ready(function() {
       thead.append(encabezado);
     } else {
       var celdas = fila.first().children('th');
-      if (celdas.length !== 10) {
+      if (celdas.length !== 12) {
         thead.html(encabezado);
       }
     }
@@ -647,6 +649,8 @@ $(document).ready(function() {
             SkuCharolas: row.SkuCharolas,
             DescripcionCharolas: row.DescripcionCharolas,
             Cantidad: row.Cantidad,
+            UsuarioCreador: row.UsuarioCreador || '',
+            FechaCreacion: row.FechaCreacion || '',
             STATUSID: row.STATUSID,
             Status: row.Status,
             Detalles: detalles,
@@ -694,6 +698,18 @@ $(document).ready(function() {
             { data: 'SkuCharolas' },
             { data: 'DescripcionCharolas' },
             { data: 'Cantidad' },
+            {
+              data: 'UsuarioCreador',
+              render: function(data) {
+                return escapeHtml(data || '');
+              }
+            },
+            {
+              data: 'FechaCreacion',
+              render: function(data) {
+                return escapeHtml(data || '');
+              }
+            },
             {
               data: 'Salida',
               render: function(data) {
