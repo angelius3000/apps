@@ -650,7 +650,7 @@ $(document).ready(function() {
             DescripcionCharolas: row.DescripcionCharolas,
             Cantidad: row.Cantidad,
             UsuarioCreador: row.UsuarioCreador || '',
-            FechaCreacion: row.FechaCreacion || '',
+            FechaRegistro: row.FechaRegistro || '',
             STATUSID: row.STATUSID,
             Status: row.Status,
             Detalles: detalles,
@@ -667,6 +667,8 @@ $(document).ready(function() {
             SkuCharolas: row.SkuCharolas,
             DescripcionCharolas: row.DescripcionCharolas,
             Cantidad: row.Cantidad,
+            UsuarioCreador: datosDetalle.UsuarioCreador,
+            FechaRegistro: datosDetalle.FechaRegistro,
             STATUSID: row.STATUSID,
             Salida: datosDetalle.Salida,
             Entrada: datosDetalle.Entrada,
@@ -705,7 +707,7 @@ $(document).ready(function() {
               }
             },
             {
-              data: 'FechaCreacion',
+              data: 'FechaRegistro',
               render: function(data) {
                 return escapeHtml(data || '');
               }

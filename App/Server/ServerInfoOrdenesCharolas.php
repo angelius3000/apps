@@ -117,36 +117,39 @@ function asegurarColumnaFactura($conn)
     return $columnaFactura;
 }
 
-function asegurarColumnasCreacion($conn)
+function asegurarColumnaUsuarioCreador($conn)
 {
-    $columnas = [
-        'USUARIOIDCreador' => false,
-        'FechaCreacion' => false,
-    ];
+    $columnaUsuarioCreador = false;
 
-    $consulta = mysqli_query($conn, 'SHOW COLUMNS FROM ordenes_charolas');
+    $consulta = mysqli_query($conn, "SHOW COLUMNS FROM ordenes_charolas LIKE 'USUARIOIDCreador'");
     if ($consulta instanceof mysqli_result) {
-        while ($columna = mysqli_fetch_assoc($consulta)) {
-            $nombre = isset($columna['Field']) ? $columna['Field'] : null;
-            if ($nombre !== null && array_key_exists($nombre, $columnas)) {
-                $columnas[$nombre] = true;
-            }
-        }
+        $columnaUsuarioCreador = mysqli_num_rows($consulta) > 0;
         mysqli_free_result($consulta);
     }
 
-    if (!$columnas['USUARIOIDCreador']) {
+    if (!$columnaUsuarioCreador) {
         if (mysqli_query($conn, 'ALTER TABLE ordenes_charolas ADD COLUMN `USUARIOIDCreador` INT NULL')) {
-            $columnas['USUARIOIDCreador'] = true;
-        }
-    }
-    if (!$columnas['FechaCreacion']) {
-        if (mysqli_query($conn, 'ALTER TABLE ordenes_charolas ADD COLUMN `FechaCreacion` DATETIME NULL')) {
-            $columnas['FechaCreacion'] = true;
+            $columnaUsuarioCreador = true;
         }
     }
 
-    return $columnas;
+    return $columnaUsuarioCreador;
+}
+
+function columnaExiste($conn, $tabla, $columna)
+{
+    $consulta = mysqli_query($conn, sprintf(
+        "SHOW COLUMNS FROM `%s` LIKE '%s'",
+        mysqli_real_escape_string($conn, $tabla),
+        mysqli_real_escape_string($conn, $columna)
+    ));
+    if ($consulta instanceof mysqli_result) {
+        $existe = mysqli_num_rows($consulta) > 0;
+        mysqli_free_result($consulta);
+        return $existe;
+    }
+
+    return false;
 }
 
 function calcularTotalesMateriales($detalles, $cantidadOrden)
@@ -206,24 +209,17 @@ if (!empty($seleccionAuditado)) {
 
 $columnaFacturaDisponible = asegurarColumnaFactura($conn);
 $seleccionFacturaSql = $columnaFacturaDisponible ? ', oc.Factura AS Factura' : ', NULL AS Factura';
-$columnasCreacion = asegurarColumnasCreacion($conn);
-$seleccionCreacionSql = '';
-if ($columnasCreacion['USUARIOIDCreador']) {
-    $seleccionCreacionSql .= ', oc.USUARIOIDCreador';
-} else {
-    $seleccionCreacionSql .= ', NULL AS USUARIOIDCreador';
-}
-if ($columnasCreacion['FechaCreacion']) {
-    $seleccionCreacionSql .= ", DATE_FORMAT(oc.FechaCreacion, '%Y-%m-%d %H:%i:%s') AS FechaCreacion";
-} else {
-    $seleccionCreacionSql .= ', NULL AS FechaCreacion';
-}
+$columnaUsuarioCreadorDisponible = asegurarColumnaUsuarioCreador($conn);
+$columnaFechaRegistroDisponible = columnaExiste($conn, 'ordenes_charolas', 'FechaRegistro');
+$seleccionUsuarioCreadorSql = $columnaUsuarioCreadorDisponible ? ", TRIM(CONCAT_WS(' ', u.PrimerNombre, u.ApellidoPaterno)) AS UsuarioCreador, oc.USUARIOIDCreador" : ", NULL AS UsuarioCreador, NULL AS USUARIOIDCreador";
+$seleccionFechaRegistroSql = $columnaFechaRegistroDisponible ? ", DATE_FORMAT(oc.FechaRegistro, '%Y-%m-%d %H:%i:%s') AS FechaRegistro" : ', NULL AS FechaRegistro';
+$joinUsuarioCreadorSql = $columnaUsuarioCreadorDisponible ? 'LEFT JOIN usuarios u ON u.USUARIOID = oc.USUARIOIDCreador' : '';
 
-$query = "SELECT oc.ORDENCHAROLAID, oc.CHAROLASID, oc.Cantidad, oc.STATUSID, s.Status, c.SkuCharolas, c.DescripcionCharolas, CONCAT_WS(' ', u.PrimerNombre, u.ApellidoPaterno) AS UsuarioCreador" . $seleccionCreacionSql . $seleccionAuditadoSql . $seleccionFacturaSql . $columnasSeleccionadas . "
+$query = "SELECT oc.ORDENCHAROLAID, oc.CHAROLASID, oc.Cantidad, oc.STATUSID, s.Status, c.SkuCharolas, c.DescripcionCharolas" . $seleccionUsuarioCreadorSql . $seleccionFechaRegistroSql . $seleccionAuditadoSql . $seleccionFacturaSql . $columnasSeleccionadas . "
           FROM ordenes_charolas oc
           JOIN charolas c ON c.CHAROLASID = oc.CHAROLASID
           JOIN status s ON s.STATUSID = oc.STATUSID
-          LEFT JOIN usuarios u ON u.USUARIOID = oc.USUARIOIDCreador
+          " . $joinUsuarioCreadorSql . "
           ORDER BY oc.ORDENCHAROLAID DESC";
 $result = mysqli_query($conn, $query);
 if (!$result) {
