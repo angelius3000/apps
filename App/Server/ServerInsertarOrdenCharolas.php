@@ -1,5 +1,8 @@
 <?php
 include("../../Connections/ConDB.php");
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if (!$conn) {
     http_response_code(500);
@@ -50,6 +53,25 @@ function obtenerColumnasMateriales($conn)
     }
 
     return $columnas;
+}
+
+function asegurarColumnaUsuarioCreador($conn)
+{
+    $columnaUsuarioCreador = false;
+
+    $consulta = mysqli_query($conn, "SHOW COLUMNS FROM ordenes_charolas LIKE 'USUARIOIDCreador'");
+    if ($consulta instanceof mysqli_result) {
+        $columnaUsuarioCreador = mysqli_num_rows($consulta) > 0;
+        mysqli_free_result($consulta);
+    }
+
+    if (!$columnaUsuarioCreador) {
+        if (mysqli_query($conn, 'ALTER TABLE ordenes_charolas ADD COLUMN `USUARIOIDCreador` INT NULL')) {
+            $columnaUsuarioCreador = true;
+        }
+    }
+
+    return $columnaUsuarioCreador;
 }
 
 function obtenerDetallesMateriaPrima($conn, $charolasId)
@@ -106,12 +128,18 @@ if ($charolasId <= 0 || $cantidad <= 0) {
 }
 
 $columnasDisponibles = obtenerColumnasMateriales($conn);
+$columnaUsuarioCreadorDisponible = asegurarColumnaUsuarioCreador($conn);
+$usuarioCreadorId = isset($_SESSION['USUARIOID']) ? (int) $_SESSION['USUARIOID'] : 0;
 $columnasMaterialesDisponibles = !in_array(false, $columnasDisponibles, true);
 $detalles = obtenerDetallesMateriaPrima($conn, $charolasId);
 $totales = calcularTotalesMateriales($detalles, $cantidad);
 
 if ($columnasMaterialesDisponibles) {
-    $stmt = mysqli_prepare($conn, "INSERT INTO ordenes_charolas (CHAROLASID, Cantidad, STATUSID, Largueros, Tornilleria, JuntaZeta, Traves) VALUES (?, ?, 1, ?, ?, ?, ?)");
+    if ($columnaUsuarioCreadorDisponible) {
+        $stmt = mysqli_prepare($conn, "INSERT INTO ordenes_charolas (CHAROLASID, Cantidad, STATUSID, Largueros, Tornilleria, JuntaZeta, Traves, USUARIOIDCreador) VALUES (?, ?, 1, ?, ?, ?, ?, ?)");
+    } else {
+        $stmt = mysqli_prepare($conn, "INSERT INTO ordenes_charolas (CHAROLASID, Cantidad, STATUSID, Largueros, Tornilleria, JuntaZeta, Traves) VALUES (?, ?, 1, ?, ?, ?, ?)");
+    }
     if (!$stmt) {
         http_response_code(500);
         echo json_encode(['error' => mysqli_error($conn)]);
@@ -121,7 +149,11 @@ if ($columnasMaterialesDisponibles) {
     $totalTornilleria = (int) $totales['Tornilleria'];
     $totalJuntaZeta = (int) $totales['JuntaZeta'];
     $totalTraves = (int) $totales['Traves'];
-    mysqli_stmt_bind_param($stmt, 'idiiii', $charolasId, $cantidad, $totalLargueros, $totalTornilleria, $totalJuntaZeta, $totalTraves);
+    if ($columnaUsuarioCreadorDisponible) {
+        mysqli_stmt_bind_param($stmt, 'idiiiii', $charolasId, $cantidad, $totalLargueros, $totalTornilleria, $totalJuntaZeta, $totalTraves, $usuarioCreadorId);
+    } else {
+        mysqli_stmt_bind_param($stmt, 'idiiii', $charolasId, $cantidad, $totalLargueros, $totalTornilleria, $totalJuntaZeta, $totalTraves);
+    }
     if (!mysqli_stmt_execute($stmt)) {
         http_response_code(500);
         echo json_encode(['error' => mysqli_stmt_error($stmt)]);
@@ -130,13 +162,21 @@ if ($columnasMaterialesDisponibles) {
     }
     mysqli_stmt_close($stmt);
 } else {
-    $stmt = mysqli_prepare($conn, "INSERT INTO ordenes_charolas (CHAROLASID, Cantidad, STATUSID) VALUES (?, ?, 1)");
+    if ($columnaUsuarioCreadorDisponible) {
+        $stmt = mysqli_prepare($conn, "INSERT INTO ordenes_charolas (CHAROLASID, Cantidad, STATUSID, USUARIOIDCreador) VALUES (?, ?, 1, ?)");
+    } else {
+        $stmt = mysqli_prepare($conn, "INSERT INTO ordenes_charolas (CHAROLASID, Cantidad, STATUSID) VALUES (?, ?, 1)");
+    }
     if (!$stmt) {
         http_response_code(500);
         echo json_encode(['error' => mysqli_error($conn)]);
         exit;
     }
-    mysqli_stmt_bind_param($stmt, 'id', $charolasId, $cantidad);
+    if ($columnaUsuarioCreadorDisponible) {
+        mysqli_stmt_bind_param($stmt, 'idi', $charolasId, $cantidad, $usuarioCreadorId);
+    } else {
+        mysqli_stmt_bind_param($stmt, 'id', $charolasId, $cantidad);
+    }
     if (!mysqli_stmt_execute($stmt)) {
         http_response_code(500);
         echo json_encode(['error' => mysqli_stmt_error($stmt)]);

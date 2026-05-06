@@ -140,6 +140,8 @@ if ($conn) {
                                             <th scope="col">SKU</th>
                                             <th scope="col">Descripción</th>
                                             <th scope="col">Cantidad</th>
+                                            <th scope="col">Usuario</th>
+                                            <th scope="col">Fecha creación</th>
                                             <th scope="col">Cambiar estatus</th>
                                         </tr>
                                     </thead>
