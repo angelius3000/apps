@@ -30,8 +30,10 @@ $statusVerificadoNombre = 'Verificado';
 $statusVerificadoId = null;
 $mensajeRestriccionVerificado = 'Solo un Soporte IT, administrador, supervisor o auditor puede asignar el estatus Verificado.';
 $tiposPermitidosCambioEstatus = ['soporte it', 'administrador', 'supervisor', 'auditor'];
+$tiposPermitidosCancelar = ['soporte it', 'administrador'];
 $tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string) $_SESSION['TipoDeUsuario'])) : '';
 $puedeCambiarEstatusCharolas = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $tiposPermitidosCambioEstatus, true);
+$puedeCancelarCharolas = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $tiposPermitidosCancelar, true);
 $puedeAsignarVerificado = $puedeCambiarEstatusCharolas;
 $statusAuditadoNombre = 'Auditado';
 $statusAuditadoId = null;
@@ -168,6 +170,8 @@ if ($conn) {
             'nombreStatusAuditado' => $statusAuditadoNombre,
             'puedeAsignarAuditado' => $puedeAsignarAuditado,
             'mensajeRestriccionAuditado' => $mensajeRestriccionAuditado,
+            'puedeCancelar' => $puedeCancelarCharolas,
+            'mensajeRestriccionCancelar' => 'Solo un Soporte IT o administrador puede cancelar requisiciones.',
         ], JSON_UNESCAPED_UNICODE); ?>;
     </script>
 

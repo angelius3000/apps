@@ -66,6 +66,25 @@ function asegurarColumnaFactura($conn)
     return $columnaFactura;
 }
 
+function asegurarColumnaMotivoCancelacion($conn)
+{
+    $columnaMotivoCancelacion = false;
+
+    $consulta = mysqli_query($conn, "SHOW COLUMNS FROM ordenes_charolas LIKE 'MotivoCancelacion'");
+    if ($consulta instanceof mysqli_result) {
+        $columnaMotivoCancelacion = mysqli_num_rows($consulta) > 0;
+        mysqli_free_result($consulta);
+    }
+
+    if (!$columnaMotivoCancelacion) {
+        if (mysqli_query($conn, 'ALTER TABLE ordenes_charolas ADD COLUMN `MotivoCancelacion` VARCHAR(500) NULL')) {
+            $columnaMotivoCancelacion = true;
+        }
+    }
+
+    return $columnaMotivoCancelacion;
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Método no permitido.']);
@@ -92,6 +111,7 @@ $salida = $salidaDefinido ? trim((string) $_POST['SALIDA']) : null;
 $entrada = $entradaDefinido ? trim((string) $_POST['ENTRADA']) : null;
 $almacen = $almacenDefinido ? trim((string) $_POST['ALMACEN']) : null;
 $factura = isset($_POST['FACTURA']) ? trim((string) $_POST['FACTURA']) : '';
+$motivoCancelacion = isset($_POST['MOTIVO_CANCELACION']) ? trim((string) $_POST['MOTIVO_CANCELACION']) : '';
 
 if ($ordenCharolaId <= 0 || $statusIdEntrada === '') {
     http_response_code(400);
@@ -105,6 +125,8 @@ $tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string
 $puedeCambiarEstatus = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $rolesPermitidos, true);
 $puedeAsignarVerificado = $puedeCambiarEstatus;
 $puedeAsignarAuditado = $tipoUsuarioActual === 'auditor';
+$rolesPermitidosCancelar = ['soporte it', 'administrador'];
+$puedeCancelar = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $rolesPermitidosCancelar, true);
 
 if (!$puedeCambiarEstatus) {
     http_response_code(403);
@@ -160,6 +182,9 @@ $puedePersistirCamposAuditado = !in_array(false, $columnasAuditado, true);
 $columnaFacturaDisponible = asegurarColumnaFactura($conn);
 $statusEnProcesoId = '2';
 $requiereFactura = $statusIdEntrada === $statusEnProcesoId;
+$statusCanceladoId = '5';
+$esCancelacion = $statusIdEntrada === $statusCanceladoId;
+$columnaMotivoCancelacionDisponible = $esCancelacion ? asegurarColumnaMotivoCancelacion($conn) : false;
 
 if ($requiereCamposAuditado && !$puedePersistirCamposAuditado) {
     http_response_code(500);
@@ -175,6 +200,31 @@ if ($requiereCamposAuditado) {
         mysqli_close($conn);
         exit;
     }
+}
+
+if ($esCancelacion && !$puedeCancelar) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Solo un Soporte IT o administrador puede cancelar requisiciones.']);
+    mysqli_close($conn);
+    exit;
+}
+
+if ($esCancelacion && !$columnaMotivoCancelacionDisponible) {
+    http_response_code(500);
+    echo json_encode(['error' => 'No se pudo habilitar el motivo de cancelación en la base de datos.']);
+    mysqli_close($conn);
+    exit;
+}
+
+if ($esCancelacion && $motivoCancelacion === '') {
+    http_response_code(400);
+    echo json_encode(['error' => 'El motivo de cancelación es obligatorio.']);
+    mysqli_close($conn);
+    exit;
+}
+
+if ($esCancelacion && strlen($motivoCancelacion) > 500) {
+    $motivoCancelacion = substr($motivoCancelacion, 0, 500);
 }
 
 if ($requiereFactura && $factura === '') {
@@ -232,6 +282,12 @@ if ($requiereCamposAuditado) {
     }
 }
 
+if ($esCancelacion && $columnaMotivoCancelacionDisponible) {
+    $camposActualizar[] = 'MotivoCancelacion = ?';
+    $tipos .= 's';
+    $valores[] = $motivoCancelacion;
+}
+
 if ($columnaFacturaDisponible) {
     if ($factura !== '') {
         $camposActualizar[] = 'Factura = ?';
@@ -273,7 +329,8 @@ echo json_encode([
     'Salida' => $requiereCamposAuditado && $puedePersistirCamposAuditado ? $salida : '',
     'Entrada' => $requiereCamposAuditado && $puedePersistirCamposAuditado ? $entrada : '',
     'Almacen' => $requiereCamposAuditado && $puedePersistirCamposAuditado ? $almacen : '',
-    'Factura' => $columnaFacturaDisponible ? $factura : ''
+    'Factura' => $columnaFacturaDisponible ? $factura : '',
+    'MotivoCancelacion' => $esCancelacion && $columnaMotivoCancelacionDisponible ? $motivoCancelacion : ''
 ]);
 
 mysqli_close($conn);
