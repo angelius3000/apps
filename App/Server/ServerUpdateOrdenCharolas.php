@@ -7,6 +7,39 @@ if (session_status() === PHP_SESSION_NONE) {
 
 header('Content-Type: application/json; charset=utf-8');
 
+
+function normalizarPerfilCharolas($perfil)
+{
+    $perfil = strtolower(trim((string) $perfil));
+    if ($perfil === '') {
+        return '';
+    }
+
+    $perfil = strtr($perfil, [
+        'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u',
+        'Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u', 'Ü' => 'u'
+    ]);
+    return preg_replace('/\s+/', ' ', $perfil);
+}
+
+function perfilPuedeCancelarCharolas($perfil, $tipoUsuarioId = null)
+{
+    if (in_array((int) $tipoUsuarioId, [1, 9], true)) {
+        return true;
+    }
+
+    return in_array(normalizarPerfilCharolas($perfil), ['administrador', 'admin', 'soporte it', 'soporte ti'], true);
+}
+
+function perfilPuedeCambiarEstatusCharolas($perfil, $tipoUsuarioId = null)
+{
+    if (in_array((int) $tipoUsuarioId, [1, 5, 6, 9], true)) {
+        return true;
+    }
+
+    return in_array(normalizarPerfilCharolas($perfil), ['soporte it', 'soporte ti', 'administrador', 'admin', 'supervisor', 'auditor'], true);
+}
+
 function asegurarColumnasAuditado($conn)
 {
     $columnas = [
@@ -120,13 +153,12 @@ if ($ordenCharolaId <= 0 || $statusIdEntrada === '') {
     exit;
 }
 
-$rolesPermitidos = ['soporte it', 'administrador', 'supervisor', 'auditor'];
-$tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string) $_SESSION['TipoDeUsuario'])) : '';
-$puedeCambiarEstatus = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $rolesPermitidos, true);
+$tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? normalizarPerfilCharolas($_SESSION['TipoDeUsuario']) : '';
+$tipoUsuarioIdActual = isset($_SESSION['TIPOUSUARIO']) ? (int) $_SESSION['TIPOUSUARIO'] : 0;
+$puedeCambiarEstatus = perfilPuedeCambiarEstatusCharolas($tipoUsuarioActual, $tipoUsuarioIdActual);
 $puedeAsignarVerificado = $puedeCambiarEstatus;
-$puedeAsignarAuditado = $tipoUsuarioActual === 'auditor';
-$rolesPermitidosCancelar = ['soporte it', 'administrador'];
-$puedeCancelar = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $rolesPermitidosCancelar, true);
+$puedeAsignarAuditado = $tipoUsuarioActual === 'auditor' || $tipoUsuarioIdActual === 5;
+$puedeCancelar = perfilPuedeCancelarCharolas($tipoUsuarioActual, $tipoUsuarioIdActual);
 
 if (!$puedeCambiarEstatus) {
     http_response_code(403);
