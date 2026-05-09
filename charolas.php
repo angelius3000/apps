@@ -23,9 +23,22 @@ function normalizarPerfilCharolas($perfil)
     return preg_replace('/\s+/', ' ', $perfil);
 }
 
-function perfilPuedeCancelarCharolas($perfil)
+function perfilPuedeCancelarCharolas($perfil, $tipoUsuarioId = null)
 {
+    if (in_array((int) $tipoUsuarioId, [1, 9], true)) {
+        return true;
+    }
+
     return in_array(normalizarPerfilCharolas($perfil), ['administrador', 'admin', 'soporte it', 'soporte ti'], true);
+}
+
+function perfilPuedeCambiarEstatusCharolas($perfil, $tipoUsuarioId = null)
+{
+    if (in_array((int) $tipoUsuarioId, [1, 5, 6, 9], true)) {
+        return true;
+    }
+
+    return in_array(normalizarPerfilCharolas($perfil), ['soporte it', 'soporte ti', 'administrador', 'admin', 'supervisor', 'auditor'], true);
 }
 
 $charolas = [];
@@ -49,15 +62,15 @@ $totalRows_charolas = count($charolas);
 $statusVerificadoNombre = 'Verificado';
 $statusVerificadoId = null;
 $mensajeRestriccionVerificado = 'Solo un Soporte IT, administrador, supervisor o auditor puede asignar el estatus Verificado.';
-$tiposPermitidosCambioEstatus = ['soporte it', 'administrador', 'supervisor', 'auditor'];
 $tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? normalizarPerfilCharolas($_SESSION['TipoDeUsuario']) : '';
-$puedeCambiarEstatusCharolas = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $tiposPermitidosCambioEstatus, true);
-$puedeCancelarCharolas = perfilPuedeCancelarCharolas($tipoUsuarioActual);
+$tipoUsuarioIdActual = isset($_SESSION['TIPOUSUARIO']) ? (int) $_SESSION['TIPOUSUARIO'] : 0;
+$puedeCambiarEstatusCharolas = perfilPuedeCambiarEstatusCharolas($tipoUsuarioActual, $tipoUsuarioIdActual);
+$puedeCancelarCharolas = perfilPuedeCancelarCharolas($tipoUsuarioActual, $tipoUsuarioIdActual);
 $puedeAsignarVerificado = $puedeCambiarEstatusCharolas;
 $statusAuditadoNombre = 'Auditado';
 $statusAuditadoId = null;
 $mensajeRestriccionAuditado = 'Solo un auditor puede asignar el estatus Auditado.';
-$puedeAsignarAuditado = $tipoUsuarioActual === 'auditor';
+$puedeAsignarAuditado = $tipoUsuarioActual === 'auditor' || $tipoUsuarioIdActual === 5;
 
 if ($conn) {
     $stmtStatusVerificado = @mysqli_prepare($conn, 'SELECT STATUSID FROM status WHERE Status = ? LIMIT 1');

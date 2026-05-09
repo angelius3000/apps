@@ -22,9 +22,22 @@ function normalizarPerfilCharolas($perfil)
     return preg_replace('/\s+/', ' ', $perfil);
 }
 
-function perfilPuedeCancelarCharolas($perfil)
+function perfilPuedeCancelarCharolas($perfil, $tipoUsuarioId = null)
 {
+    if (in_array((int) $tipoUsuarioId, [1, 9], true)) {
+        return true;
+    }
+
     return in_array(normalizarPerfilCharolas($perfil), ['administrador', 'admin', 'soporte it', 'soporte ti'], true);
+}
+
+function perfilPuedeCambiarEstatusCharolas($perfil, $tipoUsuarioId = null)
+{
+    if (in_array((int) $tipoUsuarioId, [1, 5, 6, 9], true)) {
+        return true;
+    }
+
+    return in_array(normalizarPerfilCharolas($perfil), ['soporte it', 'soporte ti', 'administrador', 'admin', 'supervisor', 'auditor'], true);
 }
 
 function asegurarColumnasAuditado($conn)
@@ -140,12 +153,12 @@ if ($ordenCharolaId <= 0 || $statusIdEntrada === '') {
     exit;
 }
 
-$rolesPermitidos = ['soporte it', 'administrador', 'supervisor', 'auditor'];
 $tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? normalizarPerfilCharolas($_SESSION['TipoDeUsuario']) : '';
-$puedeCambiarEstatus = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $rolesPermitidos, true);
+$tipoUsuarioIdActual = isset($_SESSION['TIPOUSUARIO']) ? (int) $_SESSION['TIPOUSUARIO'] : 0;
+$puedeCambiarEstatus = perfilPuedeCambiarEstatusCharolas($tipoUsuarioActual, $tipoUsuarioIdActual);
 $puedeAsignarVerificado = $puedeCambiarEstatus;
-$puedeAsignarAuditado = $tipoUsuarioActual === 'auditor';
-$puedeCancelar = perfilPuedeCancelarCharolas($tipoUsuarioActual);
+$puedeAsignarAuditado = $tipoUsuarioActual === 'auditor' || $tipoUsuarioIdActual === 5;
+$puedeCancelar = perfilPuedeCancelarCharolas($tipoUsuarioActual, $tipoUsuarioIdActual);
 
 if (!$puedeCambiarEstatus) {
     http_response_code(403);
