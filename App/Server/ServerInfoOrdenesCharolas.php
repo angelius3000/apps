@@ -117,6 +117,25 @@ function asegurarColumnaFactura($conn)
     return $columnaFactura;
 }
 
+function asegurarColumnaMotivoCancelacion($conn)
+{
+    $columnaMotivoCancelacion = false;
+
+    $consulta = mysqli_query($conn, "SHOW COLUMNS FROM ordenes_charolas LIKE 'MotivoCancelacion'");
+    if ($consulta instanceof mysqli_result) {
+        $columnaMotivoCancelacion = mysqli_num_rows($consulta) > 0;
+        mysqli_free_result($consulta);
+    }
+
+    if (!$columnaMotivoCancelacion) {
+        if (mysqli_query($conn, 'ALTER TABLE ordenes_charolas ADD COLUMN `MotivoCancelacion` VARCHAR(500) NULL')) {
+            $columnaMotivoCancelacion = true;
+        }
+    }
+
+    return $columnaMotivoCancelacion;
+}
+
 function asegurarColumnaUsuarioCreador($conn)
 {
     $columnaUsuarioCreador = false;
@@ -209,13 +228,15 @@ if (!empty($seleccionAuditado)) {
 
 $columnaFacturaDisponible = asegurarColumnaFactura($conn);
 $seleccionFacturaSql = $columnaFacturaDisponible ? ', oc.Factura AS Factura' : ', NULL AS Factura';
+$columnaMotivoCancelacionDisponible = asegurarColumnaMotivoCancelacion($conn);
+$seleccionMotivoCancelacionSql = $columnaMotivoCancelacionDisponible ? ', oc.MotivoCancelacion AS MotivoCancelacion' : ', NULL AS MotivoCancelacion';
 $columnaUsuarioCreadorDisponible = asegurarColumnaUsuarioCreador($conn);
 $columnaFechaRegistroDisponible = columnaExiste($conn, 'ordenes_charolas', 'FechaRegistro');
 $seleccionUsuarioCreadorSql = $columnaUsuarioCreadorDisponible ? ", TRIM(CONCAT_WS(' ', u.PrimerNombre, u.ApellidoPaterno)) AS UsuarioCreador, oc.USUARIOIDCreador" : ", NULL AS UsuarioCreador, NULL AS USUARIOIDCreador";
 $seleccionFechaRegistroSql = $columnaFechaRegistroDisponible ? ", DATE_FORMAT(oc.FechaRegistro, '%Y-%m-%d %H:%i:%s') AS FechaRegistro" : ', NULL AS FechaRegistro';
 $joinUsuarioCreadorSql = $columnaUsuarioCreadorDisponible ? 'LEFT JOIN usuarios u ON u.USUARIOID = oc.USUARIOIDCreador' : '';
 
-$query = "SELECT oc.ORDENCHAROLAID, oc.CHAROLASID, oc.Cantidad, oc.STATUSID, s.Status, c.SkuCharolas, c.DescripcionCharolas" . $seleccionUsuarioCreadorSql . $seleccionFechaRegistroSql . $seleccionAuditadoSql . $seleccionFacturaSql . $columnasSeleccionadas . "
+$query = "SELECT oc.ORDENCHAROLAID, oc.CHAROLASID, oc.Cantidad, oc.STATUSID, s.Status, c.SkuCharolas, c.DescripcionCharolas" . $seleccionUsuarioCreadorSql . $seleccionFechaRegistroSql . $seleccionAuditadoSql . $seleccionFacturaSql . $seleccionMotivoCancelacionSql . $columnasSeleccionadas . "
           FROM ordenes_charolas oc
           JOIN charolas c ON c.CHAROLASID = oc.CHAROLASID
           JOIN status s ON s.STATUSID = oc.STATUSID
@@ -315,6 +336,7 @@ while ($row = mysqli_fetch_assoc($result)) {
     $row['Entrada'] = isset($row['Entrada']) ? trim((string) $row['Entrada']) : '';
     $row['Almacen'] = isset($row['Almacen']) ? trim((string) $row['Almacen']) : '';
     $row['Factura'] = isset($row['Factura']) ? trim((string) $row['Factura']) : '';
+    $row['MotivoCancelacion'] = isset($row['MotivoCancelacion']) ? trim((string) $row['MotivoCancelacion']) : '';
     $ordenes[] = $row;
 }
 mysqli_free_result($result);

@@ -30,6 +30,10 @@ $(document).ready(function() {
   var mensajeRestriccionAuditado = typeof configuracionCharolas.mensajeRestriccionAuditado === 'string' && configuracionCharolas.mensajeRestriccionAuditado.trim() !== ''
     ? configuracionCharolas.mensajeRestriccionAuditado
     : 'Solo un auditor puede asignar el estatus Auditado.';
+  var puedeCancelar = !!configuracionCharolas.puedeCancelar;
+  var mensajeRestriccionCancelar = typeof configuracionCharolas.mensajeRestriccionCancelar === 'string' && configuracionCharolas.mensajeRestriccionCancelar.trim() !== ''
+    ? configuracionCharolas.mensajeRestriccionCancelar
+    : 'Solo un Soporte IT o administrador puede cancelar requisiciones.';
   var nombreStatusAuditadoNormalizado = '';
   var $camposAuditado = $('#CamposAuditado');
   var $salidaAuditado = $('#SalidaAuditado');
@@ -44,6 +48,11 @@ $(document).ready(function() {
   var $btnConfirmarCambioStatus = $('#BtnConfirmarCambioStatus');
   var $btnGenerarRequisicion = $('#GenerarRequisicionBtn');
   var statusEnProcesoId = '2';
+  var statusCanceladoId = '5';
+  var $modalCancelarCharola = $('#ModalCancelarCharola');
+  var $formCancelarCharola = $('#FormCancelarCharola');
+  var $ordenCharolaIdCancelar = $('#ORDENCHAROLAIDCancelar');
+  var $motivoCancelacionCharola = $('#MotivoCancelacionCharola');
 
   function mostrarBotonGenerarRequisicion() {
     if ($btnGenerarRequisicion.length) {
@@ -359,6 +368,14 @@ $(document).ready(function() {
     }
   }
 
+  function construirBotonCancelar(data) {
+    if (!puedeCancelar || !data || String(data.STATUSID || '') === statusCanceladoId) {
+      return '';
+    }
+
+    return '<div class="mt-3"><button type="button" class="btn btn-outline-danger btn-sm btn-cancelar-charola" data-order="' + escapeHtml(data.ORDENCHAROLAID) + '">Cancelar requisición</button></div>';
+  }
+
   function calcularTotalesMateriales(detalles) {
     var totales = {
       Largueros: 0,
@@ -483,8 +500,12 @@ $(document).ready(function() {
   }
 
   function construirDetalleRequisicion(data) {
-    if (!data || !Array.isArray(data.Detalles) || !data.Detalles.length) {
-      return '<div class="text-muted">Sin materiales registrados para esta requisición.</div>';
+    if (!data) {
+      return '<div class="text-muted">Sin información registrada para esta requisición.</div>';
+    }
+
+    if (!Array.isArray(data.Detalles) || !data.Detalles.length) {
+      return '<div class="detalle-requisicion d-flex flex-column flex-md-row justify-content-between gap-3"><div class="text-muted">Sin materiales registrados para esta requisición.</div>' + construirBotonCancelar(data) + '</div>';
     }
 
     var totalLargueros = renderMaterial(data, 'Largueros');
@@ -494,6 +515,10 @@ $(document).ready(function() {
     var salida = data.Salida ? data.Salida : '—';
     var entrada = data.Entrada ? data.Entrada : '—';
     var almacen = data.Almacen ? data.Almacen : '—';
+    var motivoCancelacion = data.MotivoCancelacion ? data.MotivoCancelacion : '—';
+    var bloqueMotivoCancelacion = String(data.STATUSID || '') === statusCanceladoId || data.MotivoCancelacion
+      ? '<div class="col-sm-12 col-lg-6"><div class="text-muted text-uppercase small">Motivo cancelación</div><div class="fw-semibold">' + escapeHtml(motivoCancelacion) + '</div></div>'
+      : '';
 
     var html = '<div class="detalle-requisicion">';
 
@@ -502,10 +527,11 @@ $(document).ready(function() {
       '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">SKU</div><div class="fw-semibold">' + escapeHtml(data.SkuCharolas) + '</div></div>' +
       '<div class="col-sm-12 col-lg-6"><div class="text-muted text-uppercase small">Descripción</div><div class="fw-semibold">' + escapeHtml(data.DescripcionCharolas) + '</div></div>' +
       '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Cantidad</div><div class="fw-semibold">' + escapeHtml(data.Cantidad) + '</div></div>' +
-      '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Estatus</div><div class="fw-semibold">' + escapeHtml(obtenerNombreStatus(data.Status, data.STATUSID)) + '</div></div>' +
+      '<div class="col-sm-6 col-lg-3 ms-lg-auto"><div class="text-muted text-uppercase small">Estatus</div><div class="fw-semibold">' + escapeHtml(obtenerNombreStatus(data.Status, data.STATUSID)) + '</div>' + construirBotonCancelar(data) + '</div>' +
       '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Salida</div><div class="fw-semibold">' + escapeHtml(salida) + '</div></div>' +
       '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Entrada</div><div class="fw-semibold">' + escapeHtml(entrada) + '</div></div>' +
       '<div class="col-sm-6 col-lg-3"><div class="text-muted text-uppercase small">Almacén</div><div class="fw-semibold">' + escapeHtml(almacen) + '</div></div>' +
+      bloqueMotivoCancelacion +
     '</div>';
 
     html += '<div class="row g-3 detalle-requisicion__totales mt-2">' +
@@ -658,6 +684,7 @@ $(document).ready(function() {
             Entrada: typeof row.Entrada === 'string' ? row.Entrada : '',
             Almacen: typeof row.Almacen === 'string' ? row.Almacen : '',
             Factura: typeof row.Factura === 'string' ? row.Factura : '',
+            MotivoCancelacion: typeof row.MotivoCancelacion === 'string' ? row.MotivoCancelacion : '',
             _totalesMateriales: normalizarTotalesMateriales(totales)
           };
 
@@ -887,6 +914,79 @@ $(document).ready(function() {
         }
       });
     }
+  });
+
+
+  $('#TablaOrdenesCharolas').on('click', '.btn-cancelar-charola', function() {
+    if (!puedeCancelar) {
+      window.alert(mensajeRestriccionCancelar);
+      return;
+    }
+
+    var orderId = $(this).data('order');
+    $ordenCharolaIdCancelar.val(orderId !== undefined && orderId !== null ? String(orderId) : '');
+    $motivoCancelacionCharola.val('');
+    $modalCancelarCharola.modal('show');
+  });
+
+  $formCancelarCharola.on('submit', function(e) {
+    e.preventDefault();
+
+    if (!puedeCancelar) {
+      window.alert(mensajeRestriccionCancelar);
+      $modalCancelarCharola.modal('hide');
+      return;
+    }
+
+    var orderId = $ordenCharolaIdCancelar.val();
+    var motivo = ($motivoCancelacionCharola.val() || '').trim();
+
+    if (!orderId) {
+      $modalCancelarCharola.modal('hide');
+      return;
+    }
+
+    if (!motivo) {
+      window.alert('Debes capturar el motivo de cancelación.');
+      return;
+    }
+
+    if (motivo.length > 500) {
+      motivo = motivo.slice(0, 500);
+    }
+
+    $.ajax({
+      type: 'POST',
+      url: 'App/Server/ServerUpdateOrdenCharolas.php',
+      data: {
+        ORDENCHAROLAID: orderId,
+        STATUSID: statusCanceladoId,
+        MOTIVO_CANCELACION: motivo
+      },
+      dataType: 'json',
+      success: function(response) {
+        if (response && response.error) {
+          window.alert(response.error);
+          return;
+        }
+        $modalCancelarCharola.modal('hide');
+        cargarOrdenes();
+      },
+      error: function(xhr) {
+        var mensaje = 'No se pudo cancelar la requisición.';
+        if (xhr && xhr.responseJSON && xhr.responseJSON.error) {
+          mensaje = xhr.responseJSON.error;
+        }
+        window.alert(mensaje);
+      }
+    });
+  });
+
+  $modalCancelarCharola.on('hidden.bs.modal', function() {
+    if ($formCancelarCharola[0]) {
+      $formCancelarCharola[0].reset();
+    }
+    $ordenCharolaIdCancelar.val('');
   });
 
   $('#TablaOrdenesCharolas').on('click', '.badge-status', function() {
