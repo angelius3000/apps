@@ -67,3 +67,29 @@
         </div>
     </div>
 </div>
+
+
+<div class="modal" id="ModalCancelarCharola">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancelar requisición</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="btn-close"></button>
+            </div>
+            <form id="FormCancelarCharola">
+                <div class="modal-body">
+                    <p class="mb-3">Indica el motivo de la cancelación para confirmar esta acción.</p>
+                    <div class="mb-3">
+                        <label for="MotivoCancelacionCharola" class="form-label">Motivo de cancelación</label>
+                        <textarea class="form-control" id="MotivoCancelacionCharola" name="MOTIVO_CANCELACION" rows="3" maxlength="500" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <input type="hidden" id="ORDENCHAROLAIDCancelar" name="ORDENCHAROLAID">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-danger">Confirmar cancelación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -8,6 +8,26 @@ if (!$tieneAcceso) {
     exit;
 }
 
+
+function normalizarPerfilCharolas($perfil)
+{
+    $perfil = strtolower(trim((string) $perfil));
+    if ($perfil === '') {
+        return '';
+    }
+
+    $perfil = strtr($perfil, [
+        'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u',
+        'Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u', 'Ü' => 'u'
+    ]);
+    return preg_replace('/\s+/', ' ', $perfil);
+}
+
+function perfilPuedeCancelarCharolas($perfil)
+{
+    return in_array(normalizarPerfilCharolas($perfil), ['administrador', 'admin', 'soporte it', 'soporte ti'], true);
+}
+
 $charolas = [];
 $charolasError = null;
 if ($conn) {
@@ -30,8 +50,9 @@ $statusVerificadoNombre = 'Verificado';
 $statusVerificadoId = null;
 $mensajeRestriccionVerificado = 'Solo un Soporte IT, administrador, supervisor o auditor puede asignar el estatus Verificado.';
 $tiposPermitidosCambioEstatus = ['soporte it', 'administrador', 'supervisor', 'auditor'];
-$tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string) $_SESSION['TipoDeUsuario'])) : '';
+$tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? normalizarPerfilCharolas($_SESSION['TipoDeUsuario']) : '';
 $puedeCambiarEstatusCharolas = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $tiposPermitidosCambioEstatus, true);
+$puedeCancelarCharolas = perfilPuedeCancelarCharolas($tipoUsuarioActual);
 $puedeAsignarVerificado = $puedeCambiarEstatusCharolas;
 $statusAuditadoNombre = 'Auditado';
 $statusAuditadoId = null;
@@ -168,6 +189,8 @@ if ($conn) {
             'nombreStatusAuditado' => $statusAuditadoNombre,
             'puedeAsignarAuditado' => $puedeAsignarAuditado,
             'mensajeRestriccionAuditado' => $mensajeRestriccionAuditado,
+            'puedeCancelar' => $puedeCancelarCharolas,
+            'mensajeRestriccionCancelar' => 'Solo un Soporte IT o administrador puede cancelar requisiciones.',
         ], JSON_UNESCAPED_UNICODE); ?>;
     </script>
 
@@ -189,7 +212,7 @@ if ($conn) {
     <script type="text/javascript" charset="utf8" src="assets/js/vfs_fonts.js"></script>
     <script type="text/javascript" charset="utf8" src="assets/js/dataTables.responsive.min.js"></script>
     <script src="assets/js/select2.min.js"></script>
-    <script src="App/js/AppCharolas.js"></script>
+    <script src="App/js/AppCharolas.js?v=<?php echo filemtime(__DIR__ . '/App/js/AppCharolas.js'); ?>"></script>
     <script src="App/js/AppCambiarContrasena.js"></script>
 </body>
 </html>
