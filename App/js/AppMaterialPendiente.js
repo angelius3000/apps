@@ -50,6 +50,9 @@ $(document).ready(function() {
   var $btnPaginaSiguiente = $('#MaterialPendientePaginaSiguiente');
   var $btnVerEliminados = $('#BtnVerEliminadosMaterialPendiente');
   var $modalEliminados = $('#ModalMaterialPendienteEliminado');
+  var $modalSolicitudes = $('#ModalSolicitudesMP');
+  var $modalAgregarClientes = $('#ModalAgregarClientes');
+  var $modalAgregarProductos = $('#ModalAgregarProductos');
   var $tablaEliminadosBody = $('#TablaMaterialPendienteEliminadoBody');
   var $errorEliminados = $('#MaterialPendienteEliminadoError');
   var REGISTROS_POR_PAGINA = 5;
@@ -78,9 +81,26 @@ $(document).ready(function() {
   var partidasPendientes = [];
   var modoEdicion = false;
   var instanciaModalEliminados = null;
+  var instanciaModalSolicitudes = null;
+  var instanciaModalAgregarClientes = null;
+  var instanciaModalAgregarProductos = null;
+  var tipoSolicitudActual = '';
+  var valorSolicitudActual = '';
 
   if ($modalEliminados.length && $modalEliminados.parent()[0] !== document.body) {
     $modalEliminados.appendTo('body');
+  }
+
+  if ($modalSolicitudes.length && $modalSolicitudes.parent()[0] !== document.body) {
+    $modalSolicitudes.appendTo('body');
+  }
+
+  if ($modalAgregarClientes.length && $modalAgregarClientes.parent()[0] !== document.body) {
+    $modalAgregarClientes.appendTo('body');
+  }
+
+  if ($modalAgregarProductos.length && $modalAgregarProductos.parent()[0] !== document.body) {
+    $modalAgregarProductos.appendTo('body');
   }
 
   function desplazarASeccionEntrega() {
@@ -243,6 +263,14 @@ $(document).ready(function() {
             });
           }
 
+          resultados.unshift({
+            id: 'solicitar:' + (params.term || ''),
+            text: 'Solicitar',
+            sku: (params.term || '').toString().trim(),
+            descripcion: 'SOLICITADO',
+            solicitado: true
+          });
+
           return {
             results: resultados,
             pagination: {
@@ -280,7 +308,14 @@ $(document).ready(function() {
       width: '100%',
       minimumResultsForSearch: 0,
       minimumInputLength: 2,
-      language: obtenerConfiguracionIdiomaMinimo()
+      language: obtenerConfiguracionIdiomaMinimo(),
+      tags: true,
+      createTag: function(params) {
+        var term = $.trim(params.term || '');
+        if (term === '') { return null; }
+        return { id: 'solicitar:' + term, text: 'Solicitar', numeroCliente: term, solicitado: true };
+      },
+      insertTag: function(data, tag) { data.unshift(tag); }
     });
   }
 
@@ -500,6 +535,7 @@ $(document).ready(function() {
       $celdaSku.append($('<input>', { type: 'hidden', name: 'productos[' + indice + '][descripcion]', value: partida.descripcion || '' }));
       $celdaSku.append($('<input>', { type: 'hidden', name: 'productos[' + indice + '][cantidad]', value: partida.cantidad }));
       $celdaSku.append($('<input>', { type: 'hidden', name: 'productos[' + indice + '][otro]', value: partida.esOtro ? '1' : '0' }));
+      $celdaSku.append($('<input>', { type: 'hidden', name: 'productos[' + indice + '][solicitado]', value: partida.solicitado ? '1' : '0' }));
 
       $celdaAcciones.append($botonEliminar);
       $fila.append($celdaSku, $celdaCantidad, $celdaAcciones, $celdaDescripcion);
@@ -524,7 +560,8 @@ $(document).ready(function() {
     return {
       id: valorSeleccionado,
       sku: (seleccionado.sku || '').toString().trim(),
-      descripcion: (seleccionado.descripcion || seleccionado.text || '').toString().trim()
+      descripcion: (seleccionado.descripcion || seleccionado.text || '').toString().trim(),
+      solicitado: !!seleccionado.solicitado
     };
   }
 
@@ -602,7 +639,19 @@ $(document).ready(function() {
       var datosProducto = obtenerDatosProductoSeleccionado();
       var cantidad = parseInt($inputCantidadPendiente.val(), 10);
 
-      if (!datosProducto.id || isNaN(cantidad) || cantidad <= 0) {
+      if (isNaN(cantidad) || cantidad <= 0) {
+        return;
+      }
+
+      if (datosProducto.solicitado) {
+        var skuSolicitado = datosProducto.sku || (($selectProductoPendiente.val() || '').toString().replace(/^solicitar:/, ''));
+        if (!skuSolicitado) { skuSolicitado = window.prompt('Captura el SKU que deseas solicitar:') || ''; }
+        skuSolicitado = skuSolicitado.trim();
+        if (!skuSolicitado) { return; }
+        datosProducto.id = null;
+        datosProducto.sku = skuSolicitado;
+        datosProducto.descripcion = 'SOLICITADO';
+      } else if (!datosProducto.id) {
         return;
       }
 
@@ -611,7 +660,8 @@ $(document).ready(function() {
         sku: datosProducto.sku,
         descripcion: datosProducto.descripcion,
         cantidad: cantidad,
-        esOtro: false
+        esOtro: false,
+        solicitado: !!datosProducto.solicitado
       });
     }
 
@@ -1587,7 +1637,8 @@ $(document).ready(function() {
         sku: productoEncontrado && productoEncontrado.sku ? productoEncontrado.sku : sku,
         descripcion: productoEncontrado && productoEncontrado.descripcion ? productoEncontrado.descripcion : descripcion,
         cantidad: cantidad,
-        esOtro: esOtro
+        esOtro: esOtro,
+        solicitado: descripcion === 'SOLICITADO'
       };
     });
 
@@ -1683,6 +1734,207 @@ $(document).ready(function() {
       mostrarErrorDetalle('No se pudieron cargar las partidas.');
     });
   }
+
+
+
+
+  function obtenerInstanciaModalSolicitudes() {
+    if (!$modalSolicitudes.length || !window.bootstrap || typeof window.bootstrap.Modal !== 'function') {
+      return null;
+    }
+
+    if (instanciaModalSolicitudes) {
+      return instanciaModalSolicitudes;
+    }
+
+    if (typeof window.bootstrap.Modal.getInstance === 'function') {
+      instanciaModalSolicitudes = window.bootstrap.Modal.getInstance($modalSolicitudes[0]);
+    }
+
+    if (!instanciaModalSolicitudes) {
+      instanciaModalSolicitudes = new window.bootstrap.Modal($modalSolicitudes[0]);
+    }
+
+    return instanciaModalSolicitudes;
+  }
+
+  function mostrarModalSolicitudes() {
+    var modalSolicitudes = obtenerInstanciaModalSolicitudes();
+
+    if (modalSolicitudes && typeof modalSolicitudes.show === 'function') {
+      modalSolicitudes.show();
+      return;
+    }
+
+    if (typeof $modalSolicitudes.modal === 'function') {
+      $modalSolicitudes.modal('show');
+    }
+  }
+
+  function ocultarModalSolicitudes() {
+    var modalSolicitudes = obtenerInstanciaModalSolicitudes();
+
+    if (modalSolicitudes && typeof modalSolicitudes.hide === 'function') {
+      modalSolicitudes.hide();
+      return;
+    }
+
+    if (typeof $modalSolicitudes.modal === 'function') {
+      $modalSolicitudes.modal('hide');
+    }
+  }
+
+
+  function obtenerInstanciaModalBootstrap($modalObjetivo, instanciaActual) {
+    if (!$modalObjetivo.length || !window.bootstrap || typeof window.bootstrap.Modal !== 'function') {
+      return null;
+    }
+
+    if (instanciaActual) {
+      return instanciaActual;
+    }
+
+    var instancia = null;
+    if (typeof window.bootstrap.Modal.getInstance === 'function') {
+      instancia = window.bootstrap.Modal.getInstance($modalObjetivo[0]);
+    }
+
+    if (!instancia) {
+      instancia = new window.bootstrap.Modal($modalObjetivo[0]);
+    }
+
+    return instancia;
+  }
+
+  function obtenerInstanciaModalAgregarClientes() {
+    instanciaModalAgregarClientes = obtenerInstanciaModalBootstrap($modalAgregarClientes, instanciaModalAgregarClientes);
+    return instanciaModalAgregarClientes;
+  }
+
+  function obtenerInstanciaModalAgregarProductos() {
+    instanciaModalAgregarProductos = obtenerInstanciaModalBootstrap($modalAgregarProductos, instanciaModalAgregarProductos);
+    return instanciaModalAgregarProductos;
+  }
+
+  function mostrarModalBootstrap($modalObjetivo, obtenerInstancia) {
+    var instancia = obtenerInstancia();
+
+    if (instancia && typeof instancia.show === 'function') {
+      instancia.show();
+      return;
+    }
+
+    if (typeof $modalObjetivo.modal === 'function') {
+      $modalObjetivo.modal('show');
+    }
+  }
+
+  function ocultarModalBootstrap($modalObjetivo, obtenerInstancia) {
+    var instancia = obtenerInstancia();
+
+    if (instancia && typeof instancia.hide === 'function') {
+      instancia.hide();
+      return;
+    }
+
+    if (typeof $modalObjetivo.modal === 'function') {
+      $modalObjetivo.modal('hide');
+    }
+  }
+
+  function mostrarModalAgregarClientes() {
+    mostrarModalBootstrap($modalAgregarClientes, obtenerInstanciaModalAgregarClientes);
+  }
+
+  function mostrarModalAgregarProductos() {
+    mostrarModalBootstrap($modalAgregarProductos, obtenerInstanciaModalAgregarProductos);
+  }
+
+  function ocultarModalAgregarClientes() {
+    ocultarModalBootstrap($modalAgregarClientes, obtenerInstanciaModalAgregarClientes);
+  }
+
+  function ocultarModalAgregarProductos() {
+    ocultarModalBootstrap($modalAgregarProductos, obtenerInstanciaModalAgregarProductos);
+  }
+
+  function abrirModalDespuesDeSolicitudes(mostrarModalAtencion) {
+    var abrir = function() {
+      window.setTimeout(function() {
+        mostrarModalAtencion();
+      }, 50);
+    };
+
+    if ($modalSolicitudes.length && $modalSolicitudes.hasClass('show')) {
+      $modalSolicitudes.one('hidden.bs.modal', abrir);
+      ocultarModalSolicitudes();
+      return;
+    }
+
+    abrir();
+  }
+
+  function cargarSolicitudesMP(tipo) {
+    tipoSolicitudActual = tipo;
+    var $body = $('#SolicitudesMPBody');
+    $('#ModalSolicitudesMPLabel').text(tipo === 'clientes' ? 'Solicitudes de clientes' : 'Solicitudes de productos');
+    $body.html('<tr><td colspan="3" class="text-center text-muted">Cargando solicitudes…</td></tr>');
+    $.getJSON('App/Server/ServerSolicitudesMaterialPendiente.php', { tipo: tipo }).done(function(respuesta) {
+      if (!respuesta || !respuesta.success || !respuesta.records || !respuesta.records.length) {
+        $body.html('<tr><td colspan="3" class="text-center text-muted">No hay solicitudes pendientes.</td></tr>');
+        return;
+      }
+      $body.html(respuesta.records.map(function(r) {
+        return '<tr><td>' + escaparHtml(r.valor || '') + '</td><td>' + escaparHtml(r.fecha || '-') + '</td><td class="text-end"><button type="button" class="btn btn-sm btn-primary atender-solicitud-mp" data-valor="' + escaparHtml(r.valor || '') + '">Agregar</button></td></tr>';
+      }).join(''));
+    }).fail(function() {
+      $body.html('<tr><td colspan="3" class="text-center text-danger">No se pudieron cargar las solicitudes.</td></tr>');
+    });
+    mostrarModalSolicitudes();
+  }
+
+  if ($modalSolicitudes.length) {
+    $modalSolicitudes.on('shown.bs.modal', function() {
+      $modalSolicitudes.css('z-index', 1060);
+      $('.modal-backdrop').last().css('z-index', 1055);
+    });
+  }
+
+  $modalAgregarClientes.add($modalAgregarProductos).on('shown.bs.modal', function() {
+    $(this).css('z-index', 1070);
+    $('.modal-backdrop').last().css('z-index', 1065);
+  });
+
+  $('#BtnSolicitudesClientesMP').on('click', function() { cargarSolicitudesMP('clientes'); });
+  $('#BtnSolicitudesProductosMP').on('click', function() { cargarSolicitudesMP('productos'); });
+  $('#SolicitudesMPBody').on('click', '.atender-solicitud-mp', function() {
+    valorSolicitudActual = ($(this).data('valor') || '').toString();
+    if (tipoSolicitudActual === 'clientes') {
+      $('#ValidacionAgregarClientes')[0] && $('#ValidacionAgregarClientes')[0].reset();
+      $('#CLIENTESIAN').val(valorSolicitudActual);
+      abrirModalDespuesDeSolicitudes(mostrarModalAgregarClientes);
+      return;
+    }
+    $('#ValidacionAgregarProductos')[0] && $('#ValidacionAgregarProductos')[0].reset();
+    $('#Sku').val(valorSolicitudActual);
+    abrirModalDespuesDeSolicitudes(mostrarModalAgregarProductos);
+  });
+
+  $('#ValidacionAgregarClientes').on('submit', function(evento) {
+    evento.preventDefault();
+    var $form = $(this);
+    $.ajax({ type: 'POST', url: 'App/Server/ServerInsertarClientes.php', data: $form.serialize(), dataType: 'json' })
+      .done(function() { ocultarModalAgregarClientes(); cargarSolicitudesMP('clientes'); })
+      .fail(function(xhr) { mostrarMensajeError((xhr.responseJSON && xhr.responseJSON.error) || 'No se pudo agregar el cliente.'); });
+  });
+
+  $('#ValidacionAgregarProductos').on('submit', function(evento) {
+    evento.preventDefault();
+    var $form = $(this);
+    $.ajax({ type: 'POST', url: 'App/Server/ServerInsertarProductos.php', data: $form.serialize(), dataType: 'json' })
+      .done(function() { ocultarModalAgregarProductos(); cargarSolicitudesMP('productos'); })
+      .fail(function(xhr) { mostrarMensajeError((xhr.responseJSON && xhr.responseJSON.error) || 'No se pudo agregar el producto.'); });
+  });
 
   if ($buscadorMaterialPendiente.length) {
     $buscadorMaterialPendiente.on('input', function() {
@@ -2179,6 +2431,21 @@ $(document).ready(function() {
   });
 
   $selectRazonSocial.on('change select2:select', function() {
+    var datos = $selectRazonSocial.hasClass('select2-hidden-accessible') ? $selectRazonSocial.select2('data') : [];
+    var seleccionado = datos && datos.length ? datos[0] : null;
+    if (seleccionado && seleccionado.solicitado) {
+      var numero = (seleccionado.numeroCliente || ($selectRazonSocial.val() || '').toString().replace(/^solicitar:/, '')).trim();
+      if (!numero) { numero = window.prompt('Captura el número de cliente que deseas solicitar:') || ''; }
+      numero = numero.trim();
+      if (numero) {
+        $checkboxOtraRazonSocial.prop('checked', true);
+        actualizarCamposOtraRazonSocial();
+        $inputNumeroClientePendienteOtro.val(numero);
+        $inputRazonSocialPendienteOtra.val('SOLICITADO');
+        $inputNombreCliente.val('SOLICITADO');
+      }
+      return;
+    }
     enfocarCampo($selectVendedores);
   });
 
