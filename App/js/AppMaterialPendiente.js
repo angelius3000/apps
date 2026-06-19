@@ -51,6 +51,8 @@ $(document).ready(function() {
   var $btnVerEliminados = $('#BtnVerEliminadosMaterialPendiente');
   var $modalEliminados = $('#ModalMaterialPendienteEliminado');
   var $modalSolicitudes = $('#ModalSolicitudesMP');
+  var $modalAgregarClientes = $('#ModalAgregarClientes');
+  var $modalAgregarProductos = $('#ModalAgregarProductos');
   var $tablaEliminadosBody = $('#TablaMaterialPendienteEliminadoBody');
   var $errorEliminados = $('#MaterialPendienteEliminadoError');
   var REGISTROS_POR_PAGINA = 5;
@@ -80,6 +82,8 @@ $(document).ready(function() {
   var modoEdicion = false;
   var instanciaModalEliminados = null;
   var instanciaModalSolicitudes = null;
+  var instanciaModalAgregarClientes = null;
+  var instanciaModalAgregarProductos = null;
   var tipoSolicitudActual = '';
   var valorSolicitudActual = '';
 
@@ -89,6 +93,14 @@ $(document).ready(function() {
 
   if ($modalSolicitudes.length && $modalSolicitudes.parent()[0] !== document.body) {
     $modalSolicitudes.appendTo('body');
+  }
+
+  if ($modalAgregarClientes.length && $modalAgregarClientes.parent()[0] !== document.body) {
+    $modalAgregarClientes.appendTo('body');
+  }
+
+  if ($modalAgregarProductos.length && $modalAgregarProductos.parent()[0] !== document.body) {
+    $modalAgregarProductos.appendTo('body');
   }
 
   function desplazarASeccionEntrega() {
@@ -1772,6 +1784,96 @@ $(document).ready(function() {
     }
   }
 
+
+  function obtenerInstanciaModalBootstrap($modalObjetivo, instanciaActual) {
+    if (!$modalObjetivo.length || !window.bootstrap || typeof window.bootstrap.Modal !== 'function') {
+      return null;
+    }
+
+    if (instanciaActual) {
+      return instanciaActual;
+    }
+
+    var instancia = null;
+    if (typeof window.bootstrap.Modal.getInstance === 'function') {
+      instancia = window.bootstrap.Modal.getInstance($modalObjetivo[0]);
+    }
+
+    if (!instancia) {
+      instancia = new window.bootstrap.Modal($modalObjetivo[0]);
+    }
+
+    return instancia;
+  }
+
+  function obtenerInstanciaModalAgregarClientes() {
+    instanciaModalAgregarClientes = obtenerInstanciaModalBootstrap($modalAgregarClientes, instanciaModalAgregarClientes);
+    return instanciaModalAgregarClientes;
+  }
+
+  function obtenerInstanciaModalAgregarProductos() {
+    instanciaModalAgregarProductos = obtenerInstanciaModalBootstrap($modalAgregarProductos, instanciaModalAgregarProductos);
+    return instanciaModalAgregarProductos;
+  }
+
+  function mostrarModalBootstrap($modalObjetivo, obtenerInstancia) {
+    var instancia = obtenerInstancia();
+
+    if (instancia && typeof instancia.show === 'function') {
+      instancia.show();
+      return;
+    }
+
+    if (typeof $modalObjetivo.modal === 'function') {
+      $modalObjetivo.modal('show');
+    }
+  }
+
+  function ocultarModalBootstrap($modalObjetivo, obtenerInstancia) {
+    var instancia = obtenerInstancia();
+
+    if (instancia && typeof instancia.hide === 'function') {
+      instancia.hide();
+      return;
+    }
+
+    if (typeof $modalObjetivo.modal === 'function') {
+      $modalObjetivo.modal('hide');
+    }
+  }
+
+  function mostrarModalAgregarClientes() {
+    mostrarModalBootstrap($modalAgregarClientes, obtenerInstanciaModalAgregarClientes);
+  }
+
+  function mostrarModalAgregarProductos() {
+    mostrarModalBootstrap($modalAgregarProductos, obtenerInstanciaModalAgregarProductos);
+  }
+
+  function ocultarModalAgregarClientes() {
+    ocultarModalBootstrap($modalAgregarClientes, obtenerInstanciaModalAgregarClientes);
+  }
+
+  function ocultarModalAgregarProductos() {
+    ocultarModalBootstrap($modalAgregarProductos, obtenerInstanciaModalAgregarProductos);
+  }
+
+  function abrirModalDespuesDeSolicitudes(mostrarModalAtencion) {
+    var abrir = function() {
+      window.setTimeout(function() {
+        mostrarModalAtencion();
+      }, 50);
+    };
+
+    if ($modalSolicitudes.length && $modalSolicitudes.hasClass('show')) {
+      $modalSolicitudes.one('hidden.bs.modal', abrir);
+      ocultarModalSolicitudes();
+      return;
+    }
+
+    abrir();
+  }
+
   function cargarSolicitudesMP(tipo) {
     tipoSolicitudActual = tipo;
     var $body = $('#SolicitudesMPBody');
@@ -1798,27 +1900,31 @@ $(document).ready(function() {
     });
   }
 
+  $modalAgregarClientes.add($modalAgregarProductos).on('shown.bs.modal', function() {
+    $(this).css('z-index', 1070);
+    $('.modal-backdrop').last().css('z-index', 1065);
+  });
+
   $('#BtnSolicitudesClientesMP').on('click', function() { cargarSolicitudesMP('clientes'); });
   $('#BtnSolicitudesProductosMP').on('click', function() { cargarSolicitudesMP('productos'); });
   $('#SolicitudesMPBody').on('click', '.atender-solicitud-mp', function() {
     valorSolicitudActual = ($(this).data('valor') || '').toString();
-    ocultarModalSolicitudes();
     if (tipoSolicitudActual === 'clientes') {
       $('#ValidacionAgregarClientes')[0] && $('#ValidacionAgregarClientes')[0].reset();
       $('#CLIENTESIAN').val(valorSolicitudActual);
-      $('#ModalAgregarClientes').modal('show');
+      abrirModalDespuesDeSolicitudes(mostrarModalAgregarClientes);
       return;
     }
     $('#ValidacionAgregarProductos')[0] && $('#ValidacionAgregarProductos')[0].reset();
     $('#Sku').val(valorSolicitudActual);
-    $('#ModalAgregarProductos').modal('show');
+    abrirModalDespuesDeSolicitudes(mostrarModalAgregarProductos);
   });
 
   $('#ValidacionAgregarClientes').on('submit', function(evento) {
     evento.preventDefault();
     var $form = $(this);
     $.ajax({ type: 'POST', url: 'App/Server/ServerInsertarClientes.php', data: $form.serialize(), dataType: 'json' })
-      .done(function() { $('#ModalAgregarClientes').modal('hide'); cargarSolicitudesMP('clientes'); })
+      .done(function() { ocultarModalAgregarClientes(); cargarSolicitudesMP('clientes'); })
       .fail(function(xhr) { mostrarMensajeError((xhr.responseJSON && xhr.responseJSON.error) || 'No se pudo agregar el cliente.'); });
   });
 
@@ -1826,7 +1932,7 @@ $(document).ready(function() {
     evento.preventDefault();
     var $form = $(this);
     $.ajax({ type: 'POST', url: 'App/Server/ServerInsertarProductos.php', data: $form.serialize(), dataType: 'json' })
-      .done(function() { $('#ModalAgregarProductos').modal('hide'); cargarSolicitudesMP('productos'); })
+      .done(function() { ocultarModalAgregarProductos(); cargarSolicitudesMP('productos'); })
       .fail(function(xhr) { mostrarMensajeError((xhr.responseJSON && xhr.responseJSON.error) || 'No se pudo agregar el producto.'); });
   });
 
