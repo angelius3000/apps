@@ -50,6 +50,7 @@ $(document).ready(function() {
   var $btnPaginaSiguiente = $('#MaterialPendientePaginaSiguiente');
   var $btnVerEliminados = $('#BtnVerEliminadosMaterialPendiente');
   var $modalEliminados = $('#ModalMaterialPendienteEliminado');
+  var $modalSolicitudes = $('#ModalSolicitudesMP');
   var $tablaEliminadosBody = $('#TablaMaterialPendienteEliminadoBody');
   var $errorEliminados = $('#MaterialPendienteEliminadoError');
   var REGISTROS_POR_PAGINA = 5;
@@ -78,11 +79,16 @@ $(document).ready(function() {
   var partidasPendientes = [];
   var modoEdicion = false;
   var instanciaModalEliminados = null;
+  var instanciaModalSolicitudes = null;
   var tipoSolicitudActual = '';
   var valorSolicitudActual = '';
 
   if ($modalEliminados.length && $modalEliminados.parent()[0] !== document.body) {
     $modalEliminados.appendTo('body');
+  }
+
+  if ($modalSolicitudes.length && $modalSolicitudes.parent()[0] !== document.body) {
+    $modalSolicitudes.appendTo('body');
   }
 
   function desplazarASeccionEntrega() {
@@ -1719,9 +1725,55 @@ $(document).ready(function() {
 
 
 
+
+  function obtenerInstanciaModalSolicitudes() {
+    if (!$modalSolicitudes.length || !window.bootstrap || typeof window.bootstrap.Modal !== 'function') {
+      return null;
+    }
+
+    if (instanciaModalSolicitudes) {
+      return instanciaModalSolicitudes;
+    }
+
+    if (typeof window.bootstrap.Modal.getInstance === 'function') {
+      instanciaModalSolicitudes = window.bootstrap.Modal.getInstance($modalSolicitudes[0]);
+    }
+
+    if (!instanciaModalSolicitudes) {
+      instanciaModalSolicitudes = new window.bootstrap.Modal($modalSolicitudes[0]);
+    }
+
+    return instanciaModalSolicitudes;
+  }
+
+  function mostrarModalSolicitudes() {
+    var modalSolicitudes = obtenerInstanciaModalSolicitudes();
+
+    if (modalSolicitudes && typeof modalSolicitudes.show === 'function') {
+      modalSolicitudes.show();
+      return;
+    }
+
+    if (typeof $modalSolicitudes.modal === 'function') {
+      $modalSolicitudes.modal('show');
+    }
+  }
+
+  function ocultarModalSolicitudes() {
+    var modalSolicitudes = obtenerInstanciaModalSolicitudes();
+
+    if (modalSolicitudes && typeof modalSolicitudes.hide === 'function') {
+      modalSolicitudes.hide();
+      return;
+    }
+
+    if (typeof $modalSolicitudes.modal === 'function') {
+      $modalSolicitudes.modal('hide');
+    }
+  }
+
   function cargarSolicitudesMP(tipo) {
     tipoSolicitudActual = tipo;
-    var $modalSolicitudes = $('#ModalSolicitudesMP');
     var $body = $('#SolicitudesMPBody');
     $('#ModalSolicitudesMPLabel').text(tipo === 'clientes' ? 'Solicitudes de clientes' : 'Solicitudes de productos');
     $body.html('<tr><td colspan="3" class="text-center text-muted">Cargando solicitudes…</td></tr>');
@@ -1736,14 +1788,21 @@ $(document).ready(function() {
     }).fail(function() {
       $body.html('<tr><td colspan="3" class="text-center text-danger">No se pudieron cargar las solicitudes.</td></tr>');
     });
-    $modalSolicitudes.modal('show');
+    mostrarModalSolicitudes();
+  }
+
+  if ($modalSolicitudes.length) {
+    $modalSolicitudes.on('shown.bs.modal', function() {
+      $modalSolicitudes.css('z-index', 1060);
+      $('.modal-backdrop').last().css('z-index', 1055);
+    });
   }
 
   $('#BtnSolicitudesClientesMP').on('click', function() { cargarSolicitudesMP('clientes'); });
   $('#BtnSolicitudesProductosMP').on('click', function() { cargarSolicitudesMP('productos'); });
   $('#SolicitudesMPBody').on('click', '.atender-solicitud-mp', function() {
     valorSolicitudActual = ($(this).data('valor') || '').toString();
-    $('#ModalSolicitudesMP').modal('hide');
+    ocultarModalSolicitudes();
     if (tipoSolicitudActual === 'clientes') {
       $('#ValidacionAgregarClientes')[0] && $('#ValidacionAgregarClientes')[0].reset();
       $('#CLIENTESIAN').val(valorSolicitudActual);
