@@ -428,6 +428,20 @@ if ($documentoAnterior !== $numeroFactura) {
 
 mysqli_commit($conn);
 
+$clientesSolicitadosNotificacion = ($usarOtraRazonSocial && $numeroClienteManual !== '') ? [$numeroClienteManual] : [];
+$productosSolicitadosNotificacion = array_keys($skusSolicitados);
+
+if (!empty($clientesSolicitadosNotificacion) || !empty($productosSolicitadosNotificacion)) {
+    include_once __DIR__ . '/../../includes/MandarEmail.php';
+    if (function_exists('EnviarNotificacionSolicitudMaterialPendiente')) {
+        EnviarNotificacionSolicitudMaterialPendiente(
+            $clientesSolicitadosNotificacion,
+            $productosSolicitadosNotificacion,
+            $numeroFactura
+        );
+    }
+}
+
 echo json_encode([
     'success' => true,
     'updated' => $actualizados,
