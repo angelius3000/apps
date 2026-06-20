@@ -15,6 +15,34 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     responderError('Método no permitido.', 405);
 }
 
+function obtenerSkuProductoExistente(mysqli $conn, array $skus): string
+{
+    if (empty($skus)) {
+        return '';
+    }
+
+    $stmt = mysqli_prepare($conn, 'SELECT Sku FROM productos WHERE Sku = ? LIMIT 1');
+    if (!$stmt) {
+        return '';
+    }
+
+    foreach (array_keys($skus) as $skuSolicitado) {
+        mysqli_stmt_bind_param($stmt, 's', $skuSolicitado);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_bind_result($stmt, $skuExistente);
+
+        if (mysqli_stmt_fetch($stmt)) {
+            mysqli_stmt_close($stmt);
+            return (string) $skuExistente;
+        }
+
+        mysqli_stmt_free_result($stmt);
+    }
+
+    mysqli_stmt_close($stmt);
+    return '';
+}
+
 if (!$conn) {
     responderError('No se pudo conectar a la base de datos.');
 }
@@ -291,6 +319,11 @@ foreach ($productos as $producto) {
 
 if (empty($productosValidos)) {
     responderError('Agrega al menos una partida pendiente válida.', 400);
+}
+
+$skuProductoExistente = obtenerSkuProductoExistente($conn, $skusSolicitados);
+if ($skuProductoExistente !== '') {
+    responderError('No se puede generar una solicitud para el SKU ' . $skuProductoExistente . ' porque ya existe en el registro de productos.', 409);
 }
 
 $stmtDocumento = mysqli_prepare(
