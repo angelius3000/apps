@@ -216,6 +216,19 @@ $(document).ready(function() {
     return sku || descripcion;
   }
 
+
+  function existeSkuExactoEnResultados(resultados, skuBuscado) {
+    skuBuscado = (skuBuscado || '').toString().trim().toLowerCase();
+
+    if (!skuBuscado) {
+      return false;
+    }
+
+    return resultados.some(function(item) {
+      return ((item && item.sku ? item.sku : '').toString().trim().toLowerCase()) === skuBuscado;
+    });
+  }
+
   function inicializarSelect2($elemento) {
     if (!$elemento.length || typeof $elemento.select2 !== 'function') {
       return;
@@ -2578,8 +2591,11 @@ $(document).ready(function() {
 
         var mensaje = respuesta && respuesta.message ? respuesta.message : '';
         mostrarMensajeError(mensaje);
-      }).fail(function() {
-        mostrarMensajeError('No se pudo guardar el material pendiente. Inténtalo nuevamente.');
+      }).fail(function(xhr) {
+        var mensaje = xhr.responseJSON && xhr.responseJSON.message
+          ? xhr.responseJSON.message
+          : 'No se pudo guardar el material pendiente. Inténtalo nuevamente.';
+        mostrarMensajeError(mensaje);
       });
     });
   }
