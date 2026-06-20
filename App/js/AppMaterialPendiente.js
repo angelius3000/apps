@@ -276,13 +276,16 @@ $(document).ready(function() {
             });
           }
 
-          resultados.unshift({
-            id: 'solicitar:' + (params.term || ''),
-            text: 'Solicitar',
-            sku: (params.term || '').toString().trim(),
-            descripcion: 'SOLICITADO',
-            solicitado: true
-          });
+          var terminoBusqueda = (params.term || '').toString().trim();
+          if (resultados.length === 0 && terminoBusqueda !== '') {
+            resultados.unshift({
+              id: 'solicitar:' + terminoBusqueda,
+              text: 'Solicitar',
+              sku: terminoBusqueda,
+              descripcion: 'SOLICITADO',
+              solicitado: true
+            });
+          }
 
           return {
             results: resultados,
@@ -326,6 +329,24 @@ $(document).ready(function() {
       createTag: function(params) {
         var term = $.trim(params.term || '');
         if (term === '') { return null; }
+
+        var termNormalizado = normalizarTextoBuscador(term);
+        var existeCoincidencia = false;
+
+        $elemento.find('option').each(function() {
+          var textoOpcion = normalizarTextoBuscador($(this).text());
+          if (textoOpcion.indexOf(termNormalizado) !== -1) {
+            existeCoincidencia = true;
+            return false;
+          }
+
+          return true;
+        });
+
+        if (existeCoincidencia) {
+          return null;
+        }
+
         return { id: 'solicitar:' + term, text: 'Solicitar', numeroCliente: term, solicitado: true };
       },
       insertTag: function(data, tag) { data.unshift(tag); }
