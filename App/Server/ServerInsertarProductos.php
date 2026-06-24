@@ -17,7 +17,24 @@ if ($sku === '') {
     exit;
 }
 
-$skuSql = "'" . mysqli_real_escape_string($conn, $sku) . "'";
+$skuEscapado = mysqli_real_escape_string($conn, $sku);
+$consultaSkuDuplicado = mysqli_query($conn, "SELECT PRODUCTOSID FROM productos WHERE Sku = '$skuEscapado' LIMIT 1");
+
+if ($consultaSkuDuplicado && mysqli_num_rows($consultaSkuDuplicado) > 0) {
+    http_response_code(409);
+    echo json_encode([
+        'error' => 'Ya existe un producto registrado con el SKU capturado.'
+    ]);
+    mysqli_free_result($consultaSkuDuplicado);
+    mysqli_close($conn);
+    exit;
+}
+
+if ($consultaSkuDuplicado) {
+    mysqli_free_result($consultaSkuDuplicado);
+}
+
+$skuSql = "'" . $skuEscapado . "'";
 $descripcionSql = ($descripcion !== '') ? "'" . mysqli_real_escape_string($conn, $descripcion) . "'" : "NULL";
 $marcaSql = ($marcaProductos !== '') ? "'" . mysqli_real_escape_string($conn, $marcaProductos) . "'" : "NULL";
 

@@ -1,4 +1,14 @@
 $(document).ready(function() {
+  function mostrarErrorProducto(xhr, mensajeDefault) {
+    var mensaje = mensajeDefault || "No se pudo guardar el producto.";
+
+    if (xhr.responseJSON && xhr.responseJSON.error) {
+      mensaje = xhr.responseJSON.error;
+    }
+
+    window.alert(mensaje);
+  }
+
   var dataTableProductosDT = $("#ProductosDT").DataTable({
     dom: "Bifrtip",
     buttons: ["excelHtml5", "pdfHtml5", "pageLength"],
@@ -45,11 +55,13 @@ $(document).ready(function() {
       dataType: "json",
       success: function() {
         dataTableProductosDT.columns.adjust().draw();
+        $("#ModalAgregarProductos").modal("toggle");
+        form[0].reset();
+      },
+      error: function(xhr) {
+        mostrarErrorProducto(xhr, "No se pudo agregar el producto.");
       }
     });
-
-    $("#ModalAgregarProductos").modal("toggle");
-    form[0].reset();
   });
 
   $("#ValidacionEditarProductos").on("submit", function(e) {
@@ -69,10 +81,12 @@ $(document).ready(function() {
       dataType: "json",
       success: function() {
         dataTableProductosDT.columns.adjust().draw();
+        $("#ModalEditarProductos").modal("toggle");
+      },
+      error: function(xhr) {
+        mostrarErrorProducto(xhr, "No se pudo actualizar el producto.");
       }
     });
-
-    $("#ModalEditarProductos").modal("toggle");
   });
 
   $("body").on("click", "#BorrarProducto", function() {
