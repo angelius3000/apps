@@ -18,7 +18,19 @@ $(document).ready(function() {
       dropdownParent: $('#ModalAgregarReparto'), // Ajuste importante
       placeholder: 'Selecciona cliente',
       allowClear: true,
-      width: '100%' // Asegura que ocupe todo el ancho del contenedor
+      width: '100%', // Asegura que ocupe todo el ancho del contenedor
+      tags: true,
+      createTag: function(params) {
+        var term = $.trim(params.term || '');
+        if (term === '') { return null; }
+
+        if (existeClienteEnSelect($('#CLIENTEID'), term)) {
+          return null;
+        }
+
+        return { id: 'solicitar:' + term, text: 'Solicitar', numeroCliente: term, solicitado: true };
+      },
+      insertTag: function(data, tag) { data.unshift(tag); }
     });
     actualizarMapaReparto(configAgregar);
   });
@@ -98,6 +110,45 @@ $(document).ready(function() {
     };
   }
 
+  function normalizarTextoBuscadorReparto(texto) {
+    return (texto || '')
+      .toString()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+  }
+
+  function existeClienteEnSelect($select, termino) {
+    var terminoNormalizado = normalizarTextoBuscadorReparto(termino);
+    var existe = false;
+
+    $select.find('option').each(function() {
+      var textoOpcion = normalizarTextoBuscadorReparto($(this).text());
+      if (textoOpcion.indexOf(terminoNormalizado) !== -1) {
+        existe = true;
+        return false;
+      }
+
+      return true;
+    });
+
+    return existe;
+  }
+
+  function actualizarSolicitudClienteReparto() {
+    var $selectCliente = $('#CLIENTEID');
+    var datos = $selectCliente.hasClass('select2-hidden-accessible') ? $selectCliente.select2('data') : [];
+    var seleccionado = datos && datos.length ? datos[0] : null;
+    var numeroSolicitado = '';
+
+    if (seleccionado && seleccionado.solicitado) {
+      numeroSolicitado = (seleccionado.numeroCliente || ($selectCliente.val() || '').toString().replace(/^solicitar:/, '')).trim();
+    }
+
+    $('#NumeroClienteSolicitadoReparto').val(numeroSolicitado);
+  }
+
   var configAgregar = {
     calleNumero: "#CalleNumero",
     colonia: "#Colonia",
@@ -130,6 +181,10 @@ $(document).ready(function() {
 
   $(document).on("input change", "#CalleNumero, #Colonia, #CP, #Ciudad, #Estado", function() {
     actualizarMapaReparto(configAgregar);
+  });
+
+  $('#CLIENTEID').on('change select2:select', function() {
+    actualizarSolicitudClienteReparto();
   });
 
   $(document).on("input change", "#CalleNumeroEditar, #ColoniaEditar, #CPEditar, #CiudadEditar, #EstadoEditar", function() {
@@ -336,6 +391,7 @@ $(document).ready(function() {
     $("#Calle").val(calleSeparada.calle);
     $("#NumeroEXT").val(calleSeparada.numero);
     actualizarMapaReparto(configAgregar);
+    actualizarSolicitudClienteReparto();
 
     form.parsley().validate();
 
