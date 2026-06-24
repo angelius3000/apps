@@ -2,12 +2,23 @@
 
 include("../../Connections/ConDB.php");
 
+if (!isset($_SESSION)) {
+    session_start();
+}
+
 function asegurarColumnaClienteSolicitadoReparto(mysqli $conn): void
 {
     @mysqli_query($conn, "ALTER TABLE repartos ADD COLUMN ClienteSolicitadoReparto VARCHAR(100) DEFAULT NULL AFTER CLIENTEID");
 }
 
+function asegurarTablaSolicitudesClientesReparto(mysqli $conn): void
+{
+    @mysqli_query($conn, "CREATE TABLE IF NOT EXISTS Solicitud_Clientes (SolicitudClienteID INT NOT NULL AUTO_INCREMENT, NumeroCliente VARCHAR(100) NOT NULL, Atendida TINYINT(1) NOT NULL DEFAULT 0, FechaSolicitud TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, FechaAtencion TIMESTAMP NULL DEFAULT NULL, SolicitanteNombre VARCHAR(255) NULL, PRIMARY KEY (SolicitudClienteID), INDEX idx_solicitud_cliente_estado (Atendida), INDEX idx_solicitud_cliente_numero (NumeroCliente)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    @mysqli_query($conn, "ALTER TABLE Solicitud_Clientes ADD COLUMN SolicitanteNombre VARCHAR(255) NULL AFTER FechaAtencion");
+}
+
 asegurarColumnaClienteSolicitadoReparto($conn);
+asegurarTablaSolicitudesClientesReparto($conn);
 
 
 $clienteIdPost = isset($_POST['CLIENTEID']) ? trim((string) $_POST['CLIENTEID']) : '';
@@ -53,10 +64,9 @@ if (!mysqli_query($conn, $sql)) {
 $last_id = mysqli_insert_id($conn);
 
 if ($numeroClienteSolicitado !== '') {
-    @mysqli_query($conn, "CREATE TABLE IF NOT EXISTS Solicitud_Clientes (SolicitudClienteID INT NOT NULL AUTO_INCREMENT, NumeroCliente VARCHAR(100) NOT NULL, Atendida TINYINT(1) NOT NULL DEFAULT 0, FechaSolicitud TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, FechaAtencion TIMESTAMP NULL DEFAULT NULL, PRIMARY KEY (SolicitudClienteID), INDEX idx_solicitud_cliente_estado (Atendida), INDEX idx_solicitud_cliente_numero (NumeroCliente)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
     $numeroClienteSolicitadoSql = mysqli_real_escape_string($conn, $numeroClienteSolicitado);
-    @mysqli_query($conn, "INSERT INTO Solicitud_Clientes (NumeroCliente) VALUES ('$numeroClienteSolicitadoSql')");
+    $solicitanteNombreSolicitud = mysqli_real_escape_string($conn, trim((string) ($_SESSION['NombreDelUsuario'] ?? $_SESSION['Username'] ?? '')));
+    @mysqli_query($conn, "INSERT INTO Solicitud_Clientes (NumeroCliente, SolicitanteNombre) VALUES ('$numeroClienteSolicitadoSql', '$solicitanteNombreSolicitud')");
 
     include_once __DIR__ . '/../../includes/MandarEmail.php';
     if (function_exists('EnviarNotificacionSolicitudMaterialPendiente')) {

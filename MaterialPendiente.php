@@ -574,7 +574,7 @@ if (isset($_SESSION['TIPOUSUARIO']) && (int) $_SESSION['TIPOUSUARIO'] === 3) {
     <div class="modal fade" id="ModalSolicitudesMP" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content">
             <div class="modal-header"><h5 class="modal-title" id="ModalSolicitudesMPLabel">Solicitudes</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
-            <div class="modal-body"><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Valor solicitado</th><th>Fecha</th><th class="text-end">Acciones</th></tr></thead><tbody id="SolicitudesMPBody"><tr><td colspan="3" class="text-center text-muted">Sin solicitudes.</td></tr></tbody></table></div></div>
+            <div class="modal-body"><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Valor solicitado</th><th>Solicitante</th><th>Fecha</th><th class="text-end">Acciones</th></tr></thead><tbody id="SolicitudesMPBody"><tr><td colspan="4" class="text-center text-muted">Sin solicitudes.</td></tr></tbody></table></div></div>
             <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button></div>
         </div></div>
     </div>

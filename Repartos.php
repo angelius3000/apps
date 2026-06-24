@@ -301,12 +301,13 @@ $puedeAgregarReparto = in_array((string) ($_SESSION['TIPOUSUARIO'] ?? ''), ['1',
                             <thead>
                                 <tr>
                                     <th>Número de cliente</th>
+                                    <th>Solicitante</th>
                                     <th>Fecha</th>
                                     <th class="text-end">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="SolicitudesClientesRepartoBody">
-                                <tr><td colspan="3" class="text-center text-muted">Sin solicitudes.</td></tr>
+                                <tr><td colspan="4" class="text-center text-muted">Sin solicitudes.</td></tr>
                             </tbody>
                         </table>
                     </div>
