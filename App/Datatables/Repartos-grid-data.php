@@ -10,6 +10,10 @@ if (!isset($_SESSION)) {
 $tipoUsuarioActual = isset($_SESSION['TipoDeUsuario']) ? strtolower(trim((string) $_SESSION['TipoDeUsuario'])) : '';
 $tiposPermitidosCambioEstatus = ['soporte it', 'administrador', 'supervisor', 'auditor'];
 $puedeCambiarEstatus = $tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $tiposPermitidosCambioEstatus, true);
+$tiposUsuarioPermitidosAcciones = ['1', '6', '9'];
+$perfilesPermitidosAcciones = ['soporte it', 'administrador', 'supervisor'];
+$puedeGestionarAccionesRepartos = in_array((string) ($_SESSION['TIPOUSUARIO'] ?? ''), $tiposUsuarioPermitidosAcciones, true)
+    || ($tipoUsuarioActual !== '' && in_array($tipoUsuarioActual, $perfilesPermitidosAcciones, true));
 
 // check request
 // storing request (ie, get/post) global array to a variable
@@ -227,19 +231,19 @@ while ($row = mysqli_fetch_array($query)) {  // preparing an array ... Preparand
         $BadgeStatus = '<span class="badge badge-success"  ' . $MandarModal . '>Recolectado</span>';
     }
 
-    if ($row['USUARIOID_US'] == $_SESSION['USUARIOID'] || $_SESSION['TIPOUSUARIO'] == '1') {
+    if ($row['USUARIOID_US'] == $_SESSION['USUARIOID'] || $puedeGestionarAccionesRepartos) {
         $BotonEditar = ' <button type="button" class="btn btn-sm btn-primary waves-effect width-md waves-light" data-bs-toggle="modal" data-bs-target="#ModalEditarReparto" onclick="TomarDatosParaModalRepartos(' . $row["REPARTOID"] . ')"><i class="mdi mdi-pencil"></i>Editar</button>';
     } else {
         $BotonEditar = '';
     }
 
-    if (($row['USUARIOID_US'] == $_SESSION['USUARIOID']) && ($row['STATUSID'] == '1') || $_SESSION['TIPOUSUARIO'] == '1') {
+    if ((($row['USUARIOID_US'] == $_SESSION['USUARIOID']) && ($row['STATUSID'] == '1')) || $puedeGestionarAccionesRepartos) {
         $BotonBorrar = '<button type="button" class="btn btn-sm btn-danger waves-effect width-md waves-light" data-bs-toggle="modal" data-bs-target="#ModalBorrarReparto" onclick="TomarDatosParaModalRepartos(' . $row["REPARTOID"] . ')"><i class="mdi mdi-pencil"></i>Borrar</button>';
     } else {
         $BotonBorrar = '';
     }
 
-    if ($row['USUARIOID_US'] == $_SESSION['USUARIOID'] || $_SESSION['TIPOUSUARIO'] == '1') {
+    if ($row['USUARIOID_US'] == $_SESSION['USUARIOID'] || $puedeGestionarAccionesRepartos) {
         $BotonClonar = ' <button type="button" class="btn btn-sm btn-dark waves-effect width-md waves-light" data-bs-toggle="modal" data-bs-target="#ModalClonarReparto" onclick="TomarDatosParaModalRepartos(' . $row["REPARTOID"] . ')"><i class="mdi mdi-pencil"></i>Clonar</button>';
     } else {
         $BotonClonar = '';
