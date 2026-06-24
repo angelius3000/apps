@@ -217,11 +217,11 @@ $(document).ready(function() {
 
   function cargarSolicitudesClientesReparto() {
     var $body = $('#SolicitudesClientesRepartoBody');
-    $body.html('<tr><td colspan="3" class="text-center text-muted">Cargando solicitudes…</td></tr>');
+    $body.html('<tr><td colspan="4" class="text-center text-muted">Cargando solicitudes…</td></tr>');
 
     $.getJSON('App/Server/ServerSolicitudesMaterialPendiente.php', { tipo: 'clientes' }).done(function(respuesta) {
       if (!respuesta || !respuesta.success || !respuesta.records || !respuesta.records.length) {
-        $body.html('<tr><td colspan="3" class="text-center text-muted">No hay solicitudes pendientes.</td></tr>');
+        $body.html('<tr><td colspan="4" class="text-center text-muted">No hay solicitudes pendientes.</td></tr>');
         return;
       }
 
@@ -234,12 +234,13 @@ $(document).ready(function() {
 
         return '<tr>' +
           '<td>' + escaparHtmlReparto(registro.valor || '') + '</td>' +
+          '<td>' + escaparHtmlReparto(registro.solicitante || '-') + '</td>' +
           '<td>' + escaparHtmlReparto(registro.fecha || '-') + '</td>' +
           '<td class="text-end">' + acciones + '</td>' +
         '</tr>';
       }).join(''));
     }).fail(function() {
-      $body.html('<tr><td colspan="3" class="text-center text-danger">No se pudieron cargar las solicitudes.</td></tr>');
+      $body.html('<tr><td colspan="4" class="text-center text-danger">No se pudieron cargar las solicitudes.</td></tr>');
     });
 
     mostrarSolicitudesClientesReparto();

@@ -1912,10 +1912,10 @@ $(document).ready(function() {
     tipoSolicitudActual = tipo;
     var $body = $('#SolicitudesMPBody');
     $('#ModalSolicitudesMPLabel').text(tipo === 'clientes' ? 'Solicitudes de clientes' : 'Solicitudes de productos');
-    $body.html('<tr><td colspan="3" class="text-center text-muted">Cargando solicitudes…</td></tr>');
+    $body.html('<tr><td colspan="4" class="text-center text-muted">Cargando solicitudes…</td></tr>');
     $.getJSON('App/Server/ServerSolicitudesMaterialPendiente.php', { tipo: tipo }).done(function(respuesta) {
       if (!respuesta || !respuesta.success || !respuesta.records || !respuesta.records.length) {
-        $body.html('<tr><td colspan="3" class="text-center text-muted">No hay solicitudes pendientes.</td></tr>');
+        $body.html('<tr><td colspan="4" class="text-center text-muted">No hay solicitudes pendientes.</td></tr>');
         return;
       }
       var puedeGestionarAcciones = respuesta.puedeGestionarAcciones === true;
@@ -1925,10 +1925,10 @@ $(document).ready(function() {
             '<button type="button" class="btn btn-sm btn-outline-danger eliminar-solicitud-mp" data-id="' + escaparHtml(r.id || '') + '" data-valor="' + escaparHtml(r.valor || '') + '">Eliminar</button>'
           : '<span class="text-muted small">Sin acciones disponibles</span>';
 
-        return '<tr><td>' + escaparHtml(r.valor || '') + '</td><td>' + escaparHtml(r.fecha || '-') + '</td><td class="text-end">' + acciones + '</td></tr>';
+        return '<tr><td>' + escaparHtml(r.valor || '') + '</td><td>' + escaparHtml(r.solicitante || '-') + '</td><td>' + escaparHtml(r.fecha || '-') + '</td><td class="text-end">' + acciones + '</td></tr>';
       }).join(''));
     }).fail(function() {
-      $body.html('<tr><td colspan="3" class="text-center text-danger">No se pudieron cargar las solicitudes.</td></tr>');
+      $body.html('<tr><td colspan="4" class="text-center text-danger">No se pudieron cargar las solicitudes.</td></tr>');
     });
     mostrarModalSolicitudes();
   }

@@ -2,6 +2,10 @@
 
 include("../../Connections/ConDB.php");
 
+if (!isset($_SESSION)) {
+    session_start();
+}
+
 header('Content-Type: application/json');
 
 function responderError(string $mensaje, int $codigo = 500): void
@@ -151,17 +155,21 @@ function asegurarTablasSolicitudes(mysqli $conn): void
         Atendida TINYINT(1) NOT NULL DEFAULT 0,
         FechaSolicitud TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FechaAtencion TIMESTAMP NULL DEFAULT NULL,
+        SolicitanteNombre VARCHAR(255) NULL,
         PRIMARY KEY (SolicitudClienteID), INDEX idx_solicitud_cliente_estado (Atendida), INDEX idx_solicitud_cliente_numero (NumeroCliente)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+    @mysqli_query($conn, "ALTER TABLE Solicitud_Clientes ADD COLUMN SolicitanteNombre VARCHAR(255) NULL AFTER FechaAtencion");
     @mysqli_query($conn, "CREATE TABLE IF NOT EXISTS Solicitud_Productos (
         SolicitudProductoID INT NOT NULL AUTO_INCREMENT,
         SKU VARCHAR(100) NOT NULL,
         Atendida TINYINT(1) NOT NULL DEFAULT 0,
         FechaSolicitud TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FechaAtencion TIMESTAMP NULL DEFAULT NULL,
+        SolicitanteNombre VARCHAR(255) NULL,
         PRIMARY KEY (SolicitudProductoID), INDEX idx_solicitud_producto_estado (Atendida), INDEX idx_solicitud_producto_sku (SKU)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    @mysqli_query($conn, "ALTER TABLE Solicitud_Productos ADD COLUMN SolicitanteNombre VARCHAR(255) NULL AFTER FechaAtencion");
 }
 
 $nombreBaseDatos = $dbname ?? '';
@@ -418,20 +426,22 @@ foreach ($productosValidos as $producto) {
 
 mysqli_stmt_close($stmt);
 
+$solicitanteNombreSolicitud = trim((string) ($_SESSION['NombreDelUsuario'] ?? $_SESSION['Username'] ?? ''));
+
 if ($usarOtraRazonSocial && $numeroClienteManual !== '') {
-    $stmtSolicitudCliente = mysqli_prepare($conn, 'INSERT INTO Solicitud_Clientes (NumeroCliente) VALUES (?)');
+    $stmtSolicitudCliente = mysqli_prepare($conn, 'INSERT INTO Solicitud_Clientes (NumeroCliente, SolicitanteNombre) VALUES (?, ?)');
     if ($stmtSolicitudCliente) {
-        mysqli_stmt_bind_param($stmtSolicitudCliente, 's', $numeroClienteManual);
+        mysqli_stmt_bind_param($stmtSolicitudCliente, 'ss', $numeroClienteManual, $solicitanteNombreSolicitud);
         mysqli_stmt_execute($stmtSolicitudCliente);
         mysqli_stmt_close($stmtSolicitudCliente);
     }
 }
 
 if (!empty($skusSolicitados)) {
-    $stmtSolicitudProducto = mysqli_prepare($conn, 'INSERT INTO Solicitud_Productos (SKU) VALUES (?)');
+    $stmtSolicitudProducto = mysqli_prepare($conn, 'INSERT INTO Solicitud_Productos (SKU, SolicitanteNombre) VALUES (?, ?)');
     if ($stmtSolicitudProducto) {
         foreach (array_keys($skusSolicitados) as $skuSolicitado) {
-            mysqli_stmt_bind_param($stmtSolicitudProducto, 's', $skuSolicitado);
+            mysqli_stmt_bind_param($stmtSolicitudProducto, 'ss', $skuSolicitado, $solicitanteNombreSolicitud);
             mysqli_stmt_execute($stmtSolicitudProducto);
         }
         mysqli_stmt_close($stmtSolicitudProducto);
