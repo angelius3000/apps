@@ -1,5 +1,6 @@
 <?php
 include("../../Connections/ConDB.php");
+@mysqli_query($conn, "ALTER TABLE repartos ADD COLUMN ClienteSolicitadoReparto VARCHAR(100) DEFAULT NULL AFTER CLIENTEID");
 include("../../includes/Funciones.php");
 
 if (!isset($_SESSION)) {
@@ -45,88 +46,88 @@ $columns = array(
 );
 
 // getting total number records without any search
-$sql = "SELECT 
-    US.USUARIOID AS USUARIOID_US, 
-    US.PrimerNombre AS PrimerNombre_US, 
-    US.SegundoNombre AS SegundoNombre_US, 
-    US.ApellidoPaterno AS ApellidoPaterno_US, 
-    US.ApellidoMaterno AS ApellidoMaterno_US, 
-    US.email AS email_US, 
-    US.Telefono AS Telefono_US, 
-    US.TIPODEUSUARIOID AS TIPODEUSUARIOID_US, 
-    US.Deshabilitado AS Deshabilitado_US, 
-    US.Password AS Password_US, 
-    US.CLIENTEID AS CLIENTEID_US, 
+$sql = "SELECT
+    US.USUARIOID AS USUARIOID_US,
+    US.PrimerNombre AS PrimerNombre_US,
+    US.SegundoNombre AS SegundoNombre_US,
+    US.ApellidoPaterno AS ApellidoPaterno_US,
+    US.ApellidoMaterno AS ApellidoMaterno_US,
+    US.email AS email_US,
+    US.Telefono AS Telefono_US,
+    US.TIPODEUSUARIOID AS TIPODEUSUARIOID_US,
+    US.Deshabilitado AS Deshabilitado_US,
+    US.Password AS Password_US,
+    US.CLIENTEID AS CLIENTEID_US,
     US.HASH AS HASH_US,
-    REP.USUARIOID AS USUARIOID_REP, 
-    REP.PrimerNombre AS PrimerNombre_REP, 
-    REP.SegundoNombre AS SegundoNombre_REP, 
-    REP.ApellidoPaterno AS ApellidoPaterno_REP, 
-    REP.ApellidoMaterno AS ApellidoMaterno_REP, 
-    REP.email AS email_REP, 
-    REP.Telefono AS Telefono_REP, 
-    REP.TIPODEUSUARIOID AS TIPODEUSUARIOID_REP, 
-    REP.Deshabilitado AS Deshabilitado_REP, 
-    REP.Password AS Password_REP, 
-    REP.CLIENTEID AS CLIENTEID_REP, 
+    REP.USUARIOID AS USUARIOID_REP,
+    REP.PrimerNombre AS PrimerNombre_REP,
+    REP.SegundoNombre AS SegundoNombre_REP,
+    REP.ApellidoPaterno AS ApellidoPaterno_REP,
+    REP.ApellidoMaterno AS ApellidoMaterno_REP,
+    REP.email AS email_REP,
+    REP.Telefono AS Telefono_REP,
+    REP.TIPODEUSUARIOID AS TIPODEUSUARIOID_REP,
+    REP.Deshabilitado AS Deshabilitado_REP,
+    REP.Password AS Password_REP,
+    REP.CLIENTEID AS CLIENTEID_REP,
     REP.HASH AS HASH_REP,
-    repartos.*, 
-    clientes.*, 
+    repartos.*,
+    clientes.*,
     status.*,
     DATE_FORMAT(repartos.FechaReparto, '%d-%m-%Y') AS FechaRepartoFormatted
-FROM 
+FROM
     repartos
-LEFT JOIN 
+LEFT JOIN
     usuarios US ON US.USUARIOID = repartos.USUARIOID
-LEFT JOIN 
+LEFT JOIN
     usuarios REP ON REP.USUARIOID = repartos.USUARIOIDRepartidor
-LEFT JOIN 
+LEFT JOIN
     clientes ON clientes.CLIENTEID = repartos.CLIENTEID
-LEFT JOIN 
+LEFT JOIN
     status ON status.STATUSID = repartos.STATUSID;";
 
 $query = mysqli_query($conn, $sql) or die("Usuario-grid-data.php: get employees");
 $totalData = mysqli_num_rows($query);
 $totalFiltered = $totalData;  // when there is no search parameter then total number rows = total number filtered rows.
 
-$sql = "SELECT 
-    US.USUARIOID AS USUARIOID_US, 
-    US.PrimerNombre AS PrimerNombre_US, 
-    US.SegundoNombre AS SegundoNombre_US, 
-    US.ApellidoPaterno AS ApellidoPaterno_US, 
-    US.ApellidoMaterno AS ApellidoMaterno_US, 
-    US.email AS email_US, 
-    US.Telefono AS Telefono_US, 
-    US.TIPODEUSUARIOID AS TIPODEUSUARIOID_US, 
-    US.Deshabilitado AS Deshabilitado_US, 
-    US.Password AS Password_US, 
-    US.CLIENTEID AS CLIENTEID_US, 
+$sql = "SELECT
+    US.USUARIOID AS USUARIOID_US,
+    US.PrimerNombre AS PrimerNombre_US,
+    US.SegundoNombre AS SegundoNombre_US,
+    US.ApellidoPaterno AS ApellidoPaterno_US,
+    US.ApellidoMaterno AS ApellidoMaterno_US,
+    US.email AS email_US,
+    US.Telefono AS Telefono_US,
+    US.TIPODEUSUARIOID AS TIPODEUSUARIOID_US,
+    US.Deshabilitado AS Deshabilitado_US,
+    US.Password AS Password_US,
+    US.CLIENTEID AS CLIENTEID_US,
     US.HASH AS HASH_US,
-    REP.USUARIOID AS USUARIOID_REP, 
-    REP.PrimerNombre AS PrimerNombre_REP, 
-    REP.SegundoNombre AS SegundoNombre_REP, 
-    REP.ApellidoPaterno AS ApellidoPaterno_REP, 
-    REP.ApellidoMaterno AS ApellidoMaterno_REP, 
-    REP.email AS email_REP, 
-    REP.Telefono AS Telefono_REP, 
-    REP.TIPODEUSUARIOID AS TIPODEUSUARIOID_REP, 
-    REP.Deshabilitado AS Deshabilitado_REP, 
-    REP.Password AS Password_REP, 
-    REP.CLIENTEID AS CLIENTEID_REP, 
+    REP.USUARIOID AS USUARIOID_REP,
+    REP.PrimerNombre AS PrimerNombre_REP,
+    REP.SegundoNombre AS SegundoNombre_REP,
+    REP.ApellidoPaterno AS ApellidoPaterno_REP,
+    REP.ApellidoMaterno AS ApellidoMaterno_REP,
+    REP.email AS email_REP,
+    REP.Telefono AS Telefono_REP,
+    REP.TIPODEUSUARIOID AS TIPODEUSUARIOID_REP,
+    REP.Deshabilitado AS Deshabilitado_REP,
+    REP.Password AS Password_REP,
+    REP.CLIENTEID AS CLIENTEID_REP,
     REP.HASH AS HASH_REP,
-    repartos.*, 
-    clientes.*, 
+    repartos.*,
+    clientes.*,
     status.*,
     DATE_FORMAT(repartos.FechaReparto, '%d-%m-%Y') AS FechaRepartoFormatted
-FROM 
+FROM
     repartos
-LEFT JOIN 
+LEFT JOIN
     usuarios US ON US.USUARIOID = repartos.USUARIOID
-LEFT JOIN 
+LEFT JOIN
     usuarios REP ON REP.USUARIOID = repartos.USUARIOIDRepartidor
-LEFT JOIN 
+LEFT JOIN
     clientes ON clientes.CLIENTEID = repartos.CLIENTEID
-LEFT JOIN 
+LEFT JOIN
     status ON status.STATUSID = repartos.STATUSID
 WHERE 1=1 ";
 
@@ -144,6 +145,7 @@ if (!empty($requestData['search']['value'])) {
             REP.ApellidoPaterno LIKE '%" . $word . "%' OR
             REP.ApellidoMaterno LIKE '%" . $word . "%' OR
             clientes.NombreCliente LIKE '%" . $word . "%' OR
+            repartos.ClienteSolicitadoReparto LIKE '%" . $word . "%' OR
             repartos.REPARTOID LIKE '%" . $word . "%' OR
             repartos.Surtidores LIKE '%" . $word . "%' OR
             repartos.FechaReparto LIKE '%" . $word . "%' OR
@@ -190,7 +192,7 @@ if (!empty($FechaInicioReparto) && !empty($FechaFinalReparto)) {
 
 
 $query = mysqli_query($conn, $sql) or die("employee-grid-data.php: get employees");
-$totalFiltered = mysqli_num_rows($query); // when there is a search parameter then we have to modify total number filtered rows as per search result. 
+$totalFiltered = mysqli_num_rows($query); // when there is a search parameter then we have to modify total number filtered rows as per search result.
 
 $sql .= " ORDER BY " . $columns[$requestData['order'][0]['column']] . "   " . $requestData['order'][0]['dir'] . "  LIMIT " . $requestData['start'] . " ," . $requestData['length'] . "   ";
 /* $requestData['order'][0]['column'] contains column index, $requestData['order'][0]['dir'] contains order such as asc/desc */
@@ -267,7 +269,11 @@ while ($row = mysqli_fetch_array($query)) {  // preparing an array ... Preparand
     $nestedData[] = $row["FechaRepartoFormatted"]; //(6) Fecha de reparto
     $nestedData[] = $row["HoraReparto"]; //(7) Hora de reparto
     $nestedData[] = $row["PrimerNombre_US"] . ' ' . $row["SegundoNombre_US"] . ' ' . $row["ApellidoPaterno_US"] . ' ' . $row["ApellidoMaterno_US"]; //(8) Solicitante
-    $nestedData[] = $row["NombreCliente"]; //(9) Cliente
+    $clienteReparto = trim((string) ($row["NombreCliente"] ?? ''));
+    if ($clienteReparto === '' && !empty($row["ClienteSolicitadoReparto"])) {
+        $clienteReparto = 'Solicitado: ' . $row["ClienteSolicitadoReparto"];
+    }
+    $nestedData[] = $clienteReparto; //(9) Cliente
     $nestedData[] = $row["CP"]; //(10) Código postal
     $nestedData[] = $row["Receptor"]; //(11) Receptor
     $nestedData[] = '<a href="tel:' . $row["TelefonoDeReceptor"] . '">' . $row["TelefonoDeReceptor"] . '</a>'; //(12) Teléfono de receptor
@@ -280,7 +286,7 @@ while ($row = mysqli_fetch_array($query)) {  // preparing an array ... Preparand
 }
 
 $json_data = array(
-    "draw" => intval($requestData['draw']),   // for every request/draw by clientside, they send a number as a parameter, when they receive a response/data they first check the draw number, so we are sending same number in draw. 
+    "draw" => intval($requestData['draw']),   // for every request/draw by clientside, they send a number as a parameter, when they receive a response/data they first check the draw number, so we are sending same number in draw.
     "recordsTotal"    => intval($totalData),  // total number of records
     "recordsFiltered" => intval($totalFiltered), // total number of records after searching, if there is no searching then totalFiltered = totalData
     "data"            => $data   // total data array
