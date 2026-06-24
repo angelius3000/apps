@@ -109,6 +109,7 @@
                                                     ?>
 
                                                 </select>
+                                                <input type="hidden" id="NumeroClienteSolicitadoReparto" name="NumeroClienteSolicitadoReparto" value="">
                                             </div>
                                             <div class="mb-4 reparto-field-full">
                                                 <label for="NumeroDeFactura" class="form-label">Número de Factura</label>
