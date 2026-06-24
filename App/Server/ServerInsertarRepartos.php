@@ -3,7 +3,15 @@
 include("../../Connections/ConDB.php");
 
 
-$CLIENTEID = mysqli_real_escape_string($conn, $_POST['CLIENTEID']);
+$clienteIdPost = isset($_POST['CLIENTEID']) ? trim((string) $_POST['CLIENTEID']) : '';
+$numeroClienteSolicitado = isset($_POST['NumeroClienteSolicitadoReparto']) ? trim((string) $_POST['NumeroClienteSolicitadoReparto']) : '';
+
+if (strpos($clienteIdPost, 'solicitar:') === 0) {
+    $numeroClienteSolicitado = trim(substr($clienteIdPost, strlen('solicitar:')));
+    $clienteIdPost = '0';
+}
+
+$CLIENTEID = mysqli_real_escape_string($conn, $clienteIdPost);
 $NumeroDeFactura = mysqli_real_escape_string($conn, $_POST['NumeroDeFactura']);
 $Calle = mysqli_real_escape_string($conn, $_POST['Calle']);
 $NumeroEXT = mysqli_real_escape_string($conn, $_POST['NumeroEXT']);
@@ -34,6 +42,18 @@ if (!mysqli_query($conn, $sql)) {
 }
 
 $last_id = mysqli_insert_id($conn);
+
+if ($numeroClienteSolicitado !== '') {
+    @mysqli_query($conn, "CREATE TABLE IF NOT EXISTS Solicitud_Clientes (SolicitudClienteID INT NOT NULL AUTO_INCREMENT, NumeroCliente VARCHAR(100) NOT NULL, Atendida TINYINT(1) NOT NULL DEFAULT 0, FechaSolicitud TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, FechaAtencion TIMESTAMP NULL DEFAULT NULL, PRIMARY KEY (SolicitudClienteID), INDEX idx_solicitud_cliente_estado (Atendida), INDEX idx_solicitud_cliente_numero (NumeroCliente)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $numeroClienteSolicitadoSql = mysqli_real_escape_string($conn, $numeroClienteSolicitado);
+    @mysqli_query($conn, "INSERT INTO Solicitud_Clientes (NumeroCliente) VALUES ('$numeroClienteSolicitadoSql')");
+
+    include_once __DIR__ . '/../../includes/MandarEmail.php';
+    if (function_exists('EnviarNotificacionSolicitudMaterialPendiente')) {
+        EnviarNotificacionSolicitudMaterialPendiente([$numeroClienteSolicitado], [], $NumeroDeFactura);
+    }
+}
 
 $msg = array('REPARTOID' => $last_id);
 

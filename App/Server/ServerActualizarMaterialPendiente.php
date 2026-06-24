@@ -121,8 +121,16 @@ if (!asegurarTablaMaterialPendiente($conn, $nombreBaseDatos)) {
     responderError('No se pudo preparar la tabla de material pendiente. Intenta nuevamente.');
 }
 
+asegurarTablasSolicitudes($conn);
+
 if (!asegurarTablaFacturaMP($conn, $nombreBaseDatos)) {
     responderError('No se pudo preparar la tabla de facturas de material pendiente. Intenta nuevamente.');
+}
+
+function asegurarTablasSolicitudes(mysqli $conn): void
+{
+    @mysqli_query($conn, "CREATE TABLE IF NOT EXISTS Solicitud_Clientes (SolicitudClienteID INT NOT NULL AUTO_INCREMENT, NumeroCliente VARCHAR(100) NOT NULL, Atendida TINYINT(1) NOT NULL DEFAULT 0, FechaSolicitud TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, FechaAtencion TIMESTAMP NULL DEFAULT NULL, PRIMARY KEY (SolicitudClienteID), INDEX idx_solicitud_cliente_estado (Atendida), INDEX idx_solicitud_cliente_numero (NumeroCliente)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    @mysqli_query($conn, "CREATE TABLE IF NOT EXISTS Solicitud_Productos (SolicitudProductoID INT NOT NULL AUTO_INCREMENT, SKU VARCHAR(100) NOT NULL, Atendida TINYINT(1) NOT NULL DEFAULT 0, FechaSolicitud TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, FechaAtencion TIMESTAMP NULL DEFAULT NULL, PRIMARY KEY (SolicitudProductoID), INDEX idx_solicitud_producto_estado (Atendida), INDEX idx_solicitud_producto_sku (SKU)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 }
 
 function obtenerTextoCatalogo(mysqli $conn, string $tabla, string $columnaId, string $columnaTexto, int $id): string
@@ -268,6 +276,7 @@ if ($surtidorValor !== '' && ctype_digit($surtidorValor)) {
 }
 
 $productosValidos = [];
+$skusSolicitados = [];
 foreach ($productos as $producto) {
     if (!is_array($producto)) {
         continue;
@@ -286,6 +295,10 @@ foreach ($productos as $producto) {
         'descripcion' => $descripcion,
         'cantidad' => $cantidad
     ];
+
+    if (isset($producto['solicitado']) && (string) $producto['solicitado'] === '1') {
+        $skusSolicitados[$sku] = true;
+    }
 }
 
 if (empty($productosValidos)) {
@@ -380,6 +393,26 @@ foreach ($productosValidos as $producto) {
 
 mysqli_stmt_close($stmtInsertar);
 
+if ($usarOtraRazonSocial && $numeroClienteManual !== '') {
+    $stmtSolicitudCliente = mysqli_prepare($conn, 'INSERT INTO Solicitud_Clientes (NumeroCliente) VALUES (?)');
+    if ($stmtSolicitudCliente) {
+        mysqli_stmt_bind_param($stmtSolicitudCliente, 's', $numeroClienteManual);
+        mysqli_stmt_execute($stmtSolicitudCliente);
+        mysqli_stmt_close($stmtSolicitudCliente);
+    }
+}
+
+if (!empty($skusSolicitados)) {
+    $stmtSolicitudProducto = mysqli_prepare($conn, 'INSERT INTO Solicitud_Productos (SKU) VALUES (?)');
+    if ($stmtSolicitudProducto) {
+        foreach (array_keys($skusSolicitados) as $skuSolicitado) {
+            mysqli_stmt_bind_param($stmtSolicitudProducto, 's', $skuSolicitado);
+            mysqli_stmt_execute($stmtSolicitudProducto);
+        }
+        mysqli_stmt_close($stmtSolicitudProducto);
+    }
+}
+
 if ($documentoAnterior !== $numeroFactura) {
     $stmtActualizarDocumento = mysqli_prepare(
         $conn,
@@ -394,6 +427,20 @@ if ($documentoAnterior !== $numeroFactura) {
 }
 
 mysqli_commit($conn);
+
+$clientesSolicitadosNotificacion = ($usarOtraRazonSocial && $numeroClienteManual !== '') ? [$numeroClienteManual] : [];
+$productosSolicitadosNotificacion = array_keys($skusSolicitados);
+
+if (!empty($clientesSolicitadosNotificacion) || !empty($productosSolicitadosNotificacion)) {
+    include_once __DIR__ . '/../../includes/MandarEmail.php';
+    if (function_exists('EnviarNotificacionSolicitudMaterialPendiente')) {
+        EnviarNotificacionSolicitudMaterialPendiente(
+            $clientesSolicitadosNotificacion,
+            $productosSolicitadosNotificacion,
+            $numeroFactura
+        );
+    }
+}
 
 echo json_encode([
     'success' => true,

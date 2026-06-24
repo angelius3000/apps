@@ -153,22 +153,22 @@
                                         <?php if (!$hayProductosPendientes) : ?>
                                             <div class="col-12">
                                                 <div class="alert alert-warning" role="alert">
-                                                    No se encontraron productos activos para seleccionar. Agrega productos en el catálogo para poder registrar partidas pendientes.
+                                                    No se encontraron productos activos para seleccionar. Puedes usar la opción "Solicitar" para capturar el SKU pendiente.
                                                 </div>
                                             </div>
                                         <?php endif; ?>
                                         <div class="col-12">
-                                            <div id="ProductosPendientesContainer" class="productos-pendientes-container" data-productos-disponibles="<?php echo $hayProductosPendientes ? '1' : '0'; ?>">
+                                            <div id="ProductosPendientesContainer" class="productos-pendientes-container" data-productos-disponibles="1">
                                                 <div class="row align-items-end">
                                                     <div class="col-lg-8 col-sm-12 mb-4" id="ProductoPendienteSelectContainer">
                                                         <label for="ProductoPendienteSelect" class="form-label">Producto pendiente</label>
-                                                        <select class="form-select select2-producto" id="ProductoPendienteSelect" data-placeholder="Selecciona producto" data-search-url="App/Server/ServerBuscarProductosMaterialPendiente.php" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?> required>
+                                                        <select class="form-select select2-producto" id="ProductoPendienteSelect" data-placeholder="Selecciona producto" data-search-url="App/Server/ServerBuscarProductosMaterialPendiente.php" required>
                                                             <?php echo $opcionesProductosPendientes; ?>
                                                         </select>
                                                     </div>
                                                     <div class="col-lg-4 col-sm-12 mb-4" id="CantidadPendienteContainer">
                                                         <label for="CantidadPendiente" class="form-label">Cantidad pendiente</label>
-                                                        <input type="number" class="form-control" id="CantidadPendiente" min="1" step="1" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?> required>
+                                                        <input type="number" class="form-control" id="CantidadPendiente" min="1" step="1" required>
                                                     </div>
                                                     <div class="col-12 mb-2">
                                                         <div class="form-check">
@@ -230,7 +230,7 @@
                 </div>
                 <div class="modal-footer modal-pendiente-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="submit" class="btn btn-primary" id="BtnGuardarPendiente" <?php echo $hayProductosPendientes ? '' : 'disabled'; ?>>Guardar</button>
+                    <button type="submit" class="btn btn-primary" id="BtnGuardarPendiente">Guardar</button>
                 </div>
             </form>
         </div>
