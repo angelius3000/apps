@@ -5,6 +5,167 @@ $(document).ready(function() {
     ? repartosConfig.mensajeRestriccionCambioEstatus
     : 'Solo un Soporte IT, administrador, supervisor o auditor puede cambiar el estatus.';
 
+  var $modalSolicitudesClientesReparto = $('#ModalSolicitudesClientesReparto');
+  var $modalAgregarClientesReparto = $('#ModalAgregarClientes');
+  var instanciaModalSolicitudesClientesReparto = null;
+  var instanciaModalAgregarClientesReparto = null;
+
+  if ($modalSolicitudesClientesReparto.length && $modalSolicitudesClientesReparto.parent()[0] !== document.body) {
+    $modalSolicitudesClientesReparto.appendTo('body');
+  }
+
+  if ($modalAgregarClientesReparto.length && $modalAgregarClientesReparto.parent()[0] !== document.body) {
+    $modalAgregarClientesReparto.appendTo('body');
+  }
+
+  function escaparHtmlReparto(texto) {
+    return $('<div>').text(texto == null ? '' : texto).html();
+  }
+
+  function obtenerInstanciaModalReparto($modalObjetivo, instanciaActual) {
+    if (!$modalObjetivo.length || !window.bootstrap || typeof window.bootstrap.Modal !== 'function') {
+      return null;
+    }
+
+    if (instanciaActual) {
+      return instanciaActual;
+    }
+
+    var instancia = null;
+    if (typeof window.bootstrap.Modal.getInstance === 'function') {
+      instancia = window.bootstrap.Modal.getInstance($modalObjetivo[0]);
+    }
+
+    if (!instancia) {
+      instancia = new window.bootstrap.Modal($modalObjetivo[0]);
+    }
+
+    return instancia;
+  }
+
+  function mostrarModalReparto($modalObjetivo, obtenerInstancia) {
+    var instancia = obtenerInstancia();
+    if (instancia && typeof instancia.show === 'function') {
+      instancia.show();
+      return;
+    }
+
+    if (typeof $modalObjetivo.modal === 'function') {
+      $modalObjetivo.modal('show');
+    }
+  }
+
+  function ocultarModalReparto($modalObjetivo, obtenerInstancia) {
+    var instancia = obtenerInstancia();
+    if (instancia && typeof instancia.hide === 'function') {
+      instancia.hide();
+      return;
+    }
+
+    if (typeof $modalObjetivo.modal === 'function') {
+      $modalObjetivo.modal('hide');
+    }
+  }
+
+  function obtenerModalSolicitudesClientesReparto() {
+    instanciaModalSolicitudesClientesReparto = obtenerInstanciaModalReparto($modalSolicitudesClientesReparto, instanciaModalSolicitudesClientesReparto);
+    return instanciaModalSolicitudesClientesReparto;
+  }
+
+  function obtenerModalAgregarClientesReparto() {
+    instanciaModalAgregarClientesReparto = obtenerInstanciaModalReparto($modalAgregarClientesReparto, instanciaModalAgregarClientesReparto);
+    return instanciaModalAgregarClientesReparto;
+  }
+
+  function mostrarSolicitudesClientesReparto() {
+    mostrarModalReparto($modalSolicitudesClientesReparto, obtenerModalSolicitudesClientesReparto);
+  }
+
+  function ocultarSolicitudesClientesReparto() {
+    ocultarModalReparto($modalSolicitudesClientesReparto, obtenerModalSolicitudesClientesReparto);
+  }
+
+  function mostrarAgregarClientesReparto() {
+    mostrarModalReparto($modalAgregarClientesReparto, obtenerModalAgregarClientesReparto);
+  }
+
+  function ocultarAgregarClientesReparto() {
+    ocultarModalReparto($modalAgregarClientesReparto, obtenerModalAgregarClientesReparto);
+  }
+
+
+
+  if ($modalSolicitudesClientesReparto.length) {
+    $modalSolicitudesClientesReparto.on('shown.bs.modal', function() {
+      $modalSolicitudesClientesReparto.css('z-index', 1060);
+      $('.modal-backdrop').last().css('z-index', 1055);
+    });
+  }
+
+  if ($modalAgregarClientesReparto.length) {
+    $modalAgregarClientesReparto.on('shown.bs.modal', function() {
+      $modalAgregarClientesReparto.css('z-index', 1070);
+      $('.modal-backdrop').last().css('z-index', 1065);
+    });
+  }
+
+  $('#BtnSolicitudesClientesReparto').on('click', function() {
+    cargarSolicitudesClientesReparto();
+  });
+
+  $('#SolicitudesClientesRepartoBody').on('click', '.atender-solicitud-cliente-reparto', function() {
+    var numeroCliente = ($(this).data('valor') || '').toString();
+    $('#ValidacionAgregarClientes')[0] && $('#ValidacionAgregarClientes')[0].reset();
+    $('#CLIENTESIAN').val(numeroCliente);
+
+    var abrir = function() {
+      window.setTimeout(mostrarAgregarClientesReparto, 50);
+    };
+
+    if ($modalSolicitudesClientesReparto.hasClass('show')) {
+      $modalSolicitudesClientesReparto.one('hidden.bs.modal', abrir);
+      ocultarSolicitudesClientesReparto();
+      return;
+    }
+
+    abrir();
+  });
+
+  $('#SolicitudesClientesRepartoBody').on('click', '.eliminar-solicitud-cliente-reparto', function() {
+    eliminarSolicitudClienteReparto($(this).data('id'), ($(this).data('valor') || '').toString());
+  });
+
+  $('#ValidacionAgregarClientes').on('submit', function(evento) {
+    evento.preventDefault();
+
+    var $form = $(this);
+    var clienteSian = $.trim($form.find('#CLIENTESIAN').val());
+    var clcSian = $.trim($form.find('#CLCSIAN').val());
+    var nombreCliente = $.trim($form.find('#NombreCliente').val());
+
+    if (clienteSian === '' && clcSian === '') {
+      window.alert('Captura al menos uno de los números de cliente.');
+      return;
+    }
+
+    if (nombreCliente === '') {
+      window.alert('Captura el nombre del cliente.');
+      return;
+    }
+
+    $.ajax({
+      type: 'POST',
+      url: 'App/Server/ServerInsertarClientes.php',
+      data: $form.serialize(),
+      dataType: 'json'
+    }).done(function() {
+      ocultarAgregarClientesReparto();
+      cargarSolicitudesClientesReparto();
+    }).fail(function(xhr) {
+      window.alert((xhr.responseJSON && xhr.responseJSON.error) || 'No se pudo agregar el cliente.');
+    });
+  });
+
   $('#ModalCambioStatus').on('show.bs.modal', function(event) {
     if (!puedeCambiarEstatus) {
       event.preventDefault();
@@ -52,6 +213,67 @@ $(document).ready(function() {
     });
     actualizarMapaReparto(configClonar);
   });
+
+
+  function cargarSolicitudesClientesReparto() {
+    var $body = $('#SolicitudesClientesRepartoBody');
+    $body.html('<tr><td colspan="3" class="text-center text-muted">Cargando solicitudes…</td></tr>');
+
+    $.getJSON('App/Server/ServerSolicitudesMaterialPendiente.php', { tipo: 'clientes' }).done(function(respuesta) {
+      if (!respuesta || !respuesta.success || !respuesta.records || !respuesta.records.length) {
+        $body.html('<tr><td colspan="3" class="text-center text-muted">No hay solicitudes pendientes.</td></tr>');
+        return;
+      }
+
+      $body.html(respuesta.records.map(function(registro) {
+        return '<tr>' +
+          '<td>' + escaparHtmlReparto(registro.valor || '') + '</td>' +
+          '<td>' + escaparHtmlReparto(registro.fecha || '-') + '</td>' +
+          '<td class="text-end">' +
+            '<button type="button" class="btn btn-sm btn-primary atender-solicitud-cliente-reparto me-2" data-valor="' + escaparHtmlReparto(registro.valor || '') + '">Agregar</button>' +
+            '<button type="button" class="btn btn-sm btn-outline-danger eliminar-solicitud-cliente-reparto" data-id="' + escaparHtmlReparto(registro.id || '') + '" data-valor="' + escaparHtmlReparto(registro.valor || '') + '">Eliminar</button>' +
+          '</td>' +
+        '</tr>';
+      }).join(''));
+    }).fail(function() {
+      $body.html('<tr><td colspan="3" class="text-center text-danger">No se pudieron cargar las solicitudes.</td></tr>');
+    });
+
+    mostrarSolicitudesClientesReparto();
+  }
+
+  function eliminarSolicitudClienteReparto(id, valor) {
+    var solicitudId = parseInt(id, 10);
+    if (isNaN(solicitudId) || solicitudId <= 0) {
+      window.alert('No se pudo identificar la solicitud a eliminar.');
+      return;
+    }
+
+    var mensaje = '¿Deseas eliminar esta solicitud de cliente?';
+    if (valor) {
+      mensaje += ' Solicitud: ' + valor + '.';
+    }
+
+    if (!window.confirm(mensaje)) {
+      return;
+    }
+
+    $.ajax({
+      url: 'App/Server/ServerSolicitudesMaterialPendiente.php',
+      method: 'POST',
+      dataType: 'json',
+      data: { accion: 'eliminar', tipo: 'clientes', id: solicitudId }
+    }).done(function(respuesta) {
+      if (!respuesta || !respuesta.success) {
+        window.alert(respuesta && respuesta.message ? respuesta.message : 'No se pudo eliminar la solicitud.');
+        return;
+      }
+
+      cargarSolicitudesClientesReparto();
+    }).fail(function() {
+      window.alert('No se pudo eliminar la solicitud.');
+    });
+  }
 
   function obtenerDireccionReparto(config) {
     var partes = [

@@ -106,6 +106,7 @@ $puedeAgregarReparto = in_array((string) ($_SESSION['TIPOUSUARIO'] ?? ''), ['1',
                             <div class="row">
                                 <div class="col">
                                     <button type="button" class="btn btn-sm btn-primary waves-effect width-md waves-light" data-bs-toggle="modal" data-bs-target="#ModalAgregarReparto"><i class="material-icons-two-tone">add</i> Agregar Reparto</button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary waves-effect width-md waves-light ms-2" id="BtnSolicitudesClientesReparto">Solicitudes de clientes</button>
 
                                 </div>
                             </div>
@@ -285,6 +286,37 @@ $puedeAgregarReparto = in_array((string) ($_SESSION['TIPOUSUARIO'] ?? ''), ['1',
     </div>
 
     <?php include("App/Modales/ModalesRepartos.php") ?>
+    <?php include("App/Modales/ModalesClientes.php") ?>
+
+    <div class="modal fade" id="ModalSolicitudesClientesReparto" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Solicitudes de clientes</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Número de cliente</th>
+                                    <th>Fecha</th>
+                                    <th class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="SolicitudesClientesRepartoBody">
+                                <tr><td colspan="3" class="text-center text-muted">Sin solicitudes.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         window.repartosConfig = <?php echo json_encode([
