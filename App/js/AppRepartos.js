@@ -225,14 +225,17 @@ $(document).ready(function() {
         return;
       }
 
+      var puedeGestionarAcciones = respuesta.puedeGestionarAcciones === true;
       $body.html(respuesta.records.map(function(registro) {
+        var acciones = puedeGestionarAcciones
+          ? '<button type="button" class="btn btn-sm btn-primary atender-solicitud-cliente-reparto me-2" data-valor="' + escaparHtmlReparto(registro.valor || '') + '">Agregar</button>' +
+            '<button type="button" class="btn btn-sm btn-outline-danger eliminar-solicitud-cliente-reparto" data-id="' + escaparHtmlReparto(registro.id || '') + '" data-valor="' + escaparHtmlReparto(registro.valor || '') + '">Eliminar</button>'
+          : '<span class="text-muted small">Sin acciones disponibles</span>';
+
         return '<tr>' +
           '<td>' + escaparHtmlReparto(registro.valor || '') + '</td>' +
           '<td>' + escaparHtmlReparto(registro.fecha || '-') + '</td>' +
-          '<td class="text-end">' +
-            '<button type="button" class="btn btn-sm btn-primary atender-solicitud-cliente-reparto me-2" data-valor="' + escaparHtmlReparto(registro.valor || '') + '">Agregar</button>' +
-            '<button type="button" class="btn btn-sm btn-outline-danger eliminar-solicitud-cliente-reparto" data-id="' + escaparHtmlReparto(registro.id || '') + '" data-valor="' + escaparHtmlReparto(registro.valor || '') + '">Eliminar</button>' +
-          '</td>' +
+          '<td class="text-end">' + acciones + '</td>' +
         '</tr>';
       }).join(''));
     }).fail(function() {

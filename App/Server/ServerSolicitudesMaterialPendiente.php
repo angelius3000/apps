@@ -1,8 +1,40 @@
 <?php
 include("../../Connections/ConDB.php");
+
+if (!isset($_SESSION)) {
+    session_start();
+}
+
 header('Content-Type: application/json');
 
 function responder($data, int $code = 200): void { http_response_code($code); echo json_encode($data); exit; }
+function puedeGestionarAccionesSolicitudes(mysqli $conn): bool {
+    $tipoUsuarioId = (int) ($_SESSION['TIPOUSUARIO'] ?? 0);
+
+    if (in_array($tipoUsuarioId, [1, 9], true)) {
+        return true;
+    }
+
+    $tipoUsuario = strtolower(trim((string) ($_SESSION['TipoDeUsuario'] ?? '')));
+
+    if ($tipoUsuario === '' && $tipoUsuarioId > 0) {
+        $stmt = mysqli_prepare($conn, 'SELECT TipoDeUsuario FROM tipodeusuarios WHERE TIPODEUSUARIOID = ? LIMIT 1');
+
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, 'i', $tipoUsuarioId);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_bind_result($stmt, $tipoUsuarioRecuperado);
+
+            if (mysqli_stmt_fetch($stmt)) {
+                $tipoUsuario = strtolower(trim((string) $tipoUsuarioRecuperado));
+            }
+
+            mysqli_stmt_close($stmt);
+        }
+    }
+
+    return in_array($tipoUsuario, ['administrador', 'soporte it'], true);
+}
 function asegurar(mysqli $conn): void {
     @mysqli_query($conn, "CREATE TABLE IF NOT EXISTS Solicitud_Clientes (
         SolicitudClienteID INT NOT NULL AUTO_INCREMENT,
@@ -23,10 +55,15 @@ function asegurar(mysqli $conn): void {
 }
 if (!$conn) responder(['success'=>false,'message'=>'No se pudo conectar a la base de datos.'],500);
 asegurar($conn);
+$puedeGestionarAcciones = puedeGestionarAccionesSolicitudes($conn);
 $tipo = strtolower(trim($_GET['tipo'] ?? $_POST['tipo'] ?? ''));
 $accion = strtolower(trim($_POST['accion'] ?? $_GET['accion'] ?? 'listar'));
 
 if ($accion === 'eliminar') {
+    if (!$puedeGestionarAcciones) {
+        responder(['success' => false, 'message' => 'No tienes permisos para gestionar las solicitudes.'], 403);
+    }
+
     $id = isset($_POST['id']) ? (int) $_POST['id'] : (int) ($_GET['id'] ?? 0);
 
     if ($id <= 0) {
@@ -62,4 +99,4 @@ if ($tipo === 'clientes') {
     $rs = mysqli_query($conn, "SELECT SolicitudProductoID id, SKU valor, FechaSolicitud fecha FROM Solicitud_Productos WHERE Atendida = 0 ORDER BY SolicitudProductoID DESC");
 } else responder(['success'=>false,'message'=>'Tipo de solicitud inválido.'],400);
 $records=[]; if ($rs instanceof mysqli_result) { while($r=mysqli_fetch_assoc($rs)) $records[]=$r; }
-responder(['success'=>true,'records'=>$records]);
+responder(['success'=>true,'records'=>$records,'puedeGestionarAcciones'=>$puedeGestionarAcciones]);

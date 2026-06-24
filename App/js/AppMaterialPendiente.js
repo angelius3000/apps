@@ -1918,11 +1918,14 @@ $(document).ready(function() {
         $body.html('<tr><td colspan="3" class="text-center text-muted">No hay solicitudes pendientes.</td></tr>');
         return;
       }
+      var puedeGestionarAcciones = respuesta.puedeGestionarAcciones === true;
       $body.html(respuesta.records.map(function(r) {
-        return '<tr><td>' + escaparHtml(r.valor || '') + '</td><td>' + escaparHtml(r.fecha || '-') + '</td><td class="text-end">' +
-          '<button type="button" class="btn btn-sm btn-primary atender-solicitud-mp me-2" data-valor="' + escaparHtml(r.valor || '') + '">Agregar</button>' +
-          '<button type="button" class="btn btn-sm btn-outline-danger eliminar-solicitud-mp" data-id="' + escaparHtml(r.id || '') + '" data-valor="' + escaparHtml(r.valor || '') + '">Eliminar</button>' +
-        '</td></tr>';
+        var acciones = puedeGestionarAcciones
+          ? '<button type="button" class="btn btn-sm btn-primary atender-solicitud-mp me-2" data-valor="' + escaparHtml(r.valor || '') + '">Agregar</button>' +
+            '<button type="button" class="btn btn-sm btn-outline-danger eliminar-solicitud-mp" data-id="' + escaparHtml(r.id || '') + '" data-valor="' + escaparHtml(r.valor || '') + '">Eliminar</button>'
+          : '<span class="text-muted small">Sin acciones disponibles</span>';
+
+        return '<tr><td>' + escaparHtml(r.valor || '') + '</td><td>' + escaparHtml(r.fecha || '-') + '</td><td class="text-end">' + acciones + '</td></tr>';
       }).join(''));
     }).fail(function() {
       $body.html('<tr><td colspan="3" class="text-center text-danger">No se pudieron cargar las solicitudes.</td></tr>');
