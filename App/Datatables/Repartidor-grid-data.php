@@ -1,5 +1,6 @@
 <?php
 include("../../Connections/ConDB.php");
+@mysqli_query($conn, "ALTER TABLE repartos ADD COLUMN ClienteSolicitadoReparto VARCHAR(100) DEFAULT NULL AFTER CLIENTEID");
 include("../../includes/Funciones.php");
 
 if (!isset($_SESSION)) {
@@ -27,7 +28,7 @@ $columns = array(
     7 => 'Surtidores', //Surtidor
     8 => 'Fecha', //Fecha de registro
     9 => 'FechaReparto', //Fecha de reparto
-    10 => 'HoraReparto', //Hora de reparto  
+    10 => 'HoraReparto', //Hora de reparto
     11 => 'USUARIOID', //Solicitante
     12 => 'CLIENTEID', //Cliente
     13 => 'TelefonoAlternativo', //Teléfono alternativo
@@ -70,6 +71,7 @@ if (!empty($requestData['search']['value'])) {
             repartos.FechaReparto LIKE '%" . $word . "%' OR
             repartos.HoraReparto LIKE '%" . $word . "%' OR
             clientes.NombreCliente LIKE '%" . $word . "%' OR
+            repartos.ClienteSolicitadoReparto LIKE '%" . $word . "%' OR
             repartos.TelefonoAlternativo LIKE '%" . $word . "%' OR
             repartos.NumeroDeFactura LIKE '%" . $word . "%' OR
             repartos.Comentarios LIKE '%" . $word . "%'
@@ -79,7 +81,7 @@ if (!empty($requestData['search']['value'])) {
 }
 
 $query = mysqli_query($conn, $sql) or die("employee-grid-data.php: get employees");
-$totalFiltered = mysqli_num_rows($query); // when there is a search parameter then we have to modify total number filtered rows as per search result. 
+$totalFiltered = mysqli_num_rows($query); // when there is a search parameter then we have to modify total number filtered rows as per search result.
 
 $sql .= " ORDER BY " . $columns[$requestData['order'][0]['column']] . "   " . $requestData['order'][0]['dir'] . "  LIMIT " . $requestData['start'] . " ," . $requestData['length'] . "   ";
 /* $requestData['order'][0]['column'] contains colmun index, $requestData['order'][0]['dir'] contains order such as asc/desc  */
@@ -124,7 +126,7 @@ while ($row = mysqli_fetch_array($query)) {  // preparing an array ... Preparand
         $BotonEditar = '';
     }
 
-   
+
     if (($row['USUARIOID'] == $_SESSION['USUARIOID']) && ($row['STATUSID'] == '1') || $_SESSION['TIPOUSUARIO'] == '1') {
 
         $BotonBorrar = '<button type="button" class="btn btn-sm btn-danger waves-effect width-md waves-light" data-bs-toggle="modal" data-bs-target="#ModalBorrarReparto" onclick="TomarDatosParaModalRepartos(' . $row["REPARTOID"] . ')"><i class="mdi mdi-pencil"></i>Borrar</button>';
@@ -138,7 +140,7 @@ while ($row = mysqli_fetch_array($query)) {  // preparing an array ... Preparand
         $BotonMapa = '';
     }
 
-    
+
 
     $nestedData = array();
 
@@ -154,7 +156,11 @@ while ($row = mysqli_fetch_array($query)) {  // preparing an array ... Preparand
     $nestedData[] = $row["FechaRepartoFormatted"]; //(6) Fecha de reparto
     $nestedData[] = $row["HoraReparto"]; //(7) Hora de reparto
     $nestedData[] = $row["PrimerNombre"] . ' ' . $row["SegundoNombre"] . ' ' . $row["ApellidoPaterno"] . ' ' . $row["ApellidoMaterno"];
-    $nestedData[] = $row["NombreCliente"];
+    $clienteReparto = trim((string) ($row["NombreCliente"] ?? ''));
+    if ($clienteReparto === '' && !empty($row["ClienteSolicitadoReparto"])) {
+        $clienteReparto = 'Solicitado: ' . $row["ClienteSolicitadoReparto"];
+    }
+    $nestedData[] = $clienteReparto;
     $nestedData[] = '<a href="tel:' . $row["TelefonoAlternativo"] . '">' . $row["TelefonoAlternativo"] . '</a>'; //(13) Teléfono alternativo$row["TelefonoAlternativo"];
     $nestedData[] = $row["NumeroDeFactura"];
     $nestedData[] = $row["Comentarios"];
@@ -166,7 +172,7 @@ while ($row = mysqli_fetch_array($query)) {  // preparing an array ... Preparand
 
 
 $json_data = array(
-    "draw" => intval($requestData['draw']),   // for every request/draw by clientside , they send a number as a parameter, when they recieve a response/data they first check the draw number, so we are sending same number in draw. 
+    "draw" => intval($requestData['draw']),   // for every request/draw by clientside , they send a number as a parameter, when they recieve a response/data they first check the draw number, so we are sending same number in draw.
     "recordsTotal"    => intval($totalData),  // total number of records
     "recordsFiltered" => intval($totalFiltered), // total number of records after searching, if there is no searching then totalFiltered = totalData
     "data"            => $data,   // total data array,

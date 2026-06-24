@@ -2,6 +2,13 @@
 
 include("../../Connections/ConDB.php");
 
+function asegurarColumnaClienteSolicitadoReparto(mysqli $conn): void
+{
+    @mysqli_query($conn, "ALTER TABLE repartos ADD COLUMN ClienteSolicitadoReparto VARCHAR(100) DEFAULT NULL AFTER CLIENTEID");
+}
+
+asegurarColumnaClienteSolicitadoReparto($conn);
+
 
 $clienteIdPost = isset($_POST['CLIENTEID']) ? trim((string) $_POST['CLIENTEID']) : '';
 $numeroClienteSolicitado = isset($_POST['NumeroClienteSolicitadoReparto']) ? trim((string) $_POST['NumeroClienteSolicitadoReparto']) : '';
@@ -12,6 +19,7 @@ if (strpos($clienteIdPost, 'solicitar:') === 0) {
 }
 
 $CLIENTEID = mysqli_real_escape_string($conn, $clienteIdPost);
+$ClienteSolicitadoReparto = $numeroClienteSolicitado !== '' ? mysqli_real_escape_string($conn, $numeroClienteSolicitado) : NULL;
 $NumeroDeFactura = mysqli_real_escape_string($conn, $_POST['NumeroDeFactura']);
 $Calle = mysqli_real_escape_string($conn, $_POST['Calle']);
 $NumeroEXT = mysqli_real_escape_string($conn, $_POST['NumeroEXT']);
@@ -27,14 +35,15 @@ $Comentarios = mysqli_real_escape_string($conn, $_POST['Comentarios']);
 $EnlaceGoogleMaps = !empty($_POST['EnlaceGoogleMaps']) ? mysqli_real_escape_string($conn, $_POST['EnlaceGoogleMaps']) : NULL;
 
 $USUARIOID = mysqli_real_escape_string($conn, $_POST['USUARIOID']);
+$ClienteSolicitadoRepartoSql = $ClienteSolicitadoReparto !== NULL ? "'" . $ClienteSolicitadoReparto . "'" : 'NULL';
 
 // Construye la consulta SQL de forma dinámica
 if ($EnlaceGoogleMaps !== NULL) {
-    $sql = "INSERT INTO repartos (USUARIOID, CLIENTEID, NumeroDeFactura, Calle, NumeroEXT, Colonia, CP, Ciudad, Estado, Receptor, TelefonoDeReceptor, TelefonoAlternativo, Comentarios, STATUSID, EnlaceMapaGoogle) 
-            VALUES ('$USUARIOID', '$CLIENTEID', '$NumeroDeFactura', '$Calle', '$NumeroEXT', '$Colonia', '$CP', '$Ciudad', '$Estado', '$Receptor', '$TelefonoDeReceptor', '$TelefonoAlternativo', '$Comentarios', '1', '$EnlaceGoogleMaps')";
+    $sql = "INSERT INTO repartos (USUARIOID, CLIENTEID, ClienteSolicitadoReparto, NumeroDeFactura, Calle, NumeroEXT, Colonia, CP, Ciudad, Estado, Receptor, TelefonoDeReceptor, TelefonoAlternativo, Comentarios, STATUSID, EnlaceMapaGoogle)
+            VALUES ('$USUARIOID', '$CLIENTEID', $ClienteSolicitadoRepartoSql, '$NumeroDeFactura', '$Calle', '$NumeroEXT', '$Colonia', '$CP', '$Ciudad', '$Estado', '$Receptor', '$TelefonoDeReceptor', '$TelefonoAlternativo', '$Comentarios', '1', '$EnlaceGoogleMaps')";
 } else {
-    $sql = "INSERT INTO repartos (USUARIOID, CLIENTEID, NumeroDeFactura, Calle, NumeroEXT, Colonia, CP, Ciudad, Estado, Receptor, TelefonoDeReceptor, TelefonoAlternativo, Comentarios, STATUSID) 
-            VALUES ('$USUARIOID', '$CLIENTEID', '$NumeroDeFactura', '$Calle', '$NumeroEXT', '$Colonia', '$CP', '$Ciudad', '$Estado', '$Receptor', '$TelefonoDeReceptor', '$TelefonoAlternativo', '$Comentarios', '1')";
+    $sql = "INSERT INTO repartos (USUARIOID, CLIENTEID, ClienteSolicitadoReparto, NumeroDeFactura, Calle, NumeroEXT, Colonia, CP, Ciudad, Estado, Receptor, TelefonoDeReceptor, TelefonoAlternativo, Comentarios, STATUSID)
+            VALUES ('$USUARIOID', '$CLIENTEID', $ClienteSolicitadoRepartoSql, '$NumeroDeFactura', '$Calle', '$NumeroEXT', '$Colonia', '$CP', '$Ciudad', '$Estado', '$Receptor', '$TelefonoDeReceptor', '$TelefonoAlternativo', '$Comentarios', '1')";
 }
 
 if (!mysqli_query($conn, $sql)) {
