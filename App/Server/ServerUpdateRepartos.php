@@ -20,11 +20,21 @@ $REPARTOID = mysqli_real_escape_string($conn, $_POST['REPARTOIDEditar']);
 
 $EnlaceGoogleMaps = !empty($_POST['EnlaceGoogleMapsEditar']) ? mysqli_real_escape_string($conn, $_POST['EnlaceGoogleMapsEditar']) : NULL;
 
+$consultaEstatus = mysqli_query($conn, "SELECT status.Status FROM repartos LEFT JOIN status ON status.STATUSID = repartos.STATUSID WHERE repartos.REPARTOID = '$REPARTOID' LIMIT 1");
+$repartoActual = $consultaEstatus ? mysqli_fetch_assoc($consultaEstatus) : null;
+
+if (!$repartoActual || strcasecmp(trim((string) ($repartoActual['Status'] ?? '')), 'Registrado') !== 0) {
+    http_response_code(409);
+    echo json_encode(array(
+        'error' => 'Solo se pueden editar repartos con estatus Registrado.'
+    ));
+    exit;
+}
 
 if ($EnlaceGoogleMaps !== NULL) {
 
     // Build the base query
-    $sql = "UPDATE repartos SET 
+    $sql = "UPDATE repartos SET
     CLIENTEID = '$CLIENTEID',
     NumeroDeFactura = '$NumeroDeFactura',
     Calle = '$Calle',
@@ -42,7 +52,7 @@ if ($EnlaceGoogleMaps !== NULL) {
 } else {
 
     // Build the base query
-    $sql = "UPDATE repartos SET 
+    $sql = "UPDATE repartos SET
     CLIENTEID = '$CLIENTEID',
     NumeroDeFactura = '$NumeroDeFactura',
     Calle = '$Calle',
