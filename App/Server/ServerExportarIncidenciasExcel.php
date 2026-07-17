@@ -1,4 +1,14 @@
 <?php
+if (!isset($_SESSION)) {
+    session_start();
+}
+
+$tiposPermitidos = [1, 5, 9];
+if (!in_array((int)($_SESSION['TIPOUSUARIO'] ?? 0), $tiposPermitidos, true)) {
+    http_response_code(403);
+    exit('No tienes permisos para descargar este reporte.');
+}
+
 include('../../Connections/ConDB.php');
 
 if (!$conn) {
