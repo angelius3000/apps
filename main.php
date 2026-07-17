@@ -71,6 +71,12 @@ if (!usuarioTieneAccesoSeccion('aplicaciones')) {
                                                 'nombre' => 'Material Pendiente',
                                             ],
                                             [
+                                                'slug' => 'incidencias',
+                                                'ruta' => 'Incidencias.php',
+                                                'icono' => 'report_problem',
+                                                'nombre' => 'Incidencias',
+                                            ],
+                                            [
                                                 'slug' => 'soporte',
                                                 'ruta' => 'Soporte.php',
                                                 'icono' => 'support_agent',
