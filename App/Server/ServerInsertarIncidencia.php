@@ -10,15 +10,23 @@ $esProductoSolicitado = $productoId === 0 && $productoSolicitadoSku !== '';
 $responsableSeleccionado = trim((string)($_POST['responsable'] ?? ''));
 $responsableOtro = trim((string)($_POST['responsableOtro'] ?? ''));
 $aduanaId = (int)($_POST['aduanaId'] ?? 0);
+$aduanaSeleccionada = trim((string)($_POST['aduanaId'] ?? ''));
+$aduanaOtro = trim((string)($_POST['aduanaOtro'] ?? ''));
 $cantidad = filter_var($_POST['cantidad'] ?? null, FILTER_VALIDATE_FLOAT);
 $precio = filter_var($_POST['precioUnitario'] ?? null, FILTER_VALIDATE_FLOAT);
 $comentarios = trim((string)($_POST['comentarios'] ?? ''));
-if ($folio === '' || (!$productoId && !$esProductoSolicitado) || $responsableSeleccionado === '' || ($responsableSeleccionado === 'otro' && $responsableOtro === '') || !$aduanaId || $cantidad === false || $cantidad <= 0 || $precio === false || $precio < 0) { responderIncidencia(['ok' => false, 'error' => 'Completa todos los campos obligatorios con valores válidos.'], 422); }
+if ($folio === '' || (!$productoId && !$esProductoSolicitado) || $responsableSeleccionado === '' || ($responsableSeleccionado === 'otro' && $responsableOtro === '') || ($aduanaSeleccionada !== 'otro' && !$aduanaId) || ($aduanaSeleccionada === 'otro' && $aduanaOtro === '') || $cantidad === false || $cantidad <= 0 || $precio === false || $precio < 0) { responderIncidencia(['ok' => false, 'error' => 'Completa todos los campos obligatorios con valores válidos.'], 422); }
 $stmtProducto = mysqli_prepare($conn, 'SELECT Sku, Descripcion, MarcaProductos FROM productos WHERE PRODUCTOSID = ? LIMIT 1');
 $stmtAduana = mysqli_prepare($conn, 'SELECT NombreAduana FROM aduana WHERE AduanaID = ? AND Deshabilitado = 0 LIMIT 1');
 if (!$stmtProducto || !$stmtAduana) { responderIncidencia(['ok' => false, 'error' => 'No se pudo validar la información seleccionada.'], 500); }
 if ($productoId > 0) { mysqli_stmt_bind_param($stmtProducto, 'i', $productoId); mysqli_stmt_execute($stmtProducto); $producto = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtProducto)); } else { $producto = ['Sku' => $productoSolicitadoSku, 'Descripcion' => 'SOLICITADO', 'MarcaProductos' => '']; }
-mysqli_stmt_bind_param($stmtAduana, 'i', $aduanaId); mysqli_stmt_execute($stmtAduana); $aduana = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtAduana));
+if ($aduanaSeleccionada === 'otro') {
+    $aduana = ['NombreAduana' => $aduanaOtro];
+} else {
+    mysqli_stmt_bind_param($stmtAduana, 'i', $aduanaId);
+    mysqli_stmt_execute($stmtAduana);
+    $aduana = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtAduana));
+}
 mysqli_stmt_close($stmtProducto); mysqli_stmt_close($stmtAduana);
 $responsable = $responsableOtro;
 if ($responsableSeleccionado !== 'otro') {
