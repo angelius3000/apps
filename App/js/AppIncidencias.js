@@ -133,11 +133,16 @@
   inicializarProducto();
   $responsable.on('change select2:select', actualizarResponsableOtro);
   $creador.on('change select2:select', actualizarCreadorOtro);
-  $(document).on('mousedown', '.select2-otro-responsable', function (evento) {
+  function seleccionarResponsableOtro(evento) {
+    if (!$(evento.target).closest('.select2-otro-responsable').length) { return; }
     evento.preventDefault();
+    evento.stopPropagation();
     $responsable.val('otro').trigger('change');
     $responsable.select2('close');
-  });
+  }
+
+  document.addEventListener('mousedown', seleccionarResponsableOtro, true);
+  document.addEventListener('click', seleccionarResponsableOtro, true);
 
   function actualizarTotal() {
     var cantidad = parseFloat($cantidad.val()) || 0;
