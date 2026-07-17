@@ -15,6 +15,11 @@
   var $creadorOtro = $('#IncidenciaCreadorOtro');
   var $selectores = $responsable.add($creador);
   var $productoSolicitadoSku = $('#IncidenciaProductoSolicitadoSku');
+  var $incidenciaId = $('#IncidenciaId');
+  var $descripcionExistente = $('#IncidenciaDescripcionExistente');
+  var $marcaExistente = $('#IncidenciaMarcaExistente');
+  var $tituloModal = $('#TituloModalIncidencia');
+  var $guardar = $('#GuardarIncidencia');
   var $buscador = $('#BuscadorIncidencias');
   var $filas = $('#TablaIncidencias .incidencia-row');
   var $sinResultados = $('#IncidenciasSinResultados');
@@ -161,13 +166,59 @@
     var seleccionado = datos && datos.length ? datos[0] : null;
     var sku = seleccionado && seleccionado.solicitado ? (seleccionado.sku || '').trim() : '';
     $productoSolicitadoSku.val(sku);
+    if (seleccionado && seleccionado.solicitado) {
+      $descripcionExistente.val('SOLICITADO');
+      $marcaExistente.val('');
+    }
+  });
+
+  function seleccionarOpcionExistente($selector, valor, texto) {
+    var opcion = new Option(texto, valor, true, true);
+    $selector.empty().append(opcion).trigger('change');
+  }
+
+  $(document).on('click', '.editar-incidencia', function () {
+    var $fila = $(this).closest('.incidencia-row');
+    var datos = $fila.data();
+    $incidenciaId.val(datos.incidenciaId);
+    $('#IncidenciaFolio').val(datos.folio);
+    $cantidad.val(datos.cantidad);
+    $precio.val(datos.precioUnitario);
+    $descripcionExistente.val(datos.descripcion);
+    $marcaExistente.val(datos.marca);
+    seleccionarOpcionExistente($producto, 'existente:' + datos.sku, datos.sku + ' - ' + datos.descripcion);
+    $productoSolicitadoSku.val(datos.sku);
+    $responsable.val('otro').trigger('change');
+    $responsableOtro.val(datos.responsable);
+    $creador.val('otro').trigger('change');
+    $creadorOtro.val(datos.creadoPor);
+    $('#IncidenciaComentarios').val(datos.comentarios);
+    $tituloModal.text('Editar incidencia');
+    $guardar.text('Guardar cambios');
+    actualizarTotal();
+    $modal.modal('show');
+  });
+
+  $(document).on('click', '.eliminar-incidencia', function () {
+    var $fila = $(this).closest('.incidencia-row');
+    var id = $fila.data('incidencia-id');
+    if (!window.confirm('¿Deseas eliminar esta incidencia? Esta acción no se puede deshacer.')) { return; }
+    var $boton = $(this).prop('disabled', true);
+    $.ajax({ url: 'App/Server/ServerEliminarIncidencia.php', method: 'POST', dataType: 'json', data: { incidenciaId: id } })
+      .done(function (respuesta) {
+        if (respuesta && respuesta.ok) { window.location.reload(); return; }
+        window.alert((respuesta && respuesta.error) || 'No se pudo eliminar la incidencia.');
+      })
+      .fail(function (xhr) { var respuesta = xhr.responseJSON; window.alert((respuesta && respuesta.error) || 'No se pudo eliminar la incidencia.'); })
+      .always(function () { $boton.prop('disabled', false); });
   });
 
   $form.on('submit', function (evento) {
     evento.preventDefault();
     $error.addClass('d-none').text('');
     var $boton = $form.find('[type="submit"]').prop('disabled', true);
-    $.ajax({ url: 'App/Server/ServerInsertarIncidencia.php', method: 'POST', dataType: 'json', data: $form.serialize() })
+    var esEdicion = $incidenciaId.val() !== '';
+    $.ajax({ url: esEdicion ? 'App/Server/ServerActualizarIncidencia.php' : 'App/Server/ServerInsertarIncidencia.php', method: 'POST', dataType: 'json', data: $form.serialize() })
       .done(function (respuesta) {
         if (!respuesta || !respuesta.ok) { $error.removeClass('d-none').text((respuesta && respuesta.error) || 'No se pudo guardar la incidencia.'); return; }
         window.location.reload();
@@ -177,6 +228,11 @@
   });
   $modal.on('hidden.bs.modal', function () {
     $form[0].reset();
+    $incidenciaId.val('');
+    $descripcionExistente.val('');
+    $marcaExistente.val('');
+    $tituloModal.text('Nueva incidencia');
+    $guardar.text('Guardar incidencia');
     $productoSolicitadoSku.val('');
     $producto.val(null).trigger('change');
     $selectores.val(null).trigger('change');
