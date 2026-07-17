@@ -9,6 +9,36 @@
   var $producto = $('#IncidenciaProducto');
   var $selectores = $('#IncidenciaVendedor, #IncidenciaAduana');
   var $productoSolicitadoSku = $('#IncidenciaProductoSolicitadoSku');
+  var $buscador = $('#BuscadorIncidencias');
+  var $filas = $('#TablaIncidencias .incidencia-row');
+  var $sinResultados = $('#IncidenciasSinResultados');
+  var $resumenPaginacion = $('#ResumenPaginacionIncidencias');
+  var $paginaAnterior = $('#IncidenciasPaginaAnterior');
+  var $paginaSiguiente = $('#IncidenciasPaginaSiguiente');
+  var paginaActual = 1;
+  var registrosPorPagina = 5;
+
+  function normalizarTexto(texto) {
+    return (texto || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function filtrarIncidencias() {
+    var termino = normalizarTexto($buscador.val());
+    var coincidencias = $filas.filter(function () { return normalizarTexto($(this).text()).indexOf(termino) !== -1; });
+    var total = coincidencias.length;
+    var totalPaginas = Math.max(1, Math.ceil(total / registrosPorPagina));
+    if (paginaActual > totalPaginas) { paginaActual = totalPaginas; }
+    var inicio = (paginaActual - 1) * registrosPorPagina;
+    var fin = inicio + registrosPorPagina;
+
+    $filas.addClass('d-none');
+    coincidencias.slice(inicio, fin).removeClass('d-none');
+    $sinResultados.toggleClass('d-none', total !== 0);
+    $resumenPaginacion.text(total === 0 ? 'Mostrando 0 de 0 registros' : 'Mostrando ' + (inicio + 1) + ' a ' + Math.min(fin, total) + ' de ' + total + ' registros');
+    $paginaAnterior.prop('disabled', paginaActual <= 1 || total === 0);
+    $paginaSiguiente.prop('disabled', paginaActual >= totalPaginas || total === 0);
+  }
+
 
   function inicializarSelector($selector) {
     if (!$selector.length || typeof $.fn.select2 !== 'function' || $selector.hasClass('select2-hidden-accessible')) {
@@ -69,6 +99,11 @@
     $total.val('$' + (cantidad * precio).toFixed(2));
   }
   $cantidad.add($precio).on('input', actualizarTotal);
+
+  $buscador.on('input', function () { paginaActual = 1; filtrarIncidencias(); });
+  $paginaAnterior.on('click', function () { if (paginaActual > 1) { paginaActual--; filtrarIncidencias(); } });
+  $paginaSiguiente.on('click', function () { paginaActual++; filtrarIncidencias(); });
+  filtrarIncidencias();
 
   $producto.on('select2:select change', function () {
     var datos = $producto.select2('data');
