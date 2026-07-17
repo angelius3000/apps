@@ -10,7 +10,10 @@
   var $responsable = $('#IncidenciaResponsable');
   var $responsableOtroContenedor = $('#IncidenciaResponsableOtroContenedor');
   var $responsableOtro = $('#IncidenciaResponsableOtro');
-  var $selectores = $responsable.add($('#IncidenciaAduana'));
+  var $creador = $('#IncidenciaAduana');
+  var $creadorOtroContenedor = $('#IncidenciaCreadorOtroContenedor');
+  var $creadorOtro = $('#IncidenciaCreadorOtro');
+  var $selectores = $responsable.add($creador);
   var $productoSolicitadoSku = $('#IncidenciaProductoSolicitadoSku');
   var $buscador = $('#BuscadorIncidencias');
   var $filas = $('#TablaIncidencias .incidencia-row');
@@ -53,8 +56,26 @@
       placeholder: $selector.data('placeholder') || 'Selecciona una opción',
       allowClear: true,
       width: '100%',
-      minimumResultsForSearch: 0
+      minimumResultsForSearch: 0,
+      matcher: $selector.is($responsable) ? filtrarResponsables : undefined,
+      language: $selector.is($responsable) ? {
+        noResults: function () {
+          return '<button type="button" class="btn btn-link p-0 select2-otro-responsable">Otro</button>';
+        }
+      } : undefined,
+      escapeMarkup: $selector.is($responsable) ? function (markup) { return markup; } : undefined
     });
+  }
+
+  function filtrarResponsables(params, data) {
+    var termino = normalizarTexto(params.term);
+    if (data.children) {
+      var grupo = $.extend({}, data, true);
+      grupo.children = $.map(data.children, function (opcion) { return filtrarResponsables(params, opcion); });
+      return grupo.children.length ? grupo : null;
+    }
+    if (data.id === 'otro') { return null; }
+    return termino === '' || normalizarTexto(data.text).indexOf(termino) !== -1 ? data : null;
   }
 
   function inicializarProducto() {
@@ -93,16 +114,30 @@
     });
   }
 
+  function actualizarCampoOtro($selector, $contenedor, $campo) {
+    var esOtro = $selector.val() === 'otro';
+    $contenedor.toggleClass('d-none', !esOtro);
+    $campo.prop('required', esOtro);
+    if (!esOtro) { $campo.val(''); }
+  }
+
   function actualizarResponsableOtro() {
-    var esOtro = $responsable.val() === 'otro';
-    $responsableOtroContenedor.toggleClass('d-none', !esOtro);
-    $responsableOtro.prop('required', esOtro);
-    if (!esOtro) { $responsableOtro.val(''); }
+    actualizarCampoOtro($responsable, $responsableOtroContenedor, $responsableOtro);
+  }
+
+  function actualizarCreadorOtro() {
+    actualizarCampoOtro($creador, $creadorOtroContenedor, $creadorOtro);
   }
 
   $selectores.each(function () { inicializarSelector($(this)); });
   inicializarProducto();
   $responsable.on('change select2:select', actualizarResponsableOtro);
+  $creador.on('change select2:select', actualizarCreadorOtro);
+  $(document).on('mousedown', '.select2-otro-responsable', function (evento) {
+    evento.preventDefault();
+    $responsable.val('otro').trigger('change');
+    $responsable.select2('close');
+  });
 
   function actualizarTotal() {
     var cantidad = parseFloat($cantidad.val()) || 0;
@@ -141,6 +176,7 @@
     $producto.val(null).trigger('change');
     $selectores.val(null).trigger('change');
     actualizarResponsableOtro();
+    actualizarCreadorOtro();
     actualizarTotal();
     $error.addClass('d-none').text('');
   });
