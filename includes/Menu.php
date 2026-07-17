@@ -39,6 +39,12 @@
                 'nombre' => 'Material Pendiente',
             ],
             [
+                'slug' => 'incidencias',
+                'ruta' => 'Incidencias.php',
+                'icono' => 'report_problem',
+                'nombre' => 'Incidencias',
+            ],
+            [
                 'slug' => 'clientes',
                 'ruta' => 'Clientes.php',
                 'icono' => 'people',
