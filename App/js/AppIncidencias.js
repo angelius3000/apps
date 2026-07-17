@@ -7,7 +7,10 @@
   var $error = $('#IncidenciaError');
   var $modal = $('#ModalIncidencia');
   var $producto = $('#IncidenciaProducto');
-  var $selectores = $('#IncidenciaVendedor, #IncidenciaAduana');
+  var $responsable = $('#IncidenciaResponsable');
+  var $responsableOtroContenedor = $('#IncidenciaResponsableOtroContenedor');
+  var $responsableOtro = $('#IncidenciaResponsableOtro');
+  var $selectores = $responsable.add($('#IncidenciaAduana'));
   var $productoSolicitadoSku = $('#IncidenciaProductoSolicitadoSku');
   var $buscador = $('#BuscadorIncidencias');
   var $filas = $('#TablaIncidencias .incidencia-row');
@@ -90,8 +93,16 @@
     });
   }
 
+  function actualizarResponsableOtro() {
+    var esOtro = $responsable.val() === 'otro';
+    $responsableOtroContenedor.toggleClass('d-none', !esOtro);
+    $responsableOtro.prop('required', esOtro);
+    if (!esOtro) { $responsableOtro.val(''); }
+  }
+
   $selectores.each(function () { inicializarSelector($(this)); });
   inicializarProducto();
+  $responsable.on('change select2:select', actualizarResponsableOtro);
 
   function actualizarTotal() {
     var cantidad = parseFloat($cantidad.val()) || 0;
@@ -129,6 +140,7 @@
     $productoSolicitadoSku.val('');
     $producto.val(null).trigger('change');
     $selectores.val(null).trigger('change');
+    actualizarResponsableOtro();
     actualizarTotal();
     $error.addClass('d-none').text('');
   });
