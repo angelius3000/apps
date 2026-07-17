@@ -10,10 +10,7 @@
   var $responsable = $('#IncidenciaResponsable');
   var $responsableOtroContenedor = $('#IncidenciaResponsableOtroContenedor');
   var $responsableOtro = $('#IncidenciaResponsableOtro');
-  var $aduana = $('#IncidenciaAduana');
-  var $aduanaOtroContenedor = $('#IncidenciaAduanaOtroContenedor');
-  var $aduanaOtro = $('#IncidenciaAduanaOtro');
-  var $selectores = $responsable.add($aduana);
+  var $selectores = $responsable.add($('#IncidenciaAduana'));
   var $productoSolicitadoSku = $('#IncidenciaProductoSolicitadoSku');
   var $buscador = $('#BuscadorIncidencias');
   var $filas = $('#TablaIncidencias .incidencia-row');
@@ -96,27 +93,16 @@
     });
   }
 
-  function actualizarCampoOtro($selector, $contenedor, $campo) {
-    var esOtro = String($selector.val() || '').toLowerCase() === 'otro';
-    $contenedor.toggleClass('d-none', !esOtro);
-    $campo.prop('required', esOtro);
-    if (!esOtro) { $campo.val(''); }
-  }
-
   function actualizarResponsableOtro() {
-    actualizarCampoOtro($responsable, $responsableOtroContenedor, $responsableOtro);
-  }
-
-  function actualizarAduanaOtro() {
-    actualizarCampoOtro($aduana, $aduanaOtroContenedor, $aduanaOtro);
+    var esOtro = $responsable.val() === 'otro';
+    $responsableOtroContenedor.toggleClass('d-none', !esOtro);
+    $responsableOtro.prop('required', esOtro);
+    if (!esOtro) { $responsableOtro.val(''); }
   }
 
   $selectores.each(function () { inicializarSelector($(this)); });
   inicializarProducto();
   $responsable.on('change select2:select', actualizarResponsableOtro);
-  $aduana.on('change select2:select', actualizarAduanaOtro);
-  actualizarResponsableOtro();
-  actualizarAduanaOtro();
 
   function actualizarTotal() {
     var cantidad = parseFloat($cantidad.val()) || 0;
@@ -155,7 +141,6 @@
     $producto.val(null).trigger('change');
     $selectores.val(null).trigger('change');
     actualizarResponsableOtro();
-    actualizarAduanaOtro();
     actualizarTotal();
     $error.addClass('d-none').text('');
   });
