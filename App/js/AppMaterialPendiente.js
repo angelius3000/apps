@@ -2022,6 +2022,7 @@ $(document).ready(function() {
   if ($buscadorMaterialPendiente.length) {
     $buscadorMaterialPendiente.on('input', function() {
       paginaActualMaterialPendiente = 1;
+      limpiarPanelEntrega();
       filtrarMaterialPendiente();
     });
   }
