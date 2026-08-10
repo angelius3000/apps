@@ -1,6 +1,7 @@
 <?php
 
 include("../../Connections/ConDB.php");
+require_once __DIR__ . '/../../includes/MaterialPendienteSchema.php';
 
 if (!isset($_SESSION)) {
     session_start();
@@ -55,6 +56,7 @@ function asegurarTablaMaterialPendiente(mysqli $conn, string $baseDatos): bool
 {
     $sqlCrearTabla = "CREATE TABLE IF NOT EXISTS materialpendiente (
         MaterialPendienteID INT NOT NULL AUTO_INCREMENT,
+        FacturaMPID INT NULL,
         DocumentoMP VARCHAR(100) NOT NULL,
         RazonSocialMP VARCHAR(255) NOT NULL,
         VendedorMP VARCHAR(255) DEFAULT NULL,
@@ -67,6 +69,7 @@ function asegurarTablaMaterialPendiente(mysqli $conn, string $baseDatos): bool
         FechaMP TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         ActivoMP TINYINT(1) NOT NULL DEFAULT 1,
         PRIMARY KEY (MaterialPendienteID),
+        INDEX idx_materialpendiente_folio (FacturaMPID),
         INDEX idx_materialpendiente_documento (DocumentoMP),
         INDEX idx_materialpendiente_sku (SkuMP)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
@@ -158,6 +161,8 @@ asegurarTablasSolicitudes($conn);
 if (!asegurarTablaFacturaMP($conn, $nombreBaseDatos)) {
     responderError('No se pudo preparar la tabla de facturas de material pendiente. Intenta nuevamente.');
 }
+
+asegurarRelacionFolioMaterialPendiente($conn, $nombreBaseDatos);
 
 function asegurarTablasSolicitudes(mysqli $conn): void
 {
@@ -376,14 +381,14 @@ if (!mysqli_stmt_execute($stmtActualizar)) {
 
 mysqli_stmt_close($stmtActualizar);
 
-$stmtEliminar = mysqli_prepare($conn, 'DELETE FROM materialpendiente WHERE DocumentoMP = ?');
+$stmtEliminar = mysqli_prepare($conn, 'DELETE FROM materialpendiente WHERE FacturaMPID = ?');
 
 if (!$stmtEliminar) {
     mysqli_rollback($conn);
     responderError('No se pudo preparar la limpieza de partidas.');
 }
 
-mysqli_stmt_bind_param($stmtEliminar, 's', $documentoAnterior);
+mysqli_stmt_bind_param($stmtEliminar, 'i', $folio);
 
 if (!mysqli_stmt_execute($stmtEliminar)) {
     mysqli_stmt_close($stmtEliminar);
@@ -395,8 +400,8 @@ mysqli_stmt_close($stmtEliminar);
 
 $stmtInsertar = mysqli_prepare(
     $conn,
-    'INSERT INTO materialpendiente (DocumentoMP, RazonSocialMP, VendedorMP, SurtidorMP, ClienteMP, AduanaMP, SkuMP, DescripcionMP, CantidadMP, ActivoMP) '
-        . 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)'
+    'INSERT INTO materialpendiente (FacturaMPID, DocumentoMP, RazonSocialMP, VendedorMP, SurtidorMP, ClienteMP, AduanaMP, SkuMP, DescripcionMP, CantidadMP, ActivoMP) '
+        . 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)'
 );
 
 if (!$stmtInsertar) {
@@ -409,7 +414,8 @@ $actualizados = 0;
 foreach ($productosValidos as $producto) {
     mysqli_stmt_bind_param(
         $stmtInsertar,
-        'ssssssssi',
+        'issssssssi',
+        $folio,
         $numeroFactura,
         $razonSocial,
         $vendedorNombre,

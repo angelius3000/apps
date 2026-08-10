@@ -1,4 +1,5 @@
 <?php include("includes/HeaderScripts.php");
+require_once __DIR__ . '/includes/MaterialPendienteSchema.php';
 
 $pageTitle = 'Edison - Material Pendiente';
 
@@ -164,6 +165,7 @@ function asegurarTablaMaterialPendienteListado(mysqli $conn, string $baseDatos):
 {
     $sqlCrearTabla = "CREATE TABLE IF NOT EXISTS materialpendiente (
         MaterialPendienteID INT NOT NULL AUTO_INCREMENT,
+        FacturaMPID INT NULL,
         DocumentoMP VARCHAR(100) NOT NULL,
         RazonSocialMP VARCHAR(255) NOT NULL,
         VendedorMP VARCHAR(255) DEFAULT NULL,
@@ -176,6 +178,7 @@ function asegurarTablaMaterialPendienteListado(mysqli $conn, string $baseDatos):
         FechaMP TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         ActivoMP TINYINT(1) NOT NULL DEFAULT 1,
         PRIMARY KEY (MaterialPendienteID),
+        INDEX idx_materialpendiente_folio (FacturaMPID),
         INDEX idx_materialpendiente_documento (DocumentoMP),
         INDEX idx_materialpendiente_sku (SkuMP)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
@@ -255,22 +258,10 @@ function asegurarTablaFacturaMPListado(mysqli $conn, string $baseDatos): void
 $nombreBaseDatos = $dbname ?? '';
 asegurarTablaMaterialPendienteListado($conn, $nombreBaseDatos);
 asegurarTablaFacturaMPListado($conn, $nombreBaseDatos);
-
-@mysqli_query(
-    $conn,
-    "UPDATE facturamp f
-    SET f.ActivoFMP = 1
-    WHERE f.ActivoFMP = 0
-      AND EXISTS (
-          SELECT 1
-          FROM materialpendiente mp
-          WHERE mp.DocumentoMP = f.DocumentoFMP
-            AND mp.ActivoMP = 1
-      )"
-);
+asegurarRelacionFolioMaterialPendiente($conn, $nombreBaseDatos);
 
 $queryMaterialPendiente = "SELECT f.FacturaMPID, f.FechaFMP, f.DocumentoFMP, f.RazonSocialFMP, f.VendedorFMP, f.SurtidorFMP, f.ClienteFMP, f.AduanaFMP, "
-    . "(SELECT COUNT(*) FROM materialpendiente mp WHERE mp.DocumentoMP = f.DocumentoFMP AND mp.ActivoMP = 1) AS PartidasPendientes "
+    . "(SELECT COUNT(*) FROM materialpendiente mp WHERE mp.FacturaMPID = f.FacturaMPID AND mp.ActivoMP = 1) AS PartidasPendientes "
     . "FROM facturamp f WHERE f.ActivoFMP = 1 ORDER BY f.FacturaMPID DESC";
 
 $resultadoMaterialPendiente = @mysqli_query($conn, $queryMaterialPendiente);

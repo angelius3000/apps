@@ -1,6 +1,7 @@
 <?php
 
 include("../../Connections/ConDB.php");
+require_once __DIR__ . '/../../includes/MaterialPendienteSchema.php';
 
 header('Content-Type: application/json');
 
@@ -66,6 +67,7 @@ function asegurarColumnaActivo(mysqli $conn, string $baseDatos, string $tabla, s
 $nombreBaseDatos = obtenerNombreBaseDatos($conn, $dbname ?? '');
 asegurarColumnaActivo($conn, $nombreBaseDatos, 'facturamp', 'ActivoFMP', "ALTER TABLE facturamp ADD COLUMN ActivoFMP TINYINT(1) NOT NULL DEFAULT 1 AFTER AduanaFMP");
 asegurarColumnaActivo($conn, $nombreBaseDatos, 'materialpendiente', 'ActivoMP', "ALTER TABLE materialpendiente ADD COLUMN ActivoMP TINYINT(1) NOT NULL DEFAULT 1 AFTER FechaMP");
+asegurarRelacionFolioMaterialPendiente($conn, $nombreBaseDatos);
 
 $folio = isset($_POST['folio']) ? (int) $_POST['folio'] : 0;
 
@@ -93,13 +95,13 @@ $documento = (string) $documento;
 
 mysqli_begin_transaction($conn);
 
-$stmtActualizarPartidas = mysqli_prepare($conn, 'UPDATE materialpendiente SET ActivoMP = 0 WHERE DocumentoMP = ?');
+$stmtActualizarPartidas = mysqli_prepare($conn, 'UPDATE materialpendiente SET ActivoMP = 0 WHERE FacturaMPID = ?');
 if (!$stmtActualizarPartidas) {
     mysqli_rollback($conn);
     responderError('No se pudo inhabilitar la información del folio.');
 }
 
-mysqli_stmt_bind_param($stmtActualizarPartidas, 's', $documento);
+mysqli_stmt_bind_param($stmtActualizarPartidas, 'i', $folio);
 
 if (!mysqli_stmt_execute($stmtActualizarPartidas)) {
     mysqli_stmt_close($stmtActualizarPartidas);
