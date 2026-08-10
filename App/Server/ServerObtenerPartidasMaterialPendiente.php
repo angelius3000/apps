@@ -1,6 +1,7 @@
 <?php
 
 include("../../Connections/ConDB.php");
+require_once __DIR__ . '/../../includes/MaterialPendienteSchema.php';
 
 header('Content-Type: application/json');
 
@@ -89,6 +90,8 @@ if ($nombreBaseDatos !== '') {
     }
 }
 
+
+asegurarRelacionFolioMaterialPendiente($conn, $nombreBaseDatos);
 $folio = isset($_GET['folio']) ? (int) $_GET['folio'] : 0;
 
 if ($folio <= 0) {
@@ -136,14 +139,14 @@ if (!empty($fechaFolio)) {
 
 $stmtPartidas = mysqli_prepare(
     $conn,
-    'SELECT MaterialPendienteID, SkuMP, DescripcionMP, CantidadMP FROM materialpendiente WHERE DocumentoMP = ? AND ActivoMP = 1 ORDER BY MaterialPendienteID ASC'
+    'SELECT MaterialPendienteID, SkuMP, DescripcionMP, CantidadMP FROM materialpendiente WHERE FacturaMPID = ? AND ActivoMP = 1 ORDER BY MaterialPendienteID ASC'
 );
 
 if (!$stmtPartidas) {
     responderError('No se pudo obtener las partidas pendientes.');
 }
 
-mysqli_stmt_bind_param($stmtPartidas, 's', $documento);
+mysqli_stmt_bind_param($stmtPartidas, 'i', $folio);
 mysqli_stmt_execute($stmtPartidas);
 mysqli_stmt_bind_result($stmtPartidas, $partidaId, $sku, $descripcion, $cantidad);
 

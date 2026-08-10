@@ -1,6 +1,7 @@
 <?php
 
 include("../../Connections/ConDB.php");
+require_once __DIR__ . '/../../includes/MaterialPendienteSchema.php';
 
 header('Content-Type: application/json');
 
@@ -115,9 +116,10 @@ if ($tipoUsuarioActual !== 'soporte it') {
 $nombreBaseDatos = obtenerNombreBaseDatos($conn, $dbname ?? '');
 asegurarColumnaActivo($conn, $nombreBaseDatos, 'facturamp', 'ActivoFMP', "ALTER TABLE facturamp ADD COLUMN ActivoFMP TINYINT(1) NOT NULL DEFAULT 1 AFTER AduanaFMP");
 asegurarColumnaActivo($conn, $nombreBaseDatos, 'materialpendiente', 'ActivoMP', "ALTER TABLE materialpendiente ADD COLUMN ActivoMP TINYINT(1) NOT NULL DEFAULT 1 AFTER FechaMP");
+asegurarRelacionFolioMaterialPendiente($conn, $nombreBaseDatos);
 
 $sql = "SELECT f.FacturaMPID, f.FechaFMP, f.DocumentoFMP, f.RazonSocialFMP, f.ClienteFMP,
-        (SELECT COUNT(*) FROM materialpendiente mp WHERE mp.DocumentoMP = f.DocumentoFMP AND mp.ActivoMP = 0) AS PartidasInactivas
+        (SELECT COUNT(*) FROM materialpendiente mp WHERE mp.FacturaMPID = f.FacturaMPID AND mp.ActivoMP = 0) AS PartidasInactivas
     FROM facturamp f
     WHERE f.ActivoFMP = 0
     ORDER BY f.FacturaMPID DESC";

@@ -1,6 +1,7 @@
 <?php
 
 include("../../Connections/ConDB.php");
+require_once __DIR__ . '/../../includes/MaterialPendienteSchema.php';
 
 header('Content-Type: application/json');
 
@@ -115,6 +116,7 @@ if ($tipoUsuarioActual !== 'soporte it') {
 $nombreBaseDatos = obtenerNombreBaseDatos($conn, $dbname ?? '');
 asegurarColumnaActivo($conn, $nombreBaseDatos, 'facturamp', 'ActivoFMP', "ALTER TABLE facturamp ADD COLUMN ActivoFMP TINYINT(1) NOT NULL DEFAULT 1 AFTER AduanaFMP");
 asegurarColumnaActivo($conn, $nombreBaseDatos, 'materialpendiente', 'ActivoMP', "ALTER TABLE materialpendiente ADD COLUMN ActivoMP TINYINT(1) NOT NULL DEFAULT 1 AFTER FechaMP");
+asegurarRelacionFolioMaterialPendiente($conn, $nombreBaseDatos);
 
 $folio = isset($_POST['folio']) ? (int) $_POST['folio'] : 0;
 if ($folio <= 0) {
@@ -138,6 +140,24 @@ if (!mysqli_stmt_fetch($stmtFactura)) {
 mysqli_stmt_close($stmtFactura);
 $documento = (string) $documento;
 
+$stmtDocumentoActivo = mysqli_prepare(
+    $conn,
+    'SELECT FacturaMPID FROM facturamp WHERE DocumentoFMP = ? AND ActivoFMP = 1 AND FacturaMPID <> ? LIMIT 1'
+);
+if (!$stmtDocumentoActivo) {
+    responderError('No se pudo validar el documento del folio.', 500);
+}
+
+mysqli_stmt_bind_param($stmtDocumentoActivo, 'si', $documento, $folio);
+mysqli_stmt_execute($stmtDocumentoActivo);
+mysqli_stmt_store_result($stmtDocumentoActivo);
+$existeDocumentoActivo = mysqli_stmt_num_rows($stmtDocumentoActivo) > 0;
+mysqli_stmt_close($stmtDocumentoActivo);
+
+if ($existeDocumentoActivo) {
+    responderError('No se puede reactivar el folio porque el documento ya tiene otro registro activo.', 409);
+}
+
 mysqli_begin_transaction($conn);
 
 $stmtReactivarFactura = mysqli_prepare($conn, 'UPDATE facturamp SET ActivoFMP = 1 WHERE FacturaMPID = ? LIMIT 1');
@@ -155,13 +175,13 @@ if (!$okFactura) {
     responderError('No se pudo reactivar el folio.', 500);
 }
 
-$stmtReactivarPartidas = mysqli_prepare($conn, 'UPDATE materialpendiente SET ActivoMP = 1 WHERE DocumentoMP = ?');
+$stmtReactivarPartidas = mysqli_prepare($conn, 'UPDATE materialpendiente SET ActivoMP = 1 WHERE FacturaMPID = ?');
 if (!$stmtReactivarPartidas) {
     mysqli_rollback($conn);
     responderError('No se pudieron reactivar las partidas del documento.', 500);
 }
 
-mysqli_stmt_bind_param($stmtReactivarPartidas, 's', $documento);
+mysqli_stmt_bind_param($stmtReactivarPartidas, 'i', $folio);
 $okPartidas = mysqli_stmt_execute($stmtReactivarPartidas);
 $partidasAfectadas = mysqli_stmt_affected_rows($stmtReactivarPartidas);
 mysqli_stmt_close($stmtReactivarPartidas);

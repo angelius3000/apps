@@ -1,6 +1,7 @@
 <?php
 
 include("../../Connections/ConDB.php");
+require_once __DIR__ . '/../../includes/MaterialPendienteSchema.php';
 
 if (!$conn) {
     header('HTTP/1.1 500 Internal Server Error');
@@ -10,7 +11,7 @@ if (!$conn) {
 
 function asegurarTablaMaterialPendiente(mysqli $conn, string $baseDatos): void
 {
-    $sqlCrearTabla = "CREATE TABLE IF NOT EXISTS materialpendiente (\n        MaterialPendienteID INT NOT NULL AUTO_INCREMENT,\n        DocumentoMP VARCHAR(100) NOT NULL,\n        RazonSocialMP VARCHAR(255) NOT NULL,\n        VendedorMP VARCHAR(255) DEFAULT NULL,\n        SurtidorMP VARCHAR(255) DEFAULT NULL,\n        ClienteMP VARCHAR(255) NOT NULL,\n        AduanaMP VARCHAR(255) DEFAULT NULL,\n        SkuMP VARCHAR(100) NOT NULL,\n        DescripcionMP VARCHAR(255) NOT NULL,\n        CantidadMP INT NOT NULL DEFAULT 0,\n        FechaMP TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n        ActivoMP TINYINT(1) NOT NULL DEFAULT 1,\n        PRIMARY KEY (MaterialPendienteID),\n        INDEX idx_materialpendiente_documento (DocumentoMP),\n        INDEX idx_materialpendiente_sku (SkuMP)\n    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    $sqlCrearTabla = "CREATE TABLE IF NOT EXISTS materialpendiente (\n        MaterialPendienteID INT NOT NULL AUTO_INCREMENT,\n        FacturaMPID INT NULL,\n        DocumentoMP VARCHAR(100) NOT NULL,\n        RazonSocialMP VARCHAR(255) NOT NULL,\n        VendedorMP VARCHAR(255) DEFAULT NULL,\n        SurtidorMP VARCHAR(255) DEFAULT NULL,\n        ClienteMP VARCHAR(255) NOT NULL,\n        AduanaMP VARCHAR(255) DEFAULT NULL,\n        SkuMP VARCHAR(100) NOT NULL,\n        DescripcionMP VARCHAR(255) NOT NULL,\n        CantidadMP INT NOT NULL DEFAULT 0,\n        FechaMP TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n        ActivoMP TINYINT(1) NOT NULL DEFAULT 1,\n        PRIMARY KEY (MaterialPendienteID),\n        INDEX idx_materialpendiente_folio (FacturaMPID),\n        INDEX idx_materialpendiente_documento (DocumentoMP),\n        INDEX idx_materialpendiente_sku (SkuMP)\n    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 
     @mysqli_query($conn, $sqlCrearTabla);
 
@@ -75,6 +76,7 @@ function asegurarTablaFacturaMP(mysqli $conn, string $baseDatos): void
 $nombreBaseDatos = $dbname ?? '';
 asegurarTablaMaterialPendiente($conn, $nombreBaseDatos);
 asegurarTablaFacturaMP($conn, $nombreBaseDatos);
+asegurarRelacionFolioMaterialPendiente($conn, $nombreBaseDatos);
 
 $longitudSkuReferencia = 0;
 $queryLongitudSku = "SELECT MAX(CHAR_LENGTH(Sku)) AS MaxSkuLength FROM productos";
@@ -90,7 +92,7 @@ if ($resultadoLongitud instanceof mysqli_result) {
 
 $query = "SELECT f.FacturaMPID, f.FechaFMP, mp.DocumentoMP, mp.RazonSocialMP, mp.VendedorMP, mp.SurtidorMP, mp.ClienteMP, mp.AduanaMP, mp.SkuMP, mp.DescripcionMP, mp.CantidadMP, mp.FechaMP "
     . "FROM materialpendiente mp "
-    . "LEFT JOIN facturamp f ON f.DocumentoFMP = mp.DocumentoMP AND f.ActivoFMP = 1 "
+    . "LEFT JOIN facturamp f ON f.FacturaMPID = mp.FacturaMPID AND f.ActivoFMP = 1 "
     . "WHERE mp.ActivoMP = 1 "
     . "ORDER BY f.FacturaMPID DESC, mp.MaterialPendienteID ASC";
 
