@@ -243,6 +243,7 @@
                                                     ?>
 
                                                 </select>
+                                                <input type="hidden" id="NumeroClienteSolicitadoRepartoEditar" name="NumeroClienteSolicitadoRepartoEditar" value="">
                                             </div>
                                             <div class="mb-4 reparto-field-full">
                                                 <label for="NumeroDeFacturaEditar" class="form-label">Número de Factura</label>
@@ -405,6 +406,7 @@
                                                     ?>
 
                                                 </select>
+                                                <input type="hidden" id="NumeroClienteSolicitadoRepartoClonar" name="NumeroClienteSolicitadoRepartoClonar" value="">
                                             </div>
                                             <div class="mb-4 reparto-field-full">
                                                 <label for="NumeroDeFacturaClonar" class="form-label">Número de Factura</label>
