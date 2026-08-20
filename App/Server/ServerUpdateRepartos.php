@@ -2,8 +2,19 @@
 
 include("../../Connections/ConDB.php");
 
+@mysqli_query($conn, "ALTER TABLE repartos ADD COLUMN ClienteSolicitadoReparto VARCHAR(100) DEFAULT NULL AFTER CLIENTEID");
+
 // Get values from form
-$CLIENTEID = mysqli_real_escape_string($conn, $_POST['CLIENTEIDEditar']);
+$clienteIdPost = trim((string) ($_POST['CLIENTEIDEditar'] ?? ''));
+$numeroClienteSolicitado = trim((string) ($_POST['NumeroClienteSolicitadoRepartoEditar'] ?? ''));
+if (strpos($clienteIdPost, 'solicitar:') === 0) {
+    $numeroClienteSolicitado = trim(substr($clienteIdPost, strlen('solicitar:')));
+    $clienteIdPost = '0';
+}
+$CLIENTEID = mysqli_real_escape_string($conn, $clienteIdPost);
+$ClienteSolicitadoReparto = $numeroClienteSolicitado !== ''
+    ? "'" . mysqli_real_escape_string($conn, $numeroClienteSolicitado) . "'"
+    : 'NULL';
 $NumeroDeFactura = mysqli_real_escape_string($conn, $_POST['NumeroDeFacturaEditar']);
 $Calle = mysqli_real_escape_string($conn, $_POST['CalleEditar']);
 $NumeroEXT = mysqli_real_escape_string($conn, $_POST['NumeroEXTEditar']);
@@ -36,6 +47,7 @@ if ($EnlaceGoogleMaps !== NULL) {
     // Build the base query
     $sql = "UPDATE repartos SET
     CLIENTEID = '$CLIENTEID',
+    ClienteSolicitadoReparto = $ClienteSolicitadoReparto,
     NumeroDeFactura = '$NumeroDeFactura',
     Calle = '$Calle',
     NumeroEXT = '$NumeroEXT',
@@ -54,6 +66,7 @@ if ($EnlaceGoogleMaps !== NULL) {
     // Build the base query
     $sql = "UPDATE repartos SET
     CLIENTEID = '$CLIENTEID',
+    ClienteSolicitadoReparto = $ClienteSolicitadoReparto,
     NumeroDeFactura = '$NumeroDeFactura',
     Calle = '$Calle',
     NumeroEXT = '$NumeroEXT',

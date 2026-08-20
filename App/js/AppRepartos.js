@@ -209,7 +209,10 @@ $(document).ready(function() {
       dropdownParent: $('#ModalClonarReparto'), // Ajuste importante
       placeholder: 'Selecciona cliente',
       allowClear: true,
-      width: '100%' // Asegura que ocupe todo el ancho del contenedor
+      width: '100%', // Asegura que ocupe todo el ancho del contenedor
+      tags: true,
+      createTag: crearOpcionSolicitudCliente($('#CLIENTEIDClonar')),
+      insertTag: function(data, tag) { data.unshift(tag); }
     });
     actualizarMapaReparto(configClonar);
   });
@@ -362,6 +365,43 @@ $(document).ready(function() {
     return existe;
   }
 
+  function crearOpcionSolicitudCliente($select) {
+    return function(params) {
+      var term = $.trim(params.term || '');
+      if (term === '' || existeClienteEnSelect($select, term)) {
+        return null;
+      }
+
+      return { id: 'solicitar:' + term, text: 'Solicitar', numeroCliente: term, solicitado: true };
+    };
+  }
+
+  function actualizarSolicitudClienteSelect(selectorCliente, selectorSolicitud) {
+    var valor = ($(selectorCliente).val() || '').toString();
+    var numeroSolicitado = valor.indexOf('solicitar:') === 0
+      ? valor.substring('solicitar:'.length).trim()
+      : '';
+
+    $(selectorSolicitud).val(numeroSolicitado);
+  }
+
+  window.seleccionarClienteReparto = function(selectorCliente, clienteId, numeroSolicitado) {
+    var $select = $(selectorCliente);
+    var numero = (numeroSolicitado || '').toString().trim();
+
+    if (numero !== '') {
+      var valorSolicitud = 'solicitar:' + numero;
+      $select.find('option').filter(function() {
+        return ($(this).val() || '').toString().indexOf('solicitar:') === 0;
+      }).remove();
+      $select.append(new Option('Solicitado: ' + numero, valorSolicitud, true, true));
+      $select.val(valorSolicitud).trigger('change');
+      return;
+    }
+
+    $select.val(clienteId || '').trigger('change');
+  };
+
   function actualizarSolicitudClienteReparto() {
     var $selectCliente = $('#CLIENTEID');
     var datos = $selectCliente.hasClass('select2-hidden-accessible') ? $selectCliente.select2('data') : [];
@@ -411,6 +451,14 @@ $(document).ready(function() {
 
   $('#CLIENTEID').on('change select2:select', function() {
     actualizarSolicitudClienteReparto();
+  });
+
+  $('#CLIENTEIDEditar').on('change select2:select', function() {
+    actualizarSolicitudClienteSelect('#CLIENTEIDEditar', '#NumeroClienteSolicitadoRepartoEditar');
+  });
+
+  $('#CLIENTEIDClonar').on('change select2:select', function() {
+    actualizarSolicitudClienteSelect('#CLIENTEIDClonar', '#NumeroClienteSolicitadoRepartoClonar');
   });
 
   $(document).on("input change", "#CalleNumeroEditar, #ColoniaEditar, #CPEditar, #CiudadEditar, #EstadoEditar", function() {
@@ -850,7 +898,7 @@ function TomarDatosParaModalRepartos(val) {
 
       // Campos para el modal #ModalEditarReparto
 
-      $("select#CLIENTEIDEditar").val(response.CLIENTEID);
+      seleccionarClienteReparto('#CLIENTEIDEditar', response.CLIENTEID, response.ClienteSolicitadoReparto);
       $("input#NumeroDeFacturaEditar").val(response.NumeroDeFactura);
       $("input#CalleNumeroEditar").val(((response.Calle || "") + " " + (response.NumeroEXT || "")).trim());
       $("input#CalleEditar").val(response.Calle);
@@ -873,7 +921,7 @@ function TomarDatosParaModalRepartos(val) {
 
       // Campos para el modal #ModalClonarReparto
 
-      $("select#CLIENTEIDClonar").val(response.CLIENTEID);
+      seleccionarClienteReparto('#CLIENTEIDClonar', response.CLIENTEID, response.ClienteSolicitadoReparto);
       //$("input#NumeroDeFacturaClonar").val(response.NumeroDeFactura);
       $("input#CalleNumeroClonar").val(((response.Calle || "") + " " + (response.NumeroEXT || "")).trim());
       $("input#CalleClonar").val(response.Calle);
