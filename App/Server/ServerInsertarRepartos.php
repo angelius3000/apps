@@ -29,6 +29,13 @@ if (strpos($clienteIdPost, 'solicitar:') === 0) {
     $clienteIdPost = '0';
 }
 
+if ($numeroClienteSolicitado !== '' && !ctype_digit($numeroClienteSolicitado)) {
+    http_response_code(400);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'El número de cliente solo puede contener números.']);
+    exit;
+}
+
 $CLIENTEID = mysqli_real_escape_string($conn, $clienteIdPost);
 $ClienteSolicitadoReparto = $numeroClienteSolicitado !== '' ? mysqli_real_escape_string($conn, $numeroClienteSolicitado) : NULL;
 $NumeroDeFactura = mysqli_real_escape_string($conn, $_POST['NumeroDeFactura']);

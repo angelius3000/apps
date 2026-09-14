@@ -64,6 +64,23 @@ $(document).ready(function() {
   var $registroEntregasBody = $('#RegistroEntregasBody');
   var $detalleError = $('#DetalleMaterialPendienteError');
   var $detalleExito = $('#DetalleMaterialPendienteExito');
+
+  function capturarNumeroClienteSolicitado() {
+    while (true) {
+      var numero = window.prompt('Captura el número de cliente que deseas solicitar:');
+
+      if (numero === null) {
+        return null;
+      }
+
+      numero = numero.trim();
+      if (/^\d+$/.test(numero)) {
+        return numero;
+      }
+
+      window.alert('El número de cliente es obligatorio y solo puede contener números.');
+    }
+  }
   var $inputFolioEntrega = $('#EntregaFolio');
   var $inputDocumentoEntrega = $('#EntregaDocumento');
   var $inputRecibio = $('#EntregaRecibio');
@@ -2514,23 +2531,32 @@ $(document).ready(function() {
     enfocarCampo($selectVendedores);
   });
 
-  $selectRazonSocial.on('change select2:select', function() {
-    var datos = $selectRazonSocial.hasClass('select2-hidden-accessible') ? $selectRazonSocial.select2('data') : [];
-    var seleccionado = datos && datos.length ? datos[0] : null;
+  $selectRazonSocial.on('change', function() {
+    enfocarCampo($selectVendedores);
+  });
+
+  $selectRazonSocial.on('select2:select', function(evento) {
+    var seleccionado = evento.params ? evento.params.data : null;
     if (seleccionado && seleccionado.solicitado) {
-      var numero = (seleccionado.numeroCliente || ($selectRazonSocial.val() || '').toString().replace(/^solicitar:/, '')).trim();
-      if (!numero) { numero = window.prompt('Captura el número de cliente que deseas solicitar:') || ''; }
-      numero = numero.trim();
-      if (numero) {
-        $checkboxOtraRazonSocial.prop('checked', true);
-        actualizarCamposOtraRazonSocial();
-        $inputNumeroClientePendienteOtro.val(numero);
-        $inputRazonSocialPendienteOtra.val('SOLICITADO');
-        $inputNombreCliente.val('SOLICITADO');
+      var numero = capturarNumeroClienteSolicitado();
+      if (numero === null) {
+        $selectRazonSocial.find('option:selected').remove();
+        $selectRazonSocial.val(null).trigger('change');
+        return;
       }
+
+      $checkboxOtraRazonSocial.prop('checked', true);
+      actualizarCamposOtraRazonSocial();
+      $inputNumeroClientePendienteOtro.val(numero);
+      $inputRazonSocialPendienteOtra.val('SOLICITADO');
+      $inputNombreCliente.val('SOLICITADO');
       return;
     }
     enfocarCampo($selectVendedores);
+  });
+
+  $inputNumeroClientePendienteOtro.on('input', function() {
+    this.value = this.value.replace(/\D/g, '');
   });
 
   $checkboxOtraRazonSocial.on('change', function() {
