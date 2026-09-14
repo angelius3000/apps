@@ -81,7 +81,7 @@
                                         </div>
                                         <div class="col-lg-6 col-sm-12 mb-4 d-none" id="NumeroClientePendienteContainer">
                                             <label for="NumeroClientePendienteOtro" class="form-label">Número de cliente</label>
-                                            <input type="text" class="form-control" id="NumeroClientePendienteOtro" name="NumeroClientePendienteOtro" autocomplete="off">
+                                            <input type="text" class="form-control" id="NumeroClientePendienteOtro" name="NumeroClientePendienteOtro" autocomplete="off" inputmode="numeric" pattern="[0-9]+" title="Captura únicamente números">
                                         </div>
                                         <div class="col-lg-6 col-sm-12 mb-4 d-none" id="OtraRazonSocialPendienteContainer">
                                             <label for="RazonSocialPendienteOtra" class="form-label">Razón social</label>

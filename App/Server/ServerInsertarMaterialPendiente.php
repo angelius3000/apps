@@ -243,6 +243,9 @@ if ($usarOtraRazonSocial) {
     if ($numeroClienteManual === '' || $razonSocialManual === '') {
         responderError('Captura el número de cliente y su razón social.', 400);
     }
+    if (!ctype_digit($numeroClienteManual)) {
+        responderError('El número de cliente solo puede contener números.', 400);
+    }
 } elseif ($clienteId <= 0) {
     responderError('Selecciona una razón social de la lista o captura una nueva.', 400);
 }
