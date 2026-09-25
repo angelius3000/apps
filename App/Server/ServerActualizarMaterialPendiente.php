@@ -487,7 +487,8 @@ if (!empty($clientesSolicitadosNotificacion) || !empty($productosSolicitadosNoti
         EnviarNotificacionSolicitudMaterialPendiente(
             $clientesSolicitadosNotificacion,
             $productosSolicitadosNotificacion,
-            $numeroFactura
+            $numeroFactura,
+            $solicitanteNombreSolicitud
         );
     }
 }

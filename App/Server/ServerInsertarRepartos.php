@@ -72,12 +72,13 @@ $last_id = mysqli_insert_id($conn);
 
 if ($numeroClienteSolicitado !== '') {
     $numeroClienteSolicitadoSql = mysqli_real_escape_string($conn, $numeroClienteSolicitado);
-    $solicitanteNombreSolicitud = mysqli_real_escape_string($conn, trim((string) ($_SESSION['NombreDelUsuario'] ?? $_SESSION['Username'] ?? '')));
-    @mysqli_query($conn, "INSERT INTO Solicitud_Clientes (NumeroCliente, SolicitanteNombre) VALUES ('$numeroClienteSolicitadoSql', '$solicitanteNombreSolicitud')");
+    $solicitanteNombreSolicitud = trim((string) ($_SESSION['NombreDelUsuario'] ?? $_SESSION['Username'] ?? ''));
+    $solicitanteNombreSolicitudSql = mysqli_real_escape_string($conn, $solicitanteNombreSolicitud);
+    @mysqli_query($conn, "INSERT INTO Solicitud_Clientes (NumeroCliente, SolicitanteNombre) VALUES ('$numeroClienteSolicitadoSql', '$solicitanteNombreSolicitudSql')");
 
     include_once __DIR__ . '/../../includes/MandarEmail.php';
     if (function_exists('EnviarNotificacionSolicitudMaterialPendiente')) {
-        EnviarNotificacionSolicitudMaterialPendiente([$numeroClienteSolicitado], [], $NumeroDeFactura);
+        EnviarNotificacionSolicitudMaterialPendiente([$numeroClienteSolicitado], [], $NumeroDeFactura, $solicitanteNombreSolicitud);
     }
 }
 

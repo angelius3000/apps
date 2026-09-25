@@ -108,10 +108,11 @@ function RecuperaTuPassword($email, $Hash)
     return false;
 }
 
-function EnviarNotificacionSolicitudMaterialPendiente(array $numerosCliente, array $skusProductos, string $documento = '')
+function EnviarNotificacionSolicitudMaterialPendiente(array $numerosCliente, array $skusProductos, string $documento = '', string $usuarioGenerador = '')
 {
     $numerosCliente = array_values(array_unique(array_filter(array_map('trim', $numerosCliente))));
     $skusProductos = array_values(array_unique(array_filter(array_map('trim', $skusProductos))));
+    $usuarioGenerador = trim($usuarioGenerador);
 
     if (empty($numerosCliente) && empty($skusProductos)) {
         return true;
@@ -127,6 +128,11 @@ function EnviarNotificacionSolicitudMaterialPendiente(array $numerosCliente, arr
     }
 
     $documentoHtml = htmlspecialchars($documento, ENT_QUOTES, 'UTF-8');
+    $usuarioGeneradorHtml = htmlspecialchars(
+        $usuarioGenerador !== '' ? $usuarioGenerador : 'No identificado',
+        ENT_QUOTES,
+        'UTF-8'
+    );
     $clientesHtml = '';
     foreach ($numerosCliente as $numeroCliente) {
         $clientesHtml .= '<li>' . htmlspecialchars($numeroCliente, ENT_QUOTES, 'UTF-8') . '</li>';
@@ -139,13 +145,15 @@ function EnviarNotificacionSolicitudMaterialPendiente(array $numerosCliente, arr
 
     $mailBody = '<html><body>'
         . '<p>Se generó una nueva solicitud desde la sección de Material Pendiente.</p>'
+        . '<p><strong>Usuario que generó la solicitud:</strong> ' . $usuarioGeneradorHtml . '</p>'
         . ($documentoHtml !== '' ? '<p><strong>Documento:</strong> ' . $documentoHtml . '</p>' : '')
         . (!empty($numerosCliente) ? '<p><strong>Clientes solicitados:</strong></p><ul>' . $clientesHtml . '</ul>' : '')
         . (!empty($skusProductos) ? '<p><strong>Productos solicitados (SKU):</strong></p><ul>' . $productosHtml . '</ul>' : '')
         . '<p style="font-size:12px;color:#666;">Este es un correo automático, no respondas a este mensaje.</p>'
         . '</body></html>';
 
-    $altBody = "Se generó una nueva solicitud desde Material Pendiente.";
+    $altBody = "Se generó una nueva solicitud desde Material Pendiente."
+        . "\nUsuario que generó la solicitud: " . ($usuarioGenerador !== '' ? $usuarioGenerador : 'No identificado');
     if ($documento !== '') {
         $altBody .= "\nDocumento: " . $documento;
     }
